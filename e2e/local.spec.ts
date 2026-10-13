@@ -108,6 +108,11 @@ test('how to play explains the stakes', async ({ page }) => {
 test('picking a course fills in the pars', async ({ page }) => {
   const pars = [4, 4, 5, 3, 4, 4, 4, 3, 5, 4, 3, 5, 4, 4, 4, 3, 4, 5];
   // Fake OpenGolfAPI answers (the app calls it directly) so the test doesn't depend on it.
+  // Keep our server's GolfCourseAPI search out of it too (it has a small daily allowance).
+  await page.route(
+    (url) => url.pathname === '/api/courses',
+    (route) => route.fulfill({ json: { courses: [] } }),
+  );
   await page.route(
     (url) => url.hostname === 'api.opengolfapi.org' && url.pathname.endsWith('/courses/search'),
     (route) =>

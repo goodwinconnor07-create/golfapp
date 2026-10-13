@@ -2,7 +2,7 @@
 // which calls the course data sources and caches their answers for a day.
 //
 // Only GolfCourseAPI (https://golfcourseapi.com, ~30,000 courses worldwide) goes through here,
-// because its key must stay secret. It's off until the GOLFCOURSE_API_KEY secret is set
+// because its key must stay secret (sent as "Authorization: Bearer <key>"). It's off until the GOLFCOURSE_API_KEY secret is set
 // (npx wrangler secret put GOLFCOURSE_API_KEY); until then search returns nothing.
 // OpenGolfAPI is called straight from the app instead (src/state/courses.ts): it refuses
 // requests from Cloudflare Workers but allows browsers.
@@ -40,33 +40,47 @@ async function cachedJson(url: string, headers: Record<string, string> = {}): Pr
 }
 
 type Obj = Record<string, unknown>;
+
+/** "Royal Melbourne Gc" + "Royal Melbourne Gc - East Course" reads better as just the course name. */
+function courseName(c: Obj): string {
+  const tidy = (v: unknown) => text(v).replace(/\b(Gc|Cc|G&cc)\b/g, (m) => m.toUpperCase());
+  const club = tidy(c.club_name);
+  const course = tidy(c.course_name);
+  if (!course || course === club) return club;
+  if (!club || course.toLowerCase().includes(club.toLowerCase())) return course;
+  return `${club} · ${course}`;
+}
 const obj = (v: unknown): Obj => (typeof v === 'object' && v !== null ? (v as Obj) : {});
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
 async function searchGolfCourse(q: string, key: string): Promise<CourseSummary[]> {
-  const data = obj(await cachedJson(`${GC}/search?search_query=${encodeURIComponent(q)}`, { authorization: `Key ${key}` }));
+  const data = obj(await cachedJson(`${GC}/search?search_query=${encodeURIComponent(q)}`, { authorization: `Bearer ${key}` }));
   return list(data.courses).map((raw) => {
     const c = obj(raw);
     const loc = obj(c.location);
-    const name = [text(c.club_name), text(c.course_name)].filter((v, i, a) => v && a.indexOf(v) === i).join(' · ');
-    return { id: `gc:${String(c.id)}`, name, place: place(loc.city, loc.state, loc.country), par: null };
+    return { id: `gc:${String(c.id)}`, name: courseName(c), place: place(loc.city, loc.state, loc.country), par: null };
   });
 }
 
 async function detailGolfCourse(id: string, key: string): Promise<CourseDetail> {
-  const data = obj(await cachedJson(`${GC}/courses/${encodeURIComponent(id)}`, { authorization: `Key ${key}` }));
+  const data = obj(await cachedJson(`${GC}/courses/${encodeURIComponent(id)}`, { authorization: `Bearer ${key}` }));
   // The course may come wrapped as { course: {...} } or bare.
   const course = data.course ? obj(data.course) : data;
   const tees = obj(course.tees);
-  const firstTee = obj([...list(tees.male), ...list(tees.female)][0]);
-  const holes = list(firstTee.holes).map((h) => obj(h).par);
-  const pars = holes.every(isPar) ? (holes as Par[]) : [];
+  // Use the first tee (men's tees come first) that lists a sensible par for every hole.
+  const allTees = [...list(tees.male), ...list(tees.female)].map(obj);
+  const parsOf = (tee: Obj) => list(tee.holes).map((h) => obj(h).par);
+  const tee = allTees.find((t) => {
+    const p = parsOf(t);
+    return p.length > 0 && p.every(isPar);
+  });
+  const pars = tee ? (parsOf(tee) as Par[]) : [];
   const loc = obj(course.location);
   return {
     id: `gc:${id}`,
-    name: [text(course.club_name), text(course.course_name)].filter((v, i, a) => v && a.indexOf(v) === i).join(' · '),
+    name: courseName(course),
     place: place(loc.city, loc.state, loc.country),
-    par: num(firstTee.par_total) ?? (pars.length ? pars.reduce((a, b) => a + b, 0) : null),
+    par: pars.length ? pars.reduce((a, b) => a + b, 0) : num(obj(allTees[0]).par_total),
     pars,
     attribution: GC_CREDIT,
   };
