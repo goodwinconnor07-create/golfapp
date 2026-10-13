@@ -106,17 +106,29 @@ test('how to play explains the stakes', async ({ page }) => {
 });
 
 test('picking a course fills in the pars', async ({ page }) => {
-  // A fixed course so the test doesn't depend on the outside course service.
   const pars = [4, 4, 5, 3, 4, 4, 4, 3, 5, 4, 3, 5, 4, 4, 4, 3, 4, 5];
+  // Fake OpenGolfAPI answers (the app calls it directly) so the test doesn't depend on it.
   await page.route(
-    (url) => url.pathname === '/api/courses',
-    (route) => route.fulfill({ json: { courses: [{ id: 'og:test-course', name: 'Palmer Links', place: 'The Villages, FL', par: 72 }] } }),
-  );
-  await page.route(
-    (url) => url.pathname.startsWith('/api/courses/'),
+    (url) => url.hostname === 'api.opengolfapi.org' && url.pathname.endsWith('/courses/search'),
     (route) =>
       route.fulfill({
-        json: { id: 'og:test-course', name: 'Palmer Links', place: 'The Villages, FL', par: 72, pars, attribution: 'test' },
+        headers: { 'access-control-allow-origin': '*' },
+        json: { courses: [{ id: 'test-course', name: 'Palmer Links', city: 'The Villages', state: 'FL', par: 72 }] },
+      }),
+  );
+  await page.route(
+    (url) => url.hostname === 'api.opengolfapi.org' && url.pathname.endsWith('/courses/test-course'),
+    (route) =>
+      route.fulfill({
+        headers: { 'access-control-allow-origin': '*' },
+        json: {
+          id: 'test-course',
+          name: 'Palmer Links',
+          city: 'The Villages',
+          state: 'FL',
+          par: 72,
+          scorecard: pars.map((par, i) => ({ hole: i + 1, par })),
+        },
       }),
   );
   await page.goto('/');

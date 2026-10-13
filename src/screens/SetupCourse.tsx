@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CourseDetail, CourseSummary } from '../game';
-import { fetchCourse, searchCourses } from '../state/api';
+import { fetchCourse, searchCourses } from '../state/courses';
 import { navigate, setDraftCourse, toast, useApp } from '../state/store';
 import { BackBar } from '../ui/components';
 import { haptic } from '../ui/effects';

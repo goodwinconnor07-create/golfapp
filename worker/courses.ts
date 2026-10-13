@@ -1,24 +1,22 @@
 // Golf course lookup for the setup screen. The app only ever talks to this Worker,
 // which calls the course data sources and caches their answers for a day.
 //
-// Sources:
-//  - OpenGolfAPI (https://opengolfapi.org): free, no key, ODbL (© OpenStreetMap contributors).
-//    Hole pars are good for US courses; elsewhere it often has the course but no pars.
-//  - GolfCourseAPI (https://golfcourseapi.com): ~30,000 courses worldwide, needs a key.
-//    Switched on by setting the GOLFCOURSE_API_KEY secret (wrangler secret put GOLFCOURSE_API_KEY).
+// Only GolfCourseAPI (https://golfcourseapi.com, ~30,000 courses worldwide) goes through here,
+// because its key must stay secret. It's off until the GOLFCOURSE_API_KEY secret is set
+// (npx wrangler secret put GOLFCOURSE_API_KEY); until then search returns nothing.
+// OpenGolfAPI is called straight from the app instead (src/state/courses.ts): it refuses
+// requests from Cloudflare Workers but allows browsers.
 
 import type { CourseDetail, CourseSummary } from '../src/game';
 
 type CourseEnv = Env & { GOLFCOURSE_API_KEY?: string };
 type Par = 3 | 4 | 5;
 
-const OG = 'https://api.opengolfapi.org/v1';
 const GC = 'https://api.golfcourseapi.com/v1';
 const CACHE_SECONDS = 24 * 60 * 60;
-const OG_CREDIT = 'Course data © OpenStreetMap contributors (ODbL) via OpenGolfAPI';
 const GC_CREDIT = 'Course data from GolfCourseAPI';
 
-const isPar = (n: unknown): n is Par => n === 3 || n === 4 || n === 5;
+export const isPar = (n: unknown): n is Par => n === 3 || n === 4 || n === 5;
 const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const place = (...parts: unknown[]) => [...new Set(parts.map(text).filter(Boolean))].join(', ');
@@ -29,7 +27,9 @@ async function cachedJson(url: string, headers: Record<string, string> = {}): Pr
   const key = new Request(url);
   const hit = await cache.match(key);
   if (hit) return hit.json();
-  const res = await fetch(url, { headers: { accept: 'application/json', ...headers } });
+  const res = await fetch(url, {
+    headers: { accept: 'application/json', 'user-agent': 'SendItGolf/1.0 (+https://send-it.kavishahtemu11.workers.dev)', ...headers },
+  });
   if (!res.ok) throw new Error(`Course source returned ${res.status}`);
   const body = await res.text();
   await cache.put(
@@ -42,24 +42,6 @@ async function cachedJson(url: string, headers: Record<string, string> = {}): Pr
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (typeof v === 'object' && v !== null ? (v as Obj) : {});
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-
-async function searchOpenGolf(q: string): Promise<CourseSummary[]> {
-  const data = obj(await cachedJson(`${OG}/courses/search?q=${encodeURIComponent(q)}`));
-  return list(data.courses).map((raw) => {
-    const c = obj(raw);
-    return { id: `og:${text(c.id)}`, name: text(c.name) || text(c.course_name), place: place(c.city, c.state), par: num(c.par) };
-  });
-}
-
-async function detailOpenGolf(id: string): Promise<CourseDetail> {
-  const c = obj(await cachedJson(`${OG}/courses/${encodeURIComponent(id)}`));
-  const holes = list(c.scorecard)
-    .map(obj)
-    .sort((a, b) => (num(a.hole) ?? 0) - (num(b.hole) ?? 0))
-    .map((h) => h.par);
-  const pars = holes.every(isPar) ? (holes as Par[]) : [];
-  return { id: `og:${id}`, name: text(c.name), place: place(c.city, c.state), par: num(c.par), pars, attribution: OG_CREDIT };
-}
 
 async function searchGolfCourse(q: string, key: string): Promise<CourseSummary[]> {
   const data = obj(await cachedJson(`${GC}/search?search_query=${encodeURIComponent(q)}`, { authorization: `Key ${key}` }));
@@ -105,20 +87,19 @@ export async function handleCourses(request: Request, env: CourseEnv, pathname: 
     if (pathname === '/api/courses') {
       const q = (new URL(request.url).searchParams.get('q') ?? '').trim().slice(0, 60);
       if (q.length < 3) return json({ courses: [] });
-      const results = await Promise.allSettled([key ? searchGolfCourse(q, key) : Promise.resolve([]), searchOpenGolf(q)]);
+      if (!key) return json({ courses: [] });
+      const results = await Promise.allSettled([searchGolfCourse(q, key)]);
+      for (const r of results) if (r.status === 'rejected') console.warn('course search failed', String(r.reason));
       const courses = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((c) => c.name);
-      if (courses.length === 0 && results.every((r) => r.status === 'rejected'))
-        return json({ error: "Course search isn't answering right now." }, 502);
+      if (results.every((r) => r.status === 'rejected')) return json({ error: "Course search isn't answering right now." }, 502);
       return json({ courses: courses.slice(0, 20) });
     }
-    const m = pathname.match(/^\/api\/courses\/(og|gc):([A-Za-z0-9-]{1,64})$/);
+    const m = pathname.match(/^\/api\/courses\/gc:([A-Za-z0-9-]{1,64})$/);
     if (!m) return json({ error: 'Not found.' }, 404);
-    if (m[1] === 'gc') {
-      if (!key) return json({ error: 'That course source is switched off.' }, 404);
-      return json(await detailGolfCourse(m[2], key));
-    }
-    return json(await detailOpenGolf(m[2]));
-  } catch {
+    if (!key) return json({ error: 'That course source is switched off.' }, 404);
+    return json(await detailGolfCourse(m[1], key));
+  } catch (e) {
+    console.warn('course lookup failed', String(e));
     return json({ error: "Couldn't load that course right now." }, 502);
   }
 }

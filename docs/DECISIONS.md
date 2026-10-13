@@ -61,4 +61,4 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 
 - **OpenGolfAPI** (in use, free, no key): about 17,000 courses with hole pars, mostly in the US. Outside the US it usually finds the course but not its pars. Data is ODbL, so the app shows "© OpenStreetMap contributors" under results.
 - **GolfCourseAPI** (built in, off until a key is added): about 30,000 courses worldwide. Free plan is 35 lookups a day; paid is US$9.99 a month for 10,000. Switch on with `npx wrangler secret put GOLFCOURSE_API_KEY`. Its results show first when it's on.
-- All lookups go through our Worker and are cached for a day, so repeat searches don't use up the daily allowance.
+- OpenGolfAPI is called straight from the phone: it refuses requests from Cloudflare Workers (403) but allows browsers. GolfCourseAPI goes through our Worker so its key stays secret, and its answers are cached for a day so repeat searches don't use up the daily allowance.
