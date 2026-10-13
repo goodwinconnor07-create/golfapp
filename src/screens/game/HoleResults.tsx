@@ -2,9 +2,8 @@ import { useEffect } from 'react';
 import { getCard, getEntry, holeResult, isVoteable, newLeader, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { TierChip } from '../../ui/components';
+import { Breakdown, TierChip } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
-import { calcText } from '../../ui/format';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
 export function HoleResults({ game }: { game: Game }) {
@@ -45,7 +44,7 @@ export function HoleResults({ game }: { game: Game }) {
                     <>
                       <TierChip tier={r.tier} />
                       <span className={r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}>
-                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'} {calcText(r.strokes, r.adjustment, r.gameScore)}
+                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'} <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} doubled={r.doubled} freePass={r.freePass} />
                       </span>
                       {r.doubled && <span className="tag tag-double">2×</span>}
                       {r.freePass && <span className="tag tag-free">Free shot</span>}
@@ -58,7 +57,7 @@ export function HoleResults({ game }: { game: Game }) {
             );
           })}
         </div>
-        <p className="note">Big number = total over or under par. Lowest wins, like golf.</p>
+        <p className="note">Your golf score plus your card = the big number. Lowest wins.</p>
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" onClick={nextHole}>

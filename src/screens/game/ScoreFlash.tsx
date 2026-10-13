@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
-import { TIERS, toParWords } from '../../game';
+import { TIERS, toParWords, type Par } from '../../game';
 import { clearFlash, type Flash } from '../../state/store';
-import { TierIcon } from '../../ui/components';
+import { Breakdown, TierIcon } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
-import { calcText } from '../../ui/format';
 import { CheckIcon, CrossIcon, MinusIcon } from '../../ui/Icons';
 
 /** Quick result splash after a score is saved. Tap to skip; it never holds up play. */
@@ -47,7 +46,7 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
             <p className="flash-title">{made ? 'Completed!' : missed ? 'Failed' : 'No change'}</p>
           </>
         )}
-        <p className="flash-calc">{calcText(flash.strokes, flash.delta, flash.gameScore)}</p>
+        <p className="flash-calc"><Breakdown strokes={flash.strokes} par={flash.par as Par} adjustment={flash.delta} doubled={flash.doubled} freePass={flash.freePass} total /></p>
         <p className="flash-name">{flash.name}</p>
         <p className="flash-sub">
           {toParWords(flash.gameScore - flash.par)} on this hole · {flash.strokes} strokes taken

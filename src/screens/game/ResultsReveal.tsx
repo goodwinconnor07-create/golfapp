@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatToPar, getCard, holeResult, newLeader, rankMoves, standings, type Game } from '../../game';
 import { markResultsRevealed, navigate, nextHole, resultsRevealSeen } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { Avatar, TierChip } from '../../ui/components';
+import { Avatar, Breakdown, TierChip } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
-import { calcText } from '../../ui/format';
 import { VoteTag } from './HoleResults';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
@@ -83,18 +82,20 @@ export function ResultsReveal({ game }: { game: Game }) {
                 </span>
                 {open ? (
                   <span className="result-right">
-                    <span className="result-calc">
-                      <TierChip tier={r.tier} />
-                      <b className={r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}>
-                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'} {calcText(r.strokes, r.adjustment, r.gameScore)}
-                      </b>
-                    </span>
+                    <TierChip tier={r.tier} />
                     <b className="result-topar">{formatToPar(r.toPar)}</b>
                   </span>
                 ) : (
                   <span className="reveal-hidden" aria-hidden>
                     ?
                   </span>
+                )}
+                {open && (
+                  // Its own line, so the working never squeezes the name.
+                  <b className={`result-sum ${r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}`}>
+                    {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}{' '}
+                    <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} doubled={r.doubled} freePass={r.freePass} />
+                  </b>
                 )}
                 {open && (
                   <span className="result-vote">

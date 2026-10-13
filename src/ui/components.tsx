@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { formatDelta, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
+import { formatDelta, formatToPar, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
 import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
@@ -337,5 +337,35 @@ export function Spinner({ label }: { label?: string }) {
       <span className="spinner" style={{ color: 'var(--blue)' }} aria-hidden />
       {label && <span className="h3">{label}</span>}
     </div>
+  );
+}
+
+// ── How a hole adds up ──────────────────────────────────────────────────────
+
+type SumOpts = { doubled?: boolean; freePass?: boolean };
+
+/**
+ * A hole's working, all against par so it adds up to the big number:
+ * ["Bogey +1", "Card −4"]. Real strokes stay visible elsewhere (stroke picker, scorecard).
+ */
+export function breakdownParts(strokes: number, par: Par, adjustment: number, opts: SumOpts = {}): string[] {
+  const diff = strokes - par;
+  const name = scoreName(strokes, par);
+  // scoreName falls back to "+5" for big numbers; don't print it twice.
+  const golf = /^[+−-]?\d/.test(name) ? formatDelta(diff) : `${name} ${formatDelta(diff)}`;
+  let card = `Card ${formatDelta(adjustment)}`;
+  if (opts.freePass && adjustment === 0) card += ' (free shot)';
+  else if (opts.doubled && adjustment !== 0) card += ' (2×)';
+  return [golf, card];
+}
+
+/** "Bogey +1 · Card −4", with "= −3" when total is set. Each part stays on one line. */
+export function Breakdown({ strokes, par, adjustment, total, ...opts }: { strokes: number; par: Par; adjustment: number; total?: boolean } & SumOpts) {
+  const [golf, card] = breakdownParts(strokes, par, adjustment, opts);
+  return (
+    <span className="breakdown">
+      <span>{golf}</span> · <span>{card}</span>
+      {total && <span> = {formatToPar(strokes - par + adjustment)}</span>}
+    </span>
   );
 }

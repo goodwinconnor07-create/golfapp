@@ -892,3 +892,8 @@ input {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* A hole's working ("Bogey +1 · Card −4"): wrap between parts, never inside one. */
+.breakdown > span {
+  white-space: nowrap;
+}

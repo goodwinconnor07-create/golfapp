@@ -77,6 +77,8 @@ export interface Flash {
   delta: number;
   gameScore: number;
   par: number;
+  doubled: boolean;
+  freePass: boolean;
   /** The challenge the stamp lands on. */
   cardTitle?: string;
 }
@@ -660,6 +662,8 @@ export function submitScore(playerId: string, hole: number, strokes: number, out
           delta: r.adjustment,
           gameScore: r.gameScore,
           par: r.par,
+          doubled: r.doubled,
+          freePass: r.freePass,
           cardTitle: g ? getCard(getEntry(g, playerId, hole)?.cardId)?.title : undefined,
         },
       });

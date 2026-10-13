@@ -1683,6 +1683,12 @@
   flex-wrap: wrap;
 }
 
+.result-sum {
+  flex-basis: 100%;
+  padding-left: 56px;
+  font-size: 15px;
+}
+
 /* Vote result on its own line, so it never squeezes the name. */
 .result-vote {
   flex-basis: 100%;
