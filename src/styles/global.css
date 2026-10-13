@@ -52,13 +52,10 @@
   box-sizing: border-box;
 }
 
-html {
-  background: var(--bg);
-}
-
 html,
 body {
   margin: 0;
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font);
   font-weight: 700;
@@ -107,6 +104,8 @@ input {
 
 .screen {
   position: relative;
+  /* Own stacking layer, so the colour blobs (z-index -1) sit above the page background but under the content. */
+  isolation: isolate;
   min-height: 100dvh;
   max-width: 520px;
   margin: 0 auto;
