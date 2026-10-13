@@ -557,6 +557,8 @@ export function boot(): void {
   }
 
   const s = state.session;
+  // A round finished before Past games existed (or before this visit) still gets saved.
+  recordIfFinished(state.game);
   if (code.length === CODE_LENGTH) {
     if (s?.mode === 'online' && s.code === code) resetTo({ name: 'game' });
     else resetTo({ name: 'join', code });

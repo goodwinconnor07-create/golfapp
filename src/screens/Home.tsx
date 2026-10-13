@@ -1,6 +1,6 @@
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
-import { ArrowIcon, BallIcon, ClockIcon, TrophyIcon } from '../ui/Icons';
+import { ArrowIcon, BallIcon, ClockIcon } from '../ui/Icons';
 
 export function Home() {
   const game = useApp((s) => s.game);
@@ -51,19 +51,6 @@ export function Home() {
                   ? `${game.status === 'lobby' ? 'In the lobby' : `Hole ${game.holes[game.current].number}`} · ${game.players.length} player${game.players.length === 1 ? '' : 's'}${online ? ` · ${game.code}` : ''}`
                   : 'Joining…'}
               </span>
-            </span>
-          </button>
-        )}
-        {game?.status === 'finished' && (
-          <button type="button" className="resume press" onClick={() => navigate({ name: 'game' })}>
-            <span className="resume-badge" style={{ background: 'linear-gradient(150deg,#fbbf24,#f59e0b)' }}>
-              <TrophyIcon />
-            </span>
-            <span style={{ flex: 1 }}>
-              <span className="h3" style={{ display: 'block' }}>
-                Last round's results
-              </span>
-              <span className="muted small">{game.players.map((p) => p.name).join(', ')}</span>
             </span>
           </button>
         )}

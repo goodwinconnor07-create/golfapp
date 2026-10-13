@@ -109,6 +109,18 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await round.click();
   await expect(round.locator('.history-player')).toHaveCount(2);
   await shot(page, '28-past-games');
+  await page.getByRole('button', { name: 'See full results' }).click();
+  await expect(page.getByText(/wins!|tie!/)).toBeVisible();
+
+  // A round finished before Past games existed is picked up on the next visit.
+  await page.evaluate(() => localStorage.removeItem('sendit.history'));
+  await page.goto('/');
+  if (!(await page.getByRole('button', { name: 'Past games' }).isVisible())) {
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Home' }).click();
+  }
+  await page.getByRole('button', { name: 'Past games' }).click();
+  await expect(page.locator('.history-row')).toHaveCount(1);
 });
 
 test('how to play explains the stakes', async ({ page }) => {

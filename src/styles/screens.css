@@ -1195,6 +1195,16 @@
   font: inherit;
 }
 
+.history-head {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
 .history-head,
 .history-player {
   display: flex;
@@ -1270,4 +1280,10 @@
   text-align: right;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
+}
+
+.history-more {
+  align-self: center;
+  min-height: 0;
+  padding: 6px 12px;
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { formatToPar } from '../game';
 import { loadHistory, type GameRecord } from '../state/persist';
-import { clearHistory } from '../state/store';
+import { clearHistory, navigate, useApp } from '../state/store';
 import { Avatar, BackBar } from '../ui/components';
 import { TrophyIcon } from '../ui/Icons';
 
@@ -11,6 +11,8 @@ const dateText = (ms: number) => new Date(ms).toLocaleDateString(undefined, { da
 export function History() {
   const [records, setRecords] = useState<GameRecord[]>(loadHistory);
   const [open, setOpen] = useState<string | null>(null);
+  // The last finished round is still on this phone, so its full results can be opened.
+  const lastId = useApp((s) => (s.game?.status === 'finished' ? s.game.id : null));
 
   return (
     <div className="screen">
@@ -22,14 +24,13 @@ export function History() {
             const winners = r.players.filter((p) => p.rank === 1);
             const expanded = open === r.id;
             return (
-              <button
-                key={r.id}
-                type="button"
-                className="history-row press"
-                aria-expanded={expanded}
-                onClick={() => setOpen(expanded ? null : r.id)}
-              >
-                <span className="history-head">
+              <div key={r.id} className="history-row">
+                <button
+                  type="button"
+                  className="history-head press"
+                  aria-expanded={expanded}
+                  onClick={() => setOpen(expanded ? null : r.id)}
+                >
                   <span className="history-trophy" aria-hidden>
                     <TrophyIcon width={22} height={22} />
                   </span>
@@ -41,7 +42,7 @@ export function History() {
                     </small>
                   </span>
                   <span className="history-score">{formatToPar(winners[0]?.toPar ?? 0)}</span>
-                </span>
+                </button>
                 {expanded && (
                   <span className="history-players">
                     {r.players.map((p, i) => (
@@ -53,9 +54,14 @@ export function History() {
                         <b>{formatToPar(p.toPar)}</b>
                       </span>
                     ))}
+                    {r.id === lastId && (
+                      <button type="button" className="btn btn-link history-more" onClick={() => navigate({ name: 'game' })}>
+                        See full results
+                      </button>
+                    )}
                   </span>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
