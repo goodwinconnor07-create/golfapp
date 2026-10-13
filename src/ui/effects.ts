@@ -130,6 +130,23 @@ export function confetti(colors: string[] = CONFETTI.party, origin?: { x: number
 }
 
 const WIPE_GROW_MS = 380;
+
+/** The button's main colour: its background colour, or the first colour of its gradient. */
+function solidColour(look: CSSStyleDeclaration): string {
+  const first = look.backgroundImage.match(/rgba?\([^)]*\)|#[0-9a-f]{3,8}/i)?.[0];
+  return first ?? look.backgroundColor;
+}
+
+/**
+ * Safari colours its bars by sampling the page, and only notices a full-screen fill late.
+ * Telling it the colour straight away through theme-color starts its change with the fill.
+ * (Not the page background: screens are see-through, so that would flash the whole page.)
+ * null puts the normal white back.
+ */
+function tintBrowser(colour: string | null): void {
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  meta?.setAttribute('content', colour ?? '#ffffff');
+}
 const WIPE_FADE_MS = 280;
 
 /**
@@ -171,6 +188,7 @@ export function colourWipe(event: { currentTarget: Element; clientX: number; cli
   });
   document.body.appendChild(wipe);
   haptic('medium');
+  tintBrowser(solidColour(look));
 
   const grow = wipe.animate([{ transform: `scale(${start})` }, { transform: 'scale(1)' }], {
     duration: WIPE_GROW_MS,
@@ -184,12 +202,13 @@ export function colourWipe(event: { currentTarget: Element; clientX: number; cli
     then();
     // Let the new page paint under the colour before fading, so the two don't compete.
     requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        wipe
+      requestAnimationFrame(() => {
+        tintBrowser(null);
+        void wipe
           .animate([{ opacity: 1 }, { opacity: 0 }], { duration: WIPE_FADE_MS, easing: 'ease-out', fill: 'forwards' })
           .finished.catch(() => undefined)
-          .finally(() => wipe.remove()),
-      ),
+          .finally(() => wipe.remove());
+      }),
     );
   };
   grow.finished.then(swap, swap);
