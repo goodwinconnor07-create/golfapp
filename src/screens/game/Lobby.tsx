@@ -70,7 +70,7 @@ export function Lobby({ game }: { game: Game }) {
             ⛳
           </span>
           <span>
-            <b>Score</b> = strokes taken, ± your challenge. Lowest wins, like golf.
+            <b>Each hole</b>: your strokes ± your challenge, scored over or under par. Lowest total wins.
           </span>
         </div>
       </div>

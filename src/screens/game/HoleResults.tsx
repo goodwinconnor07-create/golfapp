@@ -37,7 +37,8 @@ export function HoleResults({ game }: { game: Game }) {
                     <>
                       <TierChip tier={r.tier} />
                       <span className={r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}>
-                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'} {calcText(r.strokes, r.adjustment, r.gameScore)}
+                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}{' '}
+                        {calcText(r.strokes, r.adjustment, r.gameScore, r.par)}
                       </span>
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
@@ -47,7 +48,7 @@ export function HoleResults({ game }: { game: Game }) {
             );
           })}
         </div>
-        <p className="note">Big number = score so far. Lowest wins, like golf.</p>
+        <p className="note">Big number = total over or under par. Lowest wins, like golf.</p>
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" onClick={nextHole}>

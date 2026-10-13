@@ -7,6 +7,8 @@ import {
   entryKey,
   getCard,
   holeResult,
+  formatToPar,
+  toParWords,
   judgeFromStrokes,
   makeHoles,
   parseAction,
@@ -114,6 +116,21 @@ describe('scoring (spec section 12)', () => {
       expect(g.entries[entryKey('player00', 0)].strokes).toBe(5);
     });
   }
+
+  it("scores against par like the product owner's example: +2 then -7 is 5 under", () => {
+    let g = run(newGame(['Sam'], [5, 4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02'); // Safe
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 9, outcome: 'made' }); // 9 - 2 = 7 on a par 5
+    expect(holeResult(g, 'player00', 0)!.toPar).toBe(2);
+    g = run(g, { type: 'nextHole', from: 0 });
+    g = giveCard(g, 'player00', 1, 'I12'); // Insane: The Clean Birdie
+    g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 3, outcome: 'made' }); // 3 - 6 = -3 on a par 4
+    expect(holeResult(g, 'player00', 1)!.toPar).toBe(-7);
+    expect(standings(g)[0].totals.toPar).toBe(-5);
+    expect(formatToPar(-5)).toBe('\u22125');
+    expect(toParWords(-5)).toBe('5 under');
+    expect(formatToPar(0)).toBe('E');
+  });
 
   it('does not clamp negative game scores', () => {
     let g = run(newGame(['Sam'], [3]), { type: 'start' });

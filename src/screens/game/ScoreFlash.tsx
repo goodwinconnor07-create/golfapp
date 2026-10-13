@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { formatSigned } from '../../game';
+import { toParWords } from '../../game';
 import { clearFlash, type Flash } from '../../state/store';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { calcText } from '../../ui/format';
@@ -24,7 +24,7 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
         <p className="flash-calc">{calcText(flash.strokes, flash.delta, flash.gameScore)}</p>
         <p className="flash-name">{flash.name}</p>
         <p className="flash-sub">
-          Score {formatSigned(flash.gameScore)} · {flash.strokes} strokes taken
+          {toParWords(flash.gameScore - flash.par)} on this hole · {flash.strokes} strokes taken
         </p>
       </div>
     </div>

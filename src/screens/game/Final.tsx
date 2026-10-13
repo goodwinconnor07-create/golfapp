@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { formatDelta, formatSigned, getCard, recap, type Game, type Recap } from '../../game';
+import { formatDelta, getCard, recap, type Game, type Recap, formatToPar, toParWords } from '../../game';
 import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { confetti, CONFETTI } from '../../ui/effects';
@@ -14,10 +14,10 @@ function shareText(game: Game, rc: Recap): string {
   const lines = [`⛳ Send It${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
   if (rc.winners.length) {
     const who = joinNames(rc.winners.map((w) => w.player.name));
-    lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} with a score of ${formatSigned(rc.winners[0].totals.game)}`);
+    lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} at ${toParWords(rc.winners[0].totals.toPar)}`);
   }
-  lines.push('', 'Scores (lowest wins):');
-  for (const r of rc.byGame) lines.push(`${r.tied ? '=' : ''}${r.rank}. ${r.player.name}: ${formatSigned(r.totals.game)}`);
+  lines.push('', 'Against par (lowest wins):');
+  for (const r of rc.byGame) lines.push(`${r.tied ? '=' : ''}${r.rank}. ${r.player.name}: ${formatToPar(r.totals.toPar)}`);
   const extras = rc.awards.filter((a) => a.id !== 'real');
   if (extras.length) lines.push('');
   for (const a of extras) lines.push(`${a.emoji} ${a.title}: ${names(game, a.playerIds)} (${a.detail})`);
@@ -65,7 +65,7 @@ export function Final({ game }: { game: Game }) {
               {rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`}
             </h1>
             <p className="h3 muted" style={{ margin: 0 }}>
-              Score {formatSigned(rc.winners[0].totals.game)} over {plural(rc.holesPlayed, 'hole')}
+              {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
             </p>
           </div>
         ) : (
@@ -76,7 +76,7 @@ export function Final({ game }: { game: Game }) {
           </div>
         )}
 
-        <p className="section-title">Scores · lowest wins</p>
+        <p className="section-title">Against par · lowest wins</p>
         <div className="board">
           {rc.byGame.map((row, i) => (
             <BoardRow

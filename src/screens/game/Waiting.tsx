@@ -75,7 +75,7 @@ export function WaitScores({ game }: { game: Game }) {
               <span className="name">{p.name}</span>
               {r ? (
                 <span className={`tag ${r.outcome === 'missed' ? 'tag-waiting' : 'tag-done'}`}>
-                  {calcText(r.strokes, r.adjustment, r.gameScore)}
+                  {calcText(r.strokes, r.adjustment, r.gameScore, r.par)}
                 </span>
               ) : (
                 <button type="button" className="btn btn-sm btn-ghost btn-auto step-in" onClick={() => stepIn('score', p.id)}>

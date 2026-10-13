@@ -35,6 +35,18 @@ export function formatDelta(n: number): string {
   return n > 0 ? `+${n}` : `−${Math.abs(n)}`;
 }
 
+/** Golf-style score against par: "E", "+2", "−5". */
+export function formatToPar(n: number): string {
+  if (n === 0) return 'E';
+  return n > 0 ? `+${n}` : `\u2212${Math.abs(n)}`;
+}
+
+/** The same in words: "even par", "2 over", "5 under". */
+export function toParWords(n: number): string {
+  if (n === 0) return 'even par';
+  return n > 0 ? `${n} over` : `${Math.abs(n)} under`;
+}
+
 /** Signed number with a real minus sign, for scores that can go below zero. */
 export function formatSigned(n: number): string {
   return n < 0 ? `−${Math.abs(n)}` : String(n);

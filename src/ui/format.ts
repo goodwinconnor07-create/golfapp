@@ -1,10 +1,11 @@
-import { formatSigned } from '../game';
+import { formatSigned, toParWords } from '../game';
 
-/** The sum, spelled out: "5 − 4 = 1", "5 + 2 = 7", or "5 (no change)". */
-export function calcText(strokes: number, adjustment: number, gameScore: number): string {
-  if (adjustment === 0) return `${strokes} (no change)`;
+/** The sum, spelled out: "9 − 2 = 7 (2 over)". Pass par to add the over/under part. */
+export function calcText(strokes: number, adjustment: number, gameScore: number, par?: number): string {
+  const vsPar = par == null ? '' : toParWords(gameScore - par);
+  if (adjustment === 0) return `${strokes} (no change${vsPar ? `, ${vsPar}` : ''})`;
   const sign = adjustment < 0 ? '−' : '+';
-  return `${strokes} ${sign} ${Math.abs(adjustment)} = ${formatSigned(gameScore)}`;
+  return `${strokes} ${sign} ${Math.abs(adjustment)} = ${formatSigned(gameScore)}${vsPar ? ` (${vsPar})` : ''}`;
 }
 
 export function plural(n: number, word: string): string {

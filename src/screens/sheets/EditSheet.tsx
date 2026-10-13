@@ -75,7 +75,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
           </div>
         )}
         <p className="h2 center num" style={{ margin: '4px 0' }}>
-          {adjustment != null ? `${calcText(strokes, adjustment, strokes + adjustment)}` : 'Completed or failed?'}
+          {adjustment != null ? `${calcText(strokes, adjustment, strokes + adjustment, par)}` : 'Completed or failed?'}
         </p>
         <button type="button" className="btn btn-xl btn-dark" disabled={!effective} onClick={save}>
           Save

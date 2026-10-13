@@ -60,6 +60,7 @@ export interface Flash {
   strokes: number;
   delta: number;
   gameScore: number;
+  par: number;
 }
 
 export interface AppState {
@@ -452,7 +453,16 @@ export function submitScore(playerId: string, hole: number, strokes: number, out
     if (splash) {
       const name = g?.players.find((p) => p.id === playerId)?.name ?? '';
       set({
-        flash: { key: Date.now(), name, tier: r.tier, outcome: r.outcome, strokes: r.strokes, delta: r.adjustment, gameScore: r.gameScore },
+        flash: {
+          key: Date.now(),
+          name,
+          tier: r.tier,
+          outcome: r.outcome,
+          strokes: r.strokes,
+          delta: r.adjustment,
+          gameScore: r.gameScore,
+          par: r.par,
+        },
       });
     }
   }

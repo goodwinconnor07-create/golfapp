@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { formatSigned, type StandingRow } from '../game';
+import { formatToPar, type StandingRow } from '../game';
 import { Avatar } from './components';
 
 /** One leaderboard line: rank, player, big score (lowest wins). Ties show as "=2". */
@@ -16,8 +16,8 @@ export function BoardRow({ row, sub, delay }: { row: StandingRow; sub?: ReactNod
         {sub && <span className="board-sub">{sub}</span>}
       </div>
       <div className="board-total">
-        <b>{formatSigned(row.totals.game)}</b>
-        <span>Score</span>
+        <b>{formatToPar(row.totals.toPar)}</b>
+        <span>To par</span>
       </div>
     </div>
   );

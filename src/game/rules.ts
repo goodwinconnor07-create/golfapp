@@ -65,6 +65,9 @@ export interface HoleResult {
   adjustment: number;
   /** strokes + adjustment. May go below zero; never clamped. */
   gameScore: number;
+  par: Par;
+  /** gameScore against par: negative = under. */
+  toPar: number;
 }
 
 /** Full result for one player on one hole, or null if it isn't finished yet. */
@@ -81,6 +84,8 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
     outcome,
     adjustment,
     gameScore: entry.strokes + adjustment,
+    par: par!,
+    toPar: entry.strokes + adjustment - par!,
   };
 }
 

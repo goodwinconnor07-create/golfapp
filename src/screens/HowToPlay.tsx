@@ -9,7 +9,7 @@ const STEPS = [
   {
     color: '#7c3aed',
     title: 'Lowest score wins',
-    text: 'Like golf, lowest wins. Your score is the strokes you took, minus strokes if you complete your challenge, plus strokes if you fail it.',
+    text: 'Each hole: take your strokes, minus strokes if you complete your challenge, plus strokes if you fail it. That is scored over or under par, like golf. Lowest total wins.',
   },
 ];
 
@@ -48,8 +48,8 @@ export function HowToPlay() {
 
         <div className="tile-flat">
           <p style={{ margin: 0 }}>
-            <b>Example:</b> 5 strokes on a par 3 with a Bold challenge completed: 5 − 4 = <b>score of 1</b>. The app still remembers you
-            took 5 shots.
+            <b>Example:</b> 9 strokes on a par 5 with a Safe challenge completed: 9 − 2 = 7, which is <b>2 over</b>. Next, 3 strokes on a
+            par 4 with an Insane challenge completed: 3 − 6 = −3, which is <b>7 under</b>. Your total is <b>5 under</b>.
           </p>
         </div>
         <p className="muted small" style={{ margin: 0 }}>

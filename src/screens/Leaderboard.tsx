@@ -30,7 +30,9 @@ export function Leaderboard() {
           ))}
         </div>
         <p className="note">
-          {holes.length === 0 ? 'Scores show up here after the first hole.' : 'Score = strokes taken ± challenges. Lowest wins, like golf.'}
+          {holes.length === 0
+            ? 'Scores show up here after the first hole.'
+            : 'Each hole: strokes ± your challenge, compared to par. Lowest total wins, like golf.'}
         </p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { completedHoles, formatSigned, getEntry, holeResult, playerTotals } from '../game';
+import { completedHoles, getEntry, holeResult, playerTotals, formatToPar } from '../game';
 import { openSheet, useApp } from '../state/store';
 import { isHost } from '../state/view';
 import { Avatar, BackBar, TIER_LOOK } from '../ui/components';
@@ -71,7 +71,7 @@ export function Scorecard() {
                     const entry = getEntry(game, p.id, i);
                     const r = holeResult(game, p.id, i);
                     const editable = i <= lastPlayed && Boolean(entry?.cardId) && game.status !== 'lobby';
-                    const value = r ? formatSigned(r.gameScore) : '·';
+                    const value = r ? formatToPar(r.toPar) : '·';
                     const cls = r ? r.outcome : 'empty';
                     const inner = (
                       <>
@@ -109,7 +109,7 @@ export function Scorecard() {
                 <td />
                 {totals.map((t, j) => (
                   <td key={game.players[j].id}>
-                    <span className="sc-cell">{formatSigned(t.game)}</span>
+                    <span className="sc-cell">{formatToPar(t.toPar)}</span>
                   </td>
                 ))}
               </tr>

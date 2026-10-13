@@ -13,6 +13,10 @@ export function completedHoles(game: Game): number[] {
 export interface PlayerTotals {
   /** Real strokes taken. */
   real: number;
+  /** Total par of the holes counted. */
+  par: number;
+  /** Score against par, golf style (negative = under). Lowest wins. */
+  toPar: number;
   /** Challenge-adjusted game score. Lower is better; can be negative. */
   game: number;
   holes: number;
@@ -30,6 +34,8 @@ const zeroByTier = (): Record<Tier, number> => ({ safe: 0, bold: 0, insane: 0 })
 export function playerTotals(game: Game, playerId: string, holes: readonly number[] = completedHoles(game)): PlayerTotals {
   const t: PlayerTotals = {
     real: 0,
+    par: 0,
+    toPar: 0,
     game: 0,
     holes: 0,
     made: 0,
@@ -43,6 +49,8 @@ export function playerTotals(game: Game, playerId: string, holes: readonly numbe
     const r = holeResult(game, playerId, h);
     if (!r) continue;
     t.real += r.strokes;
+    t.par += r.par;
+    t.toPar += r.gameScore - r.par;
     t.game += r.gameScore;
     t.holes += 1;
     t.picks[r.tier] += 1;
@@ -73,7 +81,7 @@ export interface StandingRow {
  */
 export function standings(game: Game, by: 'game' | 'real' = 'game', holes: readonly number[] = completedHoles(game)): StandingRow[] {
   const useTiebreak = by === 'game' && game.settings.tiebreakOnStrokes;
-  const key = (t: PlayerTotals): [number, number] => (by === 'game' ? [t.game, useTiebreak ? t.real : 0] : [t.real, 0]);
+  const key = (t: PlayerTotals): [number, number] => (by === 'game' ? [t.toPar, useTiebreak ? t.real : 0] : [t.real, 0]);
 
   const rows = game.players.map((player, order) => ({ player, order, totals: playerTotals(game, player.id, holes) }));
   rows.sort((a, b) => {
