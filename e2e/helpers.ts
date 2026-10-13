@@ -18,6 +18,7 @@ export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'B
     await page.getByRole('textbox').nth(i).fill(names[i]);
   }
   await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: new RegExp(holes) }).click();
   await expect(page.getByText('Lobby')).toBeVisible();
 }

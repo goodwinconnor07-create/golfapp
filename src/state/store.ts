@@ -12,6 +12,7 @@ import {
   newId,
   normalizeCode,
   type Action,
+  type CourseDetail,
   type Game,
   type GameInfo,
   type Hole,
@@ -29,6 +30,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'howto' }
   | { name: 'setupPlayers' }
+  | { name: 'setupCourse' }
   | { name: 'setupHoles' }
   | { name: 'join'; code?: string }
   | { name: 'joinWho'; info: GameInfo }
@@ -76,7 +78,8 @@ export interface AppState {
   ui: HoleUi;
   toasts: Toast[];
   flash: Flash | null;
-  draft: { names: string[] };
+  /** Setup in progress: player names and the chosen course (null = no course picked). */
+  draft: { names: string[]; course: CourseDetail | null };
   busy: string | null;
 }
 
@@ -112,7 +115,7 @@ let state: AppState = {
   ui: freshUi(bootGame),
   toasts: [],
   flash: null,
-  draft: { names: [''] },
+  draft: { names: [''], course: null },
   busy: null,
 };
 
@@ -310,12 +313,12 @@ export function dispatch(action: Action): boolean {
 // ── Commands used by the screens ────────────────────────────────────────────
 
 export function setDraftNames(names: string[]): void {
-  set({ draft: { names } });
+  set({ draft: { ...state.draft, names } });
 }
 
 export function startNewGame(): void {
   const begin = () => {
-    set({ draft: { names: [state.profileName] } });
+    set({ draft: { names: [state.profileName], course: null } });
     resetTo({ name: 'setupPlayers' });
   };
   const g = state.game;
@@ -330,8 +333,19 @@ export function startNewGame(): void {
   } else begin();
 }
 
+export function setDraftCourse(course: CourseDetail | null): void {
+  set({ draft: { ...state.draft, course } });
+}
+
+/** Fills in each hole's par from the chosen course, matched by hole number. */
+export function withCoursePars(holes: Hole[], course: CourseDetail | null): Hole[] {
+  if (!course?.pars.length) return holes;
+  return holes.map((h) => ({ ...h, par: course.pars[h.number - 1] ?? h.par }));
+}
+
 export function createLocalGame(holes: Hole[]): void {
   const names = state.draft.names.map(cleanName).filter(Boolean);
+  const course = state.draft.course;
   if (names.length === 0) return;
   saveName(names[0]);
   closeConnection();
@@ -340,7 +354,8 @@ export function createLocalGame(holes: Hole[]): void {
     hostDeviceId: state.deviceId,
     now: Date.now(),
     players: names.map((name) => ({ id: newId(12), name })),
-    holes,
+    holes: withCoursePars(holes, course),
+    course: course?.name,
   });
   set({ profileName: names[0] });
   setSession({ mode: 'local', code: null, game, pending: [] });

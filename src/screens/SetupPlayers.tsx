@@ -63,7 +63,7 @@ export function SetupPlayers() {
         )}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={() => navigate({ name: 'setupHoles' })}>
+        <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={() => navigate({ name: 'setupCourse' })}>
           Next
         </button>
       </div>

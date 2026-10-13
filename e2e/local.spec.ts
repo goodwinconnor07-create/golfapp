@@ -12,6 +12,8 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.getByRole('textbox').nth(1).fill('Alex');
   await shot(page, '02-setup-players');
   await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByText('Where are you playing?')).toBeVisible();
+  await page.getByRole('button', { name: /Skip/ }).click();
   await shot(page, '03-setup-holes');
   await page.getByRole('button', { name: /Front 9/ }).click();
 
@@ -101,4 +103,46 @@ test('how to play explains the stakes', async ({ page }) => {
   await page.getByRole('button', { name: 'How to play' }).click();
   await expect(page.getByText('Lowest score wins')).toBeVisible();
   await shot(page, '19-howto');
+});
+
+test('picking a course fills in the pars', async ({ page }) => {
+  // A fixed course so the test doesn't depend on the outside course service.
+  const pars = [4, 4, 5, 3, 4, 4, 4, 3, 5, 4, 3, 5, 4, 4, 4, 3, 4, 5];
+  await page.route(
+    (url) => url.pathname === '/api/courses',
+    (route) => route.fulfill({ json: { courses: [{ id: 'og:test-course', name: 'Palmer Links', place: 'The Villages, FL', par: 72 }] } }),
+  );
+  await page.route(
+    (url) => url.pathname.startsWith('/api/courses/'),
+    (route) =>
+      route.fulfill({
+        json: { id: 'og:test-course', name: 'Palmer Links', place: 'The Villages, FL', par: 72, pars, attribution: 'test' },
+      }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'New game' }).click();
+  await page.getByRole('textbox').first().fill('Sam');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByLabel('Search for your course').fill('palmer');
+  await page.getByRole('button', { name: /Palmer Links/ }).click();
+  await expect(page.getByText('pars filled in for you')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Front 9/ })).toContainText('par 36');
+  await shot(page, '27-holes-with-course');
+  await page.getByRole('button', { name: /Front 9/ }).click();
+  await page.getByRole('button', { name: "Let's go!" }).click();
+  // No par question: hole 1's par came from the course.
+  await expect(page.locator('.par-chip')).toHaveText('PAR 4');
+  await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
+
+  // The course is remembered for next time.
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Home' }).click();
+  await page.getByRole('button', { name: 'New game' }).first().click();
+  // A round is in progress, so the app asks first.
+  await page.locator('.sheet').getByRole('button', { name: 'New game' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByText('Recent')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Palmer Links/ })).toBeVisible();
+  await shot(page, '26-course-recent');
 });

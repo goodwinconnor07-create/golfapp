@@ -1,6 +1,6 @@
 // HTTP calls to the Send It server (the Cloudflare Worker in /worker).
 
-import type { CreateGameResponse, Game, GameInfo } from '../game';
+import type { CourseDetail, CourseSummary, CreateGameResponse, Game, GameInfo } from '../game';
 
 async function request(path: string, init: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
   const controller = new AbortController();
@@ -61,4 +61,27 @@ export async function fetchGameInfo(code: string): Promise<GameInfo | null> {
   if (res.status === 404 || res.status === 400) return null;
   if (!res.ok) throw new Error(await errorText(res, 'Something went wrong. Try again.'));
   return (await res.json()) as GameInfo;
+}
+
+/** Course search through our server. Throws a friendly message on failure. */
+export async function searchCourses(q: string): Promise<CourseSummary[]> {
+  let res: Response;
+  try {
+    res = await request(`/api/courses?q=${encodeURIComponent(q)}`);
+  } catch {
+    throw new Error("Couldn't reach course search. You can still play and enter pars on each tee.");
+  }
+  if (!res.ok) throw new Error(await errorText(res, "Course search isn't working right now."));
+  return ((await res.json()) as { courses: CourseSummary[] }).courses;
+}
+
+export async function fetchCourse(id: string): Promise<CourseDetail> {
+  let res: Response;
+  try {
+    res = await request(`/api/courses/${encodeURIComponent(id)}`);
+  } catch {
+    throw new Error("Couldn't load that course. Check your signal and try again.");
+  }
+  if (!res.ok) throw new Error(await errorText(res, "Couldn't load that course."));
+  return (await res.json()) as CourseDetail;
 }

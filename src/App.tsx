@@ -4,6 +4,7 @@ import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { SetupPlayers } from './screens/SetupPlayers';
 import { SetupHoles } from './screens/SetupHoles';
+import { SetupCourse } from './screens/SetupCourse';
 import { Join, JoinWho } from './screens/Join';
 import { GameScreen } from './screens/game/GameScreen';
 import { Leaderboard } from './screens/Leaderboard';
@@ -27,6 +28,9 @@ export function App() {
       break;
     case 'setupPlayers':
       screen = <SetupPlayers />;
+      break;
+    case 'setupCourse':
+      screen = <SetupCourse />;
       break;
     case 'setupHoles':
       screen = <SetupHoles />;

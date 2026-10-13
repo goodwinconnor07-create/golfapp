@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { makeHoles } from '../game';
-import { createLocalGame } from '../state/store';
+import { createLocalGame, useApp, withCoursePars } from '../state/store';
 import { BackBar, Stepper } from '../ui/components';
 
 const PRESETS = [
@@ -13,6 +13,13 @@ export function SetupHoles() {
   const [custom, setCustom] = useState(false);
   const [count, setCount] = useState(6);
   const [start, setStart] = useState(1);
+  const course = useApp((s) => s.draft.course);
+  const hasPars = Boolean(course?.pars.length);
+  // Total par for a preset, when the course gives us hole pars.
+  const parFor = (n: number, from: number) => {
+    const holes = withCoursePars(makeHoles(n, from), course);
+    return holes.every((h) => h.par) ? holes.reduce((t, h) => t + (h.par ?? 0), 0) : null;
+  };
 
   return (
     <div className="screen">
@@ -20,7 +27,14 @@ export function SetupHoles() {
       <div className="screen-body">
         <h1 className="h1">How many holes?</h1>
         <p className="muted" style={{ margin: 0 }}>
-          We'll ask the par on each tee.
+          {course ? (
+            <>
+              <b style={{ color: 'var(--ink)' }}>{course.name}</b>
+              {hasPars ? ' · pars filled in for you' : " · we'll ask the par on each tee"}
+            </>
+          ) : (
+            "We'll ask the par on each tee."
+          )}
         </p>
         {PRESETS.map((p) => (
           <button
@@ -32,7 +46,10 @@ export function SetupHoles() {
             <span className="choice-num">{p.count}</span>
             <span className="choice-text">
               <b>{p.label}</b>
-              <small>{p.detail}</small>
+              <small>
+                {p.detail}
+                {parFor(p.count, p.start) ? ` · par ${parFor(p.count, p.start)}` : ''}
+              </small>
             </span>
           </button>
         ))}

@@ -31,3 +31,21 @@ export const PONG = '{"t":"pong"}';
 export interface CreateGameResponse {
   code: string;
 }
+
+/** A course in search results. Ids carry their source, e.g. "og:…" (OpenGolfAPI) or "gc:…" (GolfCourseAPI). */
+export interface CourseSummary {
+  id: string;
+  name: string;
+  /** Town, region or country, whatever the source knows. */
+  place: string;
+  /** Total par if known. */
+  par: number | null;
+}
+
+/** A course with its hole-by-hole pars (empty when the source doesn't have them). */
+export interface CourseDetail extends CourseSummary {
+  /** pars[0] is hole 1. */
+  pars: (3 | 4 | 5)[];
+  /** Credit line the data's licence asks for. */
+  attribution: string;
+}

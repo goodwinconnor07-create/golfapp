@@ -17,6 +17,8 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 | Wording | Challenges are **Completed** or **Failed** (not made/missed). |
 | Settled by strokes | When the strokes already prove the result, the app sets it and doesn't offer the other button. This covers par-or-better cards at par, and reach-the-green cards when the hole was finished within that many strokes. Cards that also depend on something else (like "without a penalty stroke") still ask. |
 
+| Course search | The host searches for the course after adding players, and hole pars fill in automatically. Recent courses are one tap. If a course has no hole pars, or setup is skipped, the app asks the par on each tee. |
+
 ## Following the spec's recommended defaults
 
 | Topic                | What the app does                                                                                                                                                                                                             |
@@ -54,3 +56,9 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **Code guessing:** anyone who guesses a live code could see first names and join. Codes are random (3.2 million combinations) and expire, but a Cloudflare rate-limit rule on `/api/games/*` would make guessing impractical. Worth adding before a public launch.
 - **Online games without signal:** scores entered offline queue up and sync later, but drawing a card needs the server, so a pick waits until the phone reconnects. One-phone games work fully offline.
 - **Playtest data:** the spec suggests tracking how often each card is made. The app collects nothing today. That could be added as opt-in stats.
+
+## Course data
+
+- **OpenGolfAPI** (in use, free, no key): about 17,000 courses with hole pars, mostly in the US. Outside the US it usually finds the course but not its pars. Data is ODbL, so the app shows "© OpenStreetMap contributors" under results.
+- **GolfCourseAPI** (built in, off until a key is added): about 30,000 courses worldwide. Free plan is 35 lookups a day; paid is US$9.99 a month for 10,000. Switch on with `npx wrangler secret put GOLFCOURSE_API_KEY`. Its results show first when it's on.
+- All lookups go through our Worker and are cached for a day, so repeat searches don't use up the daily allowance.

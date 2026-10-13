@@ -1129,3 +1129,40 @@
     height: 66px;
   }
 }
+
+/* ── Course search ───────────────────────────────────────────────────────── */
+
+.course-row {
+  min-height: 76px;
+}
+
+.course-icon {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(150deg, var(--green), var(--green-lo));
+}
+
+.course-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-text b {
+  display: block;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.course-text small {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-3);
+}

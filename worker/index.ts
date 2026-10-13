@@ -1,5 +1,7 @@
 import { cryptoRng, isCode, isDeviceId, newCode, sanitizeUpload, type CreateGameResponse } from '../src/game';
 
+import { handleCourses } from './courses';
+
 export { GameRoom } from './room';
 
 const MAX_BODY_CHARS = 64 * 1024;
@@ -44,6 +46,7 @@ export default {
     const { pathname } = new URL(request.url);
 
     if (pathname === '/api/health') return json({ ok: true });
+    if (pathname === '/api/courses' || pathname.startsWith('/api/courses/')) return handleCourses(request, env, pathname);
     if (pathname === '/api/games') {
       return request.method === 'POST' ? createGame(request, env) : json({ error: 'Use POST.' }, 405);
     }
