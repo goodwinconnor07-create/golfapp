@@ -93,8 +93,9 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 
 ## Finishing a hole online (waiting room)
 
-- "Hole done" plays the colour fill. In an online game where some players are on other phones, it marks this phone's players as done (everyone sees it) and opens a waiting room listing each player as Still playing, Done · scoring, or Scored.
-- Players can enter their own score from the room while others are still playing. Other players' numbers aren't shown in the room.
-- When everyone has scored, each phone reveals the hole's results one player at a time, worst first, so the best score on the hole lands last with a 👑. Then the standings.
+- "Hole done" plays the colour fill. In an online game where some players are on other phones, it marks this phone's players as done (everyone sees it) and goes straight to entering this phone's score(s).
+- After scoring you're in the waiting room, which lists each player as Still playing, Done · scoring or Scored. Other players' numbers aren't shown there. Players who haven't scored can also be reached from the room ("Enter for them").
+- No result splash online: the shared reveal shows everyone's result instead.
+- When everyone has scored, each phone flips the hole's results over one player at a time, worst first, so the best score on the hole lands last with a 👑. The standings (with rank arrows and any lead change) then appear on the same screen, with Next hole. Votes can still be cast there until the group moves on.
 - Hiding scores in the room is a screen choice, not a server secret: phones do receive the numbers.
-- With everyone on one phone, there's no room: scoring works as before.
+- With everyone on one phone, there's no room: scoring works as before, with the splash.

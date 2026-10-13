@@ -1,23 +1,38 @@
-import { useEffect, useState } from 'react';
-import { formatToPar, getCard, holeResult, type Game } from '../../game';
-import { doneResultsReveal } from '../../state/store';
+import { useEffect, useMemo, useState } from 'react';
+import { formatToPar, getCard, holeResult, newLeader, rankMoves, standings, type Game } from '../../game';
+import { markResultsRevealed, navigate, nextHole, resultsRevealSeen } from '../../state/store';
+import { BoardRow } from '../../ui/BoardRow';
 import { Avatar, TierChip } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { calcText } from '../../ui/format';
+import { VoteTag } from './HoleResults';
+import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
 const GAP_MS = 520;
 
-/** Everyone has scored: flip each player's hole result over in turn, saving the best for last. */
+/**
+ * Online, once everyone has scored: each player's hole flips over in turn (best last),
+ * then the standings appear underneath with Next hole. One screen for the whole moment.
+ */
 export function ResultsReveal({ game }: { game: Game }) {
   const h = game.current;
   // Worst first, so the hole's best score lands last.
-  const rows = game.players
-    .map((p) => ({ player: p, r: holeResult(game, p.id, h)! }))
-    .filter((x) => x.r)
-    .sort((a, b) => b.r.toPar - a.r.toPar);
-  const [shown, setShown] = useState(reducedMotion() ? rows.length : 0);
+  const rows = useMemo(
+    () =>
+      game.players
+        .map((p) => ({ player: p, r: holeResult(game, p.id, h)! }))
+        .filter((x) => x.r)
+        .sort((a, b) => b.r.toPar - a.r.toPar),
+    [game, h],
+  );
+  // Already watched (say, after a reload)? Show it all straight away.
+  const [shown, setShown] = useState(() => (reducedMotion() || resultsRevealSeen(game.id, h) ? rows.length : 0));
   const done = shown >= rows.length;
   const best = rows[rows.length - 1];
+  const last = h === game.holes.length - 1;
+  const leader = newLeader(game, h);
+  const moves = rankMoves(game);
+  const board = standings(game);
 
   useEffect(() => {
     if (done) return;
@@ -33,9 +48,12 @@ export function ResultsReveal({ game }: { game: Game }) {
   }, [shown, done, rows]);
 
   useEffect(() => {
-    if (done && best)
+    if (!done || !best) return;
+    if (!resultsRevealSeen(game.id, h)) {
       confetti(best.r.outcome === 'made' ? CONFETTI[best.r.tier] : CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.3 }, 70);
-  }, [done, best]);
+      markResultsRevealed();
+    }
+  }, [done, best, game.id, h]);
 
   return (
     <>
@@ -74,15 +92,51 @@ export function ResultsReveal({ game }: { game: Game }) {
                     ?
                   </span>
                 )}
+                {open && (
+                  <span className="result-vote">
+                    <VoteTag game={game} playerId={player.id} hole={h} />
+                  </span>
+                )}
               </div>
             );
           })}
         </div>
+
+        {done && (
+          <>
+            {leader && (
+              <div className="lead-banner pop" role="status">
+                👑 {leader.name} takes the lead!
+              </div>
+            )}
+            <p className="section-title" style={{ margin: '6px 0 0' }}>
+              Standings
+            </p>
+            <div className="board">
+              {board.map((row, i) => (
+                <BoardRow key={row.player.id} row={row} delay={150 + i * 70} move={moves[row.player.id]} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-green" disabled={!done} onClick={doneResultsReveal}>
-          See standings
+        <button type="button" className="btn btn-xl btn-green" disabled={!done} onClick={nextHole}>
+          {last ? (
+            <>
+              <TrophyIcon width={28} height={28} /> Final results
+            </>
+          ) : (
+            <>
+              Next hole <ArrowIcon width={28} height={28} />
+            </>
+          )}
         </button>
+        {done && (
+          <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'scorecard' })}>
+            Fix a score
+          </button>
+        )}
       </div>
     </>
   );

@@ -18,8 +18,6 @@ export interface HoleUi {
   groupShown: boolean;
   /** Online: the player whose score this phone is entering from the waiting room. */
   scoreFor: string | null;
-  /** Online: everyone's results have been revealed for this hole. */
-  resultsShown: boolean;
 }
 
 export function freshUi(game: Game | null): HoleUi {
@@ -32,7 +30,6 @@ export function freshUi(game: Game | null): HoleUi {
     extraScore: [],
     groupShown: false,
     scoreFor: null,
-    resultsShown: false,
   };
 }
 
@@ -68,7 +65,6 @@ export function gameView(
   online: boolean,
   ui: HoleUi,
   groupSeen: (gameId: string, hole: number) => boolean = () => false,
-  resultsSeen: (gameId: string, hole: number) => boolean = () => false,
 ): GameView {
   if (game.status === 'lobby') return { kind: 'lobby' };
   if (game.status === 'finished') return { kind: 'final' };
@@ -86,7 +82,7 @@ export function gameView(
   // then results are revealed together. (With everyone on this phone there's no one to wait for.)
   const room = online && game.players.some((p) => !mine.includes(p));
   if (holeComplete(game, hole)) {
-    return room && !ui.resultsShown && !resultsSeen(game.id, hole) ? { kind: 'resultsReveal' } : { kind: 'results' };
+    return room ? { kind: 'resultsReveal' } : { kind: 'results' };
   }
   // Everyone's in: flip all the tiers over at once, before anyone tees off.
   const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);

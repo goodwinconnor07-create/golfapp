@@ -1748,3 +1748,18 @@
 .result-row.top {
   box-shadow: 0 0 0 3px #fbbf24;
 }
+
+.result-row {
+  flex-wrap: wrap;
+}
+
+/* Vote result on its own line, so it never squeezes the name. */
+.result-vote {
+  flex-basis: 100%;
+  display: flex;
+  padding-left: 56px;
+}
+
+.result-vote:empty {
+  display: none;
+}

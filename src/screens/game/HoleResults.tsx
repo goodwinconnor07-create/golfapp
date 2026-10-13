@@ -82,7 +82,7 @@ export function HoleResults({ game }: { game: Game }) {
 }
 
 /** Shows how the group voted on an honour-system claim, and whether it was overturned. */
-function VoteTag({ game, playerId, hole }: { game: Game; playerId: string; hole: number }) {
+export function VoteTag({ game, playerId, hole }: { game: Game; playerId: string; hole: number }) {
   if (!isVoteable(game, playerId, hole)) return null;
   const { fair, unfair } = voteTally(getEntry(game, playerId, hole));
   if (fair + unfair === 0) return null;

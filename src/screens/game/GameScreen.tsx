@@ -1,6 +1,6 @@
 import { isDoubleHole, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
-import { groupRevealSeen, navigate, openSheet, resultsRevealSeen, useApp } from '../../state/store';
+import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
 import { gameView, myPlayers, type GameView } from '../../state/view';
 import { BackBar, Spinner } from '../../ui/components';
 import { MenuIcon, TrophyIcon } from '../../ui/Icons';
@@ -37,7 +37,7 @@ export function GameScreen() {
     );
   }
 
-  const view = gameView(game, deviceId, online, ui, groupRevealSeen, resultsRevealSeen);
+  const view = gameView(game, deviceId, online, ui, groupRevealSeen);
   const mine = myPlayers(game, deviceId, online);
   const helpers = game.players.filter((p) => ui.extraPick.includes(p.id) && !mine.includes(p));
   const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${game.current}`;
@@ -45,7 +45,7 @@ export function GameScreen() {
   return (
     <div className="screen">
       <GameTopBar game={game} online={online} conn={conn} />
-      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && view.kind !== 'resultsReveal' && <VotePrompt game={game} />}
+      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
   );

@@ -584,12 +584,23 @@ export function doneReveal(): void {
 /** "Hole done": online, tell everyone this phone's players have finished the hole. */
 export function startScoring(): void {
   const g = state.game;
+  let scoreFor: string | null = null;
   if (g && state.session?.mode === 'online') {
-    for (const p of myPlayers(g, state.deviceId, true)) {
+    const mine = myPlayers(g, state.deviceId, true);
+    for (const p of mine) {
       if (!getEntry(g, p.id, g.current)?.done) dispatch({ type: 'holeDone', playerId: p.id, hole: g.current });
     }
+    // Straight to your score: the waiting room comes after it.
+    scoreFor = mine.find((p) => !holeResult(g, p.id, g.current))?.id ?? null;
   }
-  set({ ui: { ...state.ui, scoring: true } });
+  set({ ui: { ...state.ui, scoring: true, scoreFor } });
+}
+
+/** Online with players on other phones: scoring goes through the waiting room and a shared reveal. */
+function inRoom(g: Game): boolean {
+  if (state.session?.mode !== 'online') return false;
+  const mine = myPlayers(g, state.deviceId, true);
+  return g.players.some((p) => !mine.includes(p));
 }
 
 /** From the waiting room: enter this player's score now. */
@@ -607,7 +618,8 @@ export function resultsRevealSeen(gameId: string, hole: number): boolean {
   }
 }
 
-export function doneResultsReveal(): void {
+/** The reveal has played on this phone: after a reload, go straight to the standings. */
+export function markResultsRevealed(): void {
   const g = state.game;
   if (!g) return;
   try {
@@ -615,7 +627,6 @@ export function doneResultsReveal(): void {
   } catch {
     // Storage blocked: the reveal may replay after a reload, which is harmless.
   }
-  set({ ui: { ...state.ui, resultsShown: true } });
 }
 
 /** "Pick for Alex" / "Enter for Alex": this phone steps in for someone this hole. */
@@ -627,9 +638,14 @@ export function stepIn(kind: 'pick' | 'score', playerId: string): void {
 
 export function submitScore(playerId: string, hole: number, strokes: number, outcome?: Outcome, splash = true): boolean {
   if (!dispatch({ type: 'score', playerId, hole, strokes, outcome })) return false;
-  // Back to the waiting room once this player's score is in.
-  if (state.ui.scoreFor === playerId) set({ ui: { ...state.ui, scoreFor: null } });
   const g = state.game;
+  // Next of this phone's players to score, or back to the waiting room.
+  if (state.ui.scoreFor === playerId) {
+    const next = g ? myPlayers(g, state.deviceId, true).find((p) => p.id !== playerId && !holeResult(g, p.id, hole)) : undefined;
+    set({ ui: { ...state.ui, scoreFor: next?.id ?? null } });
+  }
+  // The shared results reveal shows everyone's result, so skip the splash there.
+  if (g && inRoom(g)) splash = false;
   const r = g ? holeResult(g, playerId, hole) : null;
   if (r) {
     // With a splash, the buzz comes when the stamp lands instead.

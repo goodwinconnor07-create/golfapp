@@ -41,7 +41,7 @@ export async function pickAndReveal(page: Page, tier: 'Safe' | 'Bold' | 'Insane'
 }
 
 /** Enters a score on the score screen, whichever kind of card it is. */
-export async function enterScore(page: Page, strokes: number, made: boolean, shotName?: string) {
+export async function enterScore(page: Page, strokes: number, made: boolean, shotName?: string, splash = true) {
   const value = page.locator('.stepper-value');
   for (let guard = 0; guard < 20; guard++) {
     const current = Number(await value.textContent());
@@ -52,8 +52,14 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   const save = page.getByRole('button', { name: 'Save score' });
   if (await save.isVisible()) await save.click();
   else await page.getByRole('button', { name: made ? /Completed/ : /Failed/ }).click();
-  // Dismiss the result splash.
+  // Online with friends there's no splash: the shared reveal shows results instead.
   const flash = page.locator('.flash');
+  if (!splash) {
+    await expect(value).toBeHidden();
+    await expect(flash).toHaveCount(0);
+    return;
+  }
+  // Dismiss the result splash.
   await expect(flash).toBeVisible();
   // The splash names the result (on its stamp, or as a heading when there's no card).
   await expect(flash).toContainText(made ? /Completed/ : /Failed/);
@@ -75,17 +81,16 @@ export async function passGroupReveal(page: Page, shotName?: string) {
   await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
 }
 
-/** Online with friends: "Hole done" lands in the waiting room; enter this phone's score from there. */
-export async function scoreFromRoom(page: Page, strokes: number, made: boolean) {
-  await page.getByRole('button', { name: 'Enter my score' }).click();
-  await enterScore(page, strokes, made);
+/** Online with friends: "Hole done" goes straight to this phone's score, then the waiting room. */
+export async function holeDoneAndScore(page: Page, strokes: number, made: boolean) {
+  await page.getByRole('button', { name: /Hole done/ }).click();
+  await enterScore(page, strokes, made, undefined, false);
 }
 
-/** Everyone has scored: results flip over one by one, then on to the standings. */
+/** Everyone has scored: results flip over one by one, then the standings and Next hole appear. */
 export async function passResultsReveal(page: Page, shotName?: string) {
   await expect(page.getByRole('heading', { name: /results$/ })).toBeVisible();
-  const next = page.getByRole('button', { name: 'See standings' });
-  await expect(next).toBeEnabled({ timeout: 8_000 });
+  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeEnabled({ timeout: 8_000 });
+  await expect(page.locator('.board-row').first()).toBeVisible();
   if (shotName) await shot(page, shotName);
-  await next.click();
 }

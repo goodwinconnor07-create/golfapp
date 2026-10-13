@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { enterScore, newGame, passGroupReveal, passResultsReveal, pickAndReveal, scoreFromRoom, shot } from './helpers';
+import { enterScore, holeDoneAndScore, newGame, passGroupReveal, passResultsReveal, pickAndReveal, shot } from './helpers';
 
 async function phone(browser: Browser): Promise<Page> {
   const { viewport, deviceScaleFactor, isMobile, hasTouch, baseURL } = test.info().project.use;
@@ -89,27 +89,20 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(host.locator('.ccard')).toHaveCount(2);
   await expect(guest.locator('.ccard')).toHaveCount(2);
 
-  // Gus finishes first: he lands in the waiting room and can score while Hana plays on.
-  await guest.getByRole('button', { name: /Hole done/ }).click();
+  // Gus finishes first: straight to his score, then the waiting room while Hana plays on.
+  await holeDoneAndScore(guest, 6, false);
   await expect(guest.getByRole('heading', { name: 'Waiting for Hana' })).toBeVisible();
   await expect(guest.locator('.room-row', { hasText: 'Hana' })).toContainText('Still playing');
-  await expect(guest.locator('.room-row', { hasText: 'Gus' })).toContainText('Done');
-  await shot(guest, '26-guest-room');
-  await scoreFromRoom(guest, 6, false);
   await expect(guest.locator('.room-row', { hasText: 'Gus' })).toContainText('Scored');
-  // Gus's numbers stay hidden from Hana until everyone's in.
-  await expect(host.getByText('6 + 1')).toHaveCount(0);
+  await shot(guest, '26-guest-room');
+  // Hana sees Gus has scored, but not his numbers.
+  await expect(host.locator('.tag-done', { hasText: 'Scored' })).toBeVisible();
 
-  await host.getByRole('button', { name: /Hole done/ }).click();
-  await expect(host.getByRole('heading', { name: "Everyone's done!" })).toBeVisible();
-  await expect(host.locator('.room-row', { hasText: 'Gus' })).toContainText('Scored');
-  await scoreFromRoom(host, 5, true);
+  await holeDoneAndScore(host, 5, true);
 
-  // Both phones reveal everyone's hole together, then the standings.
+  // Both phones reveal everyone's hole together, with the standings underneath.
   await passResultsReveal(guest, '26b-results-reveal');
   await passResultsReveal(host);
-  await expect(host.getByText('Hole 1 done!')).toBeVisible();
-  await expect(guest.getByText('Hole 1 done!')).toBeVisible();
   await expect(guest.locator('.board-row')).toHaveCount(2);
 
   // Either phone can move everyone on. (Both tapping at once only moves one hole: see the engine tests.)
@@ -227,8 +220,7 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   await passGroupReveal(guest);
 
   // Hana says she made Pin Pointer.
-  await host.getByRole('button', { name: /Hole done/ }).click();
-  await scoreFromRoom(host, 4, true);
+  await holeDoneAndScore(host, 4, true);
 
   // Gus gets the vote on his phone and calls it.
   const vote = guest.getByRole('group', { name: "Vote on Hana's claim" });
@@ -237,16 +229,16 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   await vote.getByRole('button', { name: /No way/ }).click();
   await expect(vote).toBeHidden();
 
-  await guest.getByRole('button', { name: /Hole done/ }).click();
-  await scoreFromRoom(guest, 4, true);
+  await holeDoneAndScore(guest, 4, true);
   await passResultsReveal(guest);
   await passResultsReveal(host);
 
   // Voted down: Hana's card counts as failed (+2), and both phones say so.
   for (const page of [host, guest]) {
-    await expect(page.getByText('Hole 1 done!')).toBeVisible();
-    await expect(page.locator('.board-row', { hasText: 'Hana' }).getByText(/overturned/)).toBeVisible();
-    await expect(page.locator('.board-row', { hasText: 'Hana' })).toContainText('+2');
+    const hana = page.locator('.result-row', { hasText: 'Hana' });
+    await expect(hana).toContainText('4 + 2 = 6');
+    await expect(hana.getByText(/overturned/)).toBeVisible();
+    await expect(hana).toContainText('+2');
   }
   await shot(host, '33-vote-result');
 });
