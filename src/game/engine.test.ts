@@ -581,7 +581,7 @@ describe('hole done', () => {
     expect(holeStatus(g, 'player00', 0)).toBe('playing');
     g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0 });
     expect(holeStatus(g, 'player00', 0)).toBe('done');
-    expect(applyAction(g, { type: 'holeDone', playerId: 'player00', hole: 0 }, ctx()).changed).toBe(false);
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player00', hole: 0 }, ctx())).toMatchObject({ ok: true, changed: false });
     g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 4 });
     // Scoring counts as done too.
     expect(holeStatus(g, 'player01', 0)).toBe('scored');
