@@ -13,8 +13,7 @@ test('a friend claims the name the host already typed in', async ({ browser }) =
 
   await host.goto('/');
   await newGame(host, ['Hana', 'Ollie']);
-  await host.getByRole('button', { name: 'Invite friends to join' }).click();
-  const tiles = host.locator('.code-tiles');
+  const tiles = host.locator('.invite-panel .code-tiles');
   await expect(tiles).toBeVisible();
   const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
 
@@ -27,7 +26,6 @@ test('a friend claims the name the host already typed in', async ({ browser }) =
   await expect(friend.getByText("You're in!")).toBeVisible();
   await expect(friend.locator('.player-row', { hasText: 'Ollie' }).getByText('You')).toBeVisible();
 
-  await host.getByRole('button', { name: 'Close' }).click();
   await expect(host.locator('.player-row', { hasText: 'Ollie' }).getByText('Joined')).toBeVisible();
 
   // Only the host can start; the friend sees who they're waiting for.
@@ -43,8 +41,7 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   // Host sets up and goes online.
   await host.goto('/');
   await newGame(host, ['Hana']);
-  await host.getByRole('button', { name: 'Invite friends to join' }).click();
-  const tiles = host.locator('.code-tiles');
+  const tiles = host.locator('.invite-panel .code-tiles');
   await expect(tiles).toBeVisible();
   const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
   expect(code).toMatch(/^[BCDFGHJKLMNPQRSTVWXZ]{5}$/);
@@ -64,7 +61,6 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(guest.getByText("You're in!")).toBeVisible();
   await shot(guest, '23-guest-lobby');
 
-  await host.getByRole('button', { name: 'Close' }).click();
   await expect(host.locator('.player-row', { hasText: 'Gus' }).getByText('Joined')).toBeVisible();
   await shot(host, '24-host-lobby-online');
   await host.getByRole('button', { name: "Let's go!" }).click();
@@ -119,10 +115,8 @@ test('no signal mid-round: deal, score and catch up later', async ({ browser }) 
   const host = await phone(browser);
   await host.goto('/');
   await newGame(host, ['Hana']);
-  await host.getByRole('button', { name: 'Invite friends to join' }).click();
-  await expect(host.locator('.code-tiles')).toBeVisible();
-  await host.getByRole('button', { name: 'Close' }).click();
   await host.getByRole('button', { name: "Let's go!" }).click();
+  await host.getByRole('button', { name: 'Start anyway' }).click();
   await host.getByRole('button', { name: /PAR\s*4/ }).click();
   await expect(host.getByRole('heading', { name: 'Hana' })).toBeVisible();
 
@@ -160,10 +154,8 @@ test('a silently dead link still gets a card after a few seconds', async ({ brow
   });
   await host.goto('/');
   await newGame(host, ['Hana']);
-  await host.getByRole('button', { name: 'Invite friends to join' }).click();
-  await expect(host.locator('.code-tiles')).toBeVisible();
-  await host.getByRole('button', { name: 'Close' }).click();
   await host.getByRole('button', { name: "Let's go!" }).click();
+  await host.getByRole('button', { name: 'Start anyway' }).click();
   await host.getByRole('button', { name: /PAR\s*4/ }).click();
   await expect(host.getByRole('heading', { name: 'Hana' })).toBeVisible();
 

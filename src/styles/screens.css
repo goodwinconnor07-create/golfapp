@@ -1287,3 +1287,19 @@
   min-height: 0;
   padding: 6px 12px;
 }
+
+/* Host lobby: the invite comes first. */
+.invite-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 18px 16px 8px;
+  border-radius: 26px;
+  background: var(--blue-bg);
+  text-align: center;
+}
+
+.invite-panel .label {
+  margin: 0;
+}

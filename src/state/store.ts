@@ -411,10 +411,12 @@ export function createLocalGame(holes: Hole[]): void {
   set({ profileName: names[0] });
   setSession({ mode: 'local', code: null, game, pending: [] });
   resetTo({ name: 'game' });
+  // Invite-first: get a join code right away. With no signal the lobby offers to try again.
+  if (state.server !== 'down') void goOnline(true);
 }
 
 /** Moves a one-phone game onto the server so friends can join with a code. */
-export async function goOnline(): Promise<boolean> {
+export async function goOnline(quiet = false): Promise<boolean> {
   const s = state.session;
   if (!s?.game) return false;
   if (s.mode === 'online') return true;
@@ -427,7 +429,7 @@ export async function goOnline(): Promise<boolean> {
     connect(code);
     return true;
   } catch (e) {
-    toast(e instanceof Error ? e.message : "Couldn't start online play.", 'error');
+    if (!quiet) toast(e instanceof Error ? e.message : "Couldn't start online play.", 'error');
     return false;
   } finally {
     set({ busy: null });

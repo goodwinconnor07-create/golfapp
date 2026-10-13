@@ -72,3 +72,11 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 ## Sharing results
 
 - Share on the final screen sends a picture of the results (winner, standings, a few awards) with the text as a caption. On a computer it saves the picture and copies the text.
+
+## Invite first (everyone on their own phone)
+
+- The product owner doesn't want to encourage one-phone games, where the host ends up doing all the work.
+- New game asks only for the host's name. Creating the game gets a join code straight away, and the host's lobby leads with the code and a Share invite button.
+- Adding a player to the host's phone is still possible for someone without a phone, but it's a small link ("No phone? Add them here").
+- Starting with nobody else in the game asks "Start on your own?" first.
+- With no signal, the game is still created on the phone and the lobby offers "Get invite code" to try again.

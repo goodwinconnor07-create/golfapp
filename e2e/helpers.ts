@@ -13,14 +13,20 @@ export async function shot(page: Page, name: string): Promise<void> {
 
 export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'Back 9' | '18 holes' = 'Front 9') {
   await page.getByRole('button', { name: 'New game' }).click();
-  for (let i = 0; i < names.length; i++) {
-    if (i > 0) await page.getByRole('button', { name: 'Add player' }).click();
-    await page.getByRole('textbox').nth(i).fill(names[i]);
-  }
+  await page.getByLabel('Your name').fill(names[0]);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: new RegExp(holes) }).click();
   await expect(page.getByText('Lobby')).toBeVisible();
+  // The game gets its invite code straight away.
+  await expect(page.locator('.invite-panel .code-tiles')).toBeVisible();
+  // Anyone else in the list is added to this phone (someone without a phone).
+  for (const name of names.slice(1)) {
+    await page.getByRole('button', { name: /No phone\? Add them/ }).click();
+    await page.getByLabel('Name').fill(name);
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.locator('.player-row', { hasText: name })).toBeVisible();
+  }
 }
 
 /** Picks a tier for whoever's turn it is and dismisses the card. Returns the card title. */

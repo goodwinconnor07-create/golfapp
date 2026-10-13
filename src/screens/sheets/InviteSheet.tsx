@@ -15,6 +15,33 @@ async function copy(text: string) {
   }
 }
 
+/** Opens the phone's share sheet with the join link, or copies it. */
+export async function shareInvite(code: string) {
+  const link = `${location.origin}/j/${code}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Join my Send It game', text: `Join my golf game on Send It. Code: ${code}`, url: link });
+      return;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+    }
+  }
+  await copy(link);
+}
+
+/** The join code as big colourful letter tiles. */
+export function CodeTiles({ code }: { code: string }) {
+  return (
+    <div className="code-tiles" aria-label={`Game code ${code.split('').join(' ')}`}>
+      {code.split('').map((ch, i) => (
+        <span key={i} style={{ background: TILE_COLORS[i % TILE_COLORS.length], animationDelay: `${i * 60}ms` }}>
+          {ch}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function InviteSheet() {
   const game = useApp((s) => s.game);
   const online = useApp((s) => s.session?.mode === 'online');
@@ -47,7 +74,7 @@ export function InviteSheet() {
             <button type="button" className="btn btn-blue" onClick={() => void goOnline()}>
               Try again
             </button>
-            <p className="note">You can still play everyone on this phone.</p>
+            <p className="note">Friends without signal can be added to your phone from the lobby.</p>
           </div>
         )}
       </Sheet>
@@ -55,17 +82,8 @@ export function InviteSheet() {
   }
 
   const link = `${location.origin}/j/${game.code}`;
-  const share = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Join my Send It game', text: `Join my golf game on Send It. Code: ${game.code}`, url: link });
-        return;
-      } catch (e) {
-        if (e instanceof DOMException && e.name === 'AbortError') return;
-      }
-    }
-    await copy(link);
-  };
+  const code = game.code;
+  const share = () => shareInvite(code);
 
   return (
     <Sheet title="Invite friends">
@@ -73,13 +91,7 @@ export function InviteSheet() {
         <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
           Friends scan this, open the link, or type the code.
         </p>
-        <div className="code-tiles" aria-label={`Game code ${game.code.split('').join(' ')}`}>
-          {game.code.split('').map((ch, i) => (
-            <span key={i} style={{ background: TILE_COLORS[i % TILE_COLORS.length], animationDelay: `${i * 60}ms` }}>
-              {ch}
-            </span>
-          ))}
-        </div>
+        <CodeTiles code={code} />
         <div className="qr-box">
           <QRCode text={link} size={196} />
         </div>

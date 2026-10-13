@@ -7,9 +7,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await shot(page, '01-home');
 
   await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByRole('textbox').first().fill('Sam');
-  await page.getByRole('button', { name: 'Add player' }).click();
-  await page.getByRole('textbox').nth(1).fill('Alex');
+  await page.getByLabel('Your name').fill('Sam');
   await shot(page, '02-setup-players');
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Where are you playing?')).toBeVisible();
@@ -18,7 +16,18 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.getByRole('button', { name: /Front 9/ }).click();
 
   await expect(page.getByText('Ready to send it?')).toBeVisible();
+  // Invite first: the code is up straight away, and starting alone asks first.
+  await expect(page.locator('.invite-panel .code-tiles')).toBeVisible();
   await shot(page, '04-lobby');
+  await page.getByRole('button', { name: "Let's go!" }).click();
+  await expect(page.getByText('Start on your own?')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  // Alex has no phone, so Sam adds them to this one.
+  await page.getByRole('button', { name: /No phone\? Add them/ }).click();
+  await page.getByLabel('Name').fill('Alex');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.locator('.player-row', { hasText: 'Alex' })).toBeVisible();
+  await shot(page, '04b-lobby-with-guest');
   await page.getByRole('button', { name: 'Game options' }).click();
   await shot(page, '05-options');
   await page.getByRole('button', { name: 'Done' }).click();
@@ -177,6 +186,7 @@ test('picking a course fills in the pars', async ({ page }) => {
   await shot(page, '27-holes-with-course');
   await page.getByRole('button', { name: /Front 9/ }).click();
   await page.getByRole('button', { name: "Let's go!" }).click();
+  await page.getByRole('button', { name: 'Start anyway' }).click();
   // No par question: hole 1's par came from the course.
   await expect(page.locator('.par-chip')).toHaveText('PAR 4');
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();

@@ -1,15 +1,30 @@
 import { LIMITS, type Game } from '../../game';
-import { dispatch, openSheet, useApp } from '../../state/store';
+import { confirm, dispatch, goOnline, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
-import { Avatar } from '../../ui/components';
+import { Avatar, Spinner } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
-import { GearIcon, PlusIcon, UsersIcon } from '../../ui/Icons';
+import { GearIcon, ShareIcon } from '../../ui/Icons';
+import { CodeTiles, shareInvite } from '../sheets/InviteSheet';
 
 export function Lobby({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
   const online = useApp((s) => s.session?.mode === 'online');
   const host = isHost(game, deviceId);
   const hostName = game.players.find((p) => p.deviceId === game.hostDeviceId)?.name ?? 'the host';
+  const busy = useApp((s) => s.busy);
+  const server = useApp((s) => s.server);
+  const alone = game.players.length === 1;
+
+  const start = () => dispatch({ type: 'start' });
+  const startClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!alone) return colourWipe(e, start);
+    confirm({
+      title: 'Start on your own?',
+      body: 'Nobody has joined yet. Send the code to your group first so everyone picks their own cards.',
+      confirm: 'Start anyway',
+      onConfirm: start,
+    });
+  };
 
   return (
     <>
@@ -22,13 +37,47 @@ export function Lobby({ game }: { game: Game }) {
           </p>
         </div>
 
-        {online && game.code && (
+        {/* Invite first: the code and a share button are the main thing on the host's lobby. */}
+        {host && (
+          <div className="invite-panel">
+            {online && game.code ? (
+              <>
+                <p className="label">Friends join with this code</p>
+                <CodeTiles code={game.code} />
+                <button type="button" className="btn btn-xl btn-blue" onClick={() => void shareInvite(game.code!)}>
+                  <ShareIcon width={26} height={26} /> Share invite
+                </button>
+                <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'invite' })}>
+                  Show QR code
+                </button>
+              </>
+            ) : busy ? (
+              <Spinner label={busy} />
+            ) : (
+              <>
+                <p style={{ margin: 0 }}>
+                  {server === 'down'
+                    ? "Online play isn't available right now, so friends can't join with a code."
+                    : 'No code yet. Check your signal, then get one so friends can join.'}
+                </p>
+                {server !== 'down' && (
+                  <button type="button" className="btn btn-xl btn-blue" onClick={() => void goOnline()}>
+                    Get invite code
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {!host && online && game.code && (
           <button type="button" className="code-banner press" onClick={() => openSheet({ name: 'invite' })}>
             <span>Game code</span>
             <span className="code-text">{game.code}</span>
           </button>
         )}
 
+        <p className="section-title">Who's in · {game.players.length}</p>
         <div className="stack">
           {game.players.map((p) => {
             const tag =
@@ -53,18 +102,23 @@ export function Lobby({ game }: { game: Game }) {
               </div>
             );
           })}
+          {host && alone && (
+            <div className="waiting-line">
+              <span className="dots" aria-hidden>
+                <i />
+                <i />
+                <i />
+              </span>
+              Waiting for friends to join
+            </div>
+          )}
           {host && game.players.length < LIMITS.maxPlayers && (
-            <button type="button" className="btn btn-outline" onClick={() => openSheet({ name: 'player', playerId: 'new' })}>
-              <PlusIcon width={24} height={24} /> Add player
+            // Kept small on purpose: everyone on their own phone is the way to play.
+            <button type="button" className="btn btn-link small" onClick={() => openSheet({ name: 'player', playerId: 'new' })}>
+              No phone? Add them here
             </button>
           )}
         </div>
-
-        {host && (
-          <button type="button" className="btn btn-blue" onClick={() => openSheet({ name: 'invite' })}>
-            <UsersIcon width={26} height={26} /> {online ? 'Show invite' : 'Invite friends to join'}
-          </button>
-        )}
 
         <div className="tile-flat explainer">
           <span style={{ fontSize: 30 }} aria-hidden>
@@ -79,7 +133,7 @@ export function Lobby({ game }: { game: Game }) {
       <div className="screen-foot">
         {host ? (
           <>
-            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, () => dispatch({ type: 'start' }))}>
+            <button type="button" className="btn btn-xl btn-green" onClick={startClick}>
               Let's go!
             </button>
             <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'options' })}>
