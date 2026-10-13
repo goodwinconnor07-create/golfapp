@@ -99,6 +99,6 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 
 ## Showing a hole's score (Oct 2026)
 
-- The product owner found "5 − 4 = 1" next to "−3 to par" confusing, so every hole now shows its working against par, adding up to the big number: **"Bogey +1 · Card −4"** → **−3**. The golf part uses the usual names (Birdie −1, Par 0, Bogey +1…). The card part shows "(2×)" on double-stakes holes and "(free shot)" when a free shot makes a fail cost 0.
-- The splash and the fix-a-score sheet add the total: "Bogey +1 · Card −4 = −3".
-- Display only: scoring is unchanged, and real strokes still show on the stroke picker, the leaderboard and the scorecard.
+- The product owner found "5 − 4 = 1" next to "−3 to par" confusing, so every hole now shows its working against par as two pills that add up to the big number: **[Bogey +1] + [✓ Card −4]** → **−3**. The golf pill uses the usual names (Birdie −1, Par, Bogey +1…; plain "Par", never "Par 0"). The card pill is green when made and red when missed, with ✓/✗ as well, and notes "(2×)" on double-stakes holes and "free shot" when a free shot makes a fail cost 0.
+- The splash and the fix-a-score sheet show the pills large with the total: [Bogey +1] + [✓ Card −4] = −3. The splash no longer repeats "3 under on this hole".
+- Display only: scoring is unchanged, and real strokes still show on the stroke picker, the splash, the leaderboard and the scorecard.

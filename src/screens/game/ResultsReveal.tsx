@@ -92,10 +92,9 @@ export function ResultsReveal({ game }: { game: Game }) {
                 )}
                 {open && (
                   // Its own line, so the working never squeezes the name.
-                  <b className={`result-sum ${r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}`}>
-                    {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}{' '}
-                    <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} doubled={r.doubled} freePass={r.freePass} />
-                  </b>
+                  <span className="result-sum">
+                    <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} outcome={r.outcome} doubled={r.doubled} freePass={r.freePass} />
+                  </span>
                 )}
                 {open && (
                   <span className="result-vote">

@@ -676,6 +676,16 @@
   color: var(--ink-3);
 }
 
+.board-sub .breakdown {
+  /* Its own line under the level chip, so it wraps between pills only if it must. */
+  flex-basis: 100%;
+}
+
+/* Narrow rows stack the two pills; a dangling "+" there reads as clutter. */
+.board-sub .pill-op {
+  display: none;
+}
+
 .board-sub .chip {
   font-size: 13px;
   padding: 4px 8px;

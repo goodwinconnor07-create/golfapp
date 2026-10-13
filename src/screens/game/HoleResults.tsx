@@ -43,9 +43,7 @@ export function HoleResults({ game }: { game: Game }) {
                   r && (
                     <>
                       <TierChip tier={r.tier} />
-                      <span className={r.outcome === 'made' ? 'good' : r.outcome === 'missed' ? 'bad' : ''}>
-                        {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'} <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} doubled={r.doubled} freePass={r.freePass} />
-                      </span>
+                      <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} outcome={r.outcome} doubled={r.doubled} freePass={r.freePass} />
                       {r.doubled && <span className="tag tag-double">2×</span>}
                       {r.freePass && <span className="tag tag-free">Free shot</span>}
                       <VoteTag game={game} playerId={row.player.id} hole={h} />

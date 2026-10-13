@@ -70,7 +70,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
           </div>
         )}
         <p className="h2 center num" style={{ margin: '4px 0' }}>
-          {adjustment != null ? <Breakdown strokes={strokes} par={par} adjustment={adjustment} doubled={isDoubleHole(game, hole)} freePass={entry.freePass} total /> : 'Completed or failed?'}
+          {adjustment != null ? <Breakdown strokes={strokes} par={par} adjustment={adjustment} outcome={effective!} doubled={isDoubleHole(game, hole)} freePass={entry.freePass} total big /> : 'Completed or failed?'}
         </p>
         <button type="button" className="btn btn-xl btn-dark" disabled={!effective} onClick={save}>
           Save

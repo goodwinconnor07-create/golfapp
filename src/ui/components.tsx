@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { formatDelta, formatToPar, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
+import { formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
@@ -346,26 +346,51 @@ type SumOpts = { doubled?: boolean; freePass?: boolean };
 
 /**
  * A hole's working, all against par so it adds up to the big number:
- * ["Bogey +1", "Card −4"]. Real strokes stay visible elsewhere (stroke picker, scorecard).
+ * golf "Bogey +1", card "Card −4". Real strokes stay visible elsewhere (stroke picker, scorecard).
  */
-export function breakdownParts(strokes: number, par: Par, adjustment: number, opts: SumOpts = {}): string[] {
+export function breakdownParts(strokes: number, par: Par, adjustment: number, opts: SumOpts = {}): { golf: string; card: string } {
   const diff = strokes - par;
   const name = scoreName(strokes, par);
-  // scoreName falls back to "+5" for big numbers; don't print it twice.
-  const golf = /^[+−-]?\d/.test(name) ? formatDelta(diff) : `${name} ${formatDelta(diff)}`;
+  // scoreName falls back to "+5" for big numbers; don't print it twice. Plain "Par", never "Par 0".
+  const golf = /^[+−-]?\d/.test(name) ? formatDelta(diff) : diff === 0 ? name : `${name} ${formatDelta(diff)}`;
   let card = `Card ${formatDelta(adjustment)}`;
-  if (opts.freePass && adjustment === 0) card += ' (free shot)';
+  if (opts.freePass && adjustment === 0) card = 'Card 0 · free shot';
   else if (opts.doubled && adjustment !== 0) card += ' (2×)';
-  return [golf, card];
+  return { golf, card };
 }
 
-/** "Bogey +1 · Card −4", with "= −3" when total is set. Each part stays on one line. */
-export function Breakdown({ strokes, par, adjustment, total, ...opts }: { strokes: number; par: Par; adjustment: number; total?: boolean } & SumOpts) {
-  const [golf, card] = breakdownParts(strokes, par, adjustment, opts);
+/**
+ * The working as pills: [Bogey +1] + [✓ Card −4], plus "= −3" when total is set.
+ * The card pill is green when made and red when missed, with ✓/✗ so colour isn't the only cue.
+ */
+export function Breakdown({
+  strokes,
+  par,
+  adjustment,
+  outcome,
+  total,
+  big,
+  ...opts
+}: { strokes: number; par: Par; adjustment: number; outcome: Outcome; total?: boolean; big?: boolean } & SumOpts) {
+  const { golf, card } = breakdownParts(strokes, par, adjustment, opts);
+  const mark = outcome === 'made' ? '✓ ' : outcome === 'missed' ? '✗ ' : '';
   return (
-    <span className="breakdown">
-      <span>{golf}</span> · <span>{card}</span>
-      {total && <span> = {formatToPar(strokes - par + adjustment)}</span>}
+    <span className={`breakdown${big ? ' big' : ''}`} aria-label={`${golf} plus ${card}`}>
+      <span className="pill pill-golf">{golf}</span>
+      <span className="pill-op">+</span>
+      {/* The card pill and the total wrap together, so "= −3" never sits alone. */}
+      <span className="pill-group">
+        <span className={`pill pill-${outcome}`}>
+          {mark}
+          {card}
+        </span>
+        {total && (
+          <>
+            <span className="pill-op">=</span>
+            <b className="pill-total">{formatToPar(strokes - par + adjustment)}</b>
+          </>
+        )}
+      </span>
     </span>
   );
 }

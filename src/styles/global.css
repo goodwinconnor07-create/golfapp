@@ -893,7 +893,80 @@ input {
   }
 }
 
-/* A hole's working ("Bogey +1 · Card −4"): wrap between parts, never inside one. */
-.breakdown > span {
+/* A hole's working as pills: [Bogey +1] + [✓ Card −4] = −3. Pills never break inside. */
+.breakdown {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 5px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.pill {
+  padding: 4px 8px;
+  border-radius: 999px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pill-golf {
+  background: var(--bg-3);
+  color: var(--ink-2);
+}
+
+.pill-made {
+  background: var(--green-bg);
+  color: var(--green-lo);
+}
+
+.pill-missed {
+  background: var(--red-bg);
+  color: var(--red-lo);
+}
+
+.pill-na {
+  background: var(--bg-3);
+  color: var(--ink-3);
+}
+
+.pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+  white-space: nowrap;
+}
+
+.pill-op {
+  color: var(--ink-3);
+}
+
+.pill-total {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown.big {
+  justify-content: center;
+  gap: 6px 6px;
+  font-size: 17px;
+}
+
+.breakdown.big .pill {
+  padding: 7px 11px;
+}
+
+.breakdown.big .pill-total {
+  font-size: 28px;
+}
+
+/* On the coloured result splash: white pills, dark text. */
+.flash .pill {
+  background: #fff;
+}
+
+.flash .pill-op,
+.flash .pill-total {
+  color: #fff;
 }

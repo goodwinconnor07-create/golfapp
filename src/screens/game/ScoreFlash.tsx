@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { TIERS, toParWords, type Par } from '../../game';
+import { TIERS, type Par } from '../../game';
 import { clearFlash, type Flash } from '../../state/store';
 import { Breakdown, TierIcon } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
@@ -46,10 +46,12 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
             <p className="flash-title">{made ? 'Completed!' : missed ? 'Failed' : 'No change'}</p>
           </>
         )}
-        <p className="flash-calc"><Breakdown strokes={flash.strokes} par={flash.par as Par} adjustment={flash.delta} doubled={flash.doubled} freePass={flash.freePass} total /></p>
+        <p className="flash-calc">
+          <Breakdown strokes={flash.strokes} par={flash.par as Par} adjustment={flash.delta} outcome={flash.outcome} doubled={flash.doubled} freePass={flash.freePass} total big />
+        </p>
         <p className="flash-name">{flash.name}</p>
         <p className="flash-sub">
-          {toParWords(flash.gameScore - flash.par)} on this hole · {flash.strokes} strokes taken
+          {flash.strokes} strokes taken
         </p>
       </div>
     </div>
