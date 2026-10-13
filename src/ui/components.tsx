@@ -121,155 +121,13 @@ export function StrokePicker({
   return (
     <div className={`stroke-picker tone-${look.tone}`}>
       {label && <p className="label">{label}</p>}
-      <StrokeDial value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} par={par} onChange={set} />
+      <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={set} label="strokes" />
       <p key={look.tone} className="score-name pop" aria-live="polite">
         <span className="score-emoji" aria-hidden>
           {look.emoji}
         </span>
         {scoreName(strokes, par)}
       </p>
-    </div>
-  );
-}
-
-const DIAL_STEP = 30; // degrees per stroke: 12 notches a lap, like a clock
-const DIAL_SIZE = 260;
-const DIAL_R = 104; // ring radius
-const DIAL_C = DIAL_SIZE / 2;
-
-/** Point on the ring at an angle (0° = 12 o'clock, clockwise). */
-function ringPoint(deg: number, r = DIAL_R): [number, number] {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  return [DIAL_C + r * Math.cos(rad), DIAL_C + r * Math.sin(rad)];
-}
-
-/** SVG arc from 12 o'clock round to `deg` (up to a full circle). */
-function arcPath(deg: number): string {
-  const d = Math.max(0, Math.min(359.99, deg));
-  if (d <= 0) return '';
-  const [x0, y0] = ringPoint(0);
-  const [x1, y1] = ringPoint(d);
-  return `M ${x0} ${y0} A ${DIAL_R} ${DIAL_R} 0 ${d > 180 ? 1 : 0} 1 ${x1} ${y1}`;
-}
-
-/**
- * Combination-lock style dial: the stroke count sits in the middle and you drag the knob
- * round the ring to change it. Each notch (30°, 12 a lap like a clock) clicks with a buzz.
- * Going past 12 carries on round to 13+. The ring fills in the score's colour.
- */
-export function StrokeDial({
-  value,
-  min,
-  max,
-  par,
-  onChange,
-}: {
-  value: number;
-  min: number;
-  max: number;
-  par: number;
-  onChange: (v: number) => void;
-}) {
-  const svg = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ startValue: number; lastAngle: number; turned: number } | null>(null);
-  const [live, setLive] = useState<number | null>(null); // knob angle while dragging
-  const [bump, setBump] = useState(0);
-
-  const angleAt = (e: { clientX: number; clientY: number }) => {
-    const box = svg.current!.getBoundingClientRect();
-    const x = e.clientX - (box.left + box.width / 2);
-    const y = e.clientY - (box.top + box.height / 2);
-    return ((Math.atan2(y, x) * 180) / Math.PI + 90 + 360) % 360;
-  };
-
-  const set = (v: number) => {
-    const next = Math.min(max, Math.max(min, v));
-    if (next === value) return;
-    haptic('light');
-    setBump((b) => b + 1);
-    onChange(next);
-  };
-
-  const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    svg.current?.setPointerCapture(e.pointerId);
-    drag.current = { startValue: value, lastAngle: angleAt(e), turned: 0 };
-    setLive(value * DIAL_STEP);
-  };
-
-  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    const d = drag.current;
-    if (!d) return;
-    const a = angleAt(e);
-    let delta = a - d.lastAngle;
-    if (delta > 180) delta -= 360;
-    if (delta < -180) delta += 360;
-    d.lastAngle = a;
-    // Stop the knob at the ends instead of letting it wind past them.
-    const lo = (min - d.startValue) * DIAL_STEP;
-    const hi = (max - d.startValue) * DIAL_STEP;
-    d.turned = Math.min(hi, Math.max(lo, d.turned + delta));
-    setLive(d.startValue * DIAL_STEP + d.turned);
-    set(d.startValue + Math.round(d.turned / DIAL_STEP));
-  };
-
-  const onUp = () => {
-    drag.current = null;
-    setLive(null); // the knob snaps to the notch
-  };
-
-  const knobDeg = live ?? value * DIAL_STEP;
-  const [kx, ky] = ringPoint(knobDeg);
-  const fill = live ?? value * DIAL_STEP;
-  const lapped = value > 12;
-  const [px, py] = ringPoint(par * DIAL_STEP, DIAL_R + 26);
-
-  return (
-    <div className="dial">
-      <svg
-        ref={svg}
-        className={`dial-svg ${live !== null ? 'turning' : ''}`}
-        viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
-        role="slider"
-        aria-label="Strokes taken"
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-valuenow={value}
-        tabIndex={0}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') set(value + 1);
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') set(value - 1);
-        }}
-      >
-        <circle className={`dial-track ${lapped ? 'lapped' : ''}`} cx={DIAL_C} cy={DIAL_C} r={DIAL_R} />
-        <path className="dial-fill" d={arcPath(lapped ? fill - 360 : fill)} />
-        {Array.from({ length: 12 }, (_, i) => {
-          const [x0, y0] = ringPoint(i * DIAL_STEP, DIAL_R - 20);
-          const [x1, y1] = ringPoint(i * DIAL_STEP, DIAL_R - 13);
-          return <line key={i} className="dial-tick" x1={x0} y1={y0} x2={x1} y2={y1} />;
-        })}
-        <text className="dial-par" x={px} y={py} textAnchor="middle" dominantBaseline="central">
-          ⛳
-        </text>
-        <circle className="dial-knob" cx={kx} cy={ky} r={21} />
-        <circle className="dial-knob-dot" cx={kx} cy={ky} r={6} />
-      </svg>
-      <div className="dial-centre" aria-hidden>
-        <span key={bump} className={`stepper-value dial-value ${bump ? 'bump' : ''}`}>
-          {value}
-        </span>
-      </div>
-      <div className="dial-steps">
-        <button type="button" className="dial-step press" aria-label="Fewer strokes" disabled={value <= min} onClick={() => set(value - 1)}>
-          <MinusIcon />
-        </button>
-        <button type="button" className="dial-step press" aria-label="More strokes" disabled={value >= max} onClick={() => set(value + 1)}>
-          <PlusIcon />
-        </button>
-      </div>
     </div>
   );
 }
@@ -290,34 +148,63 @@ export function Stepper({
   label: string;
 }) {
   const [bump, setBump] = useState(0);
-  const change = (v: number) => {
-    if (v < min || v > max) return;
+  // Latest value for the hold-to-repeat timer, which outlives a render.
+  const latest = useRef(value);
+  latest.current = value;
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const change = (dir: 1 | -1) => {
+    const v = latest.current + dir;
+    if (v < min || v > max) return false;
+    latest.current = v;
     onChange(v);
     setBump((b) => b + 1);
+    return true;
   };
+  // Press: one step now; keep holding and it keeps counting.
+  const press = (dir: 1 | -1) => {
+    stop();
+    if (!change(dir)) return;
+    const repeat = (delay: number) => {
+      timer.current = setTimeout(() => {
+        if (change(dir)) repeat(110);
+      }, delay);
+    };
+    repeat(420);
+  };
+  const stop = () => clearTimeout(timer.current);
+  useEffect(() => stop, []);
+
+  const button = (dir: 1 | -1) => (
+    <button
+      type="button"
+      className="stepper-btn press"
+      aria-label={`${dir < 0 ? 'Fewer' : 'More'} ${label}`}
+      disabled={dir < 0 ? value <= min : value >= max}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        press(dir);
+      }}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      // Keyboard and screen readers click without a pointer.
+      onClick={(e) => {
+        if (e.detail === 0) change(dir);
+      }}
+    >
+      {dir < 0 ? <MinusIcon /> : <PlusIcon />}
+    </button>
+  );
+
   return (
     <div className="stepper" role="group" aria-label={label}>
-      <button
-        type="button"
-        className="stepper-btn press"
-        aria-label={`Fewer ${label}`}
-        disabled={value <= min}
-        onClick={() => change(value - 1)}
-      >
-        <MinusIcon />
-      </button>
+      {button(-1)}
       <span key={bump} className={`stepper-value ${bump ? 'bump' : ''}`} aria-live="polite">
         {value}
       </span>
-      <button
-        type="button"
-        className="stepper-btn press"
-        aria-label={`More ${label}`}
-        disabled={value >= max}
-        onClick={() => change(value + 1)}
-      >
-        <PlusIcon />
-      </button>
+      {button(1)}
     </div>
   );
 }
