@@ -40,6 +40,9 @@ export interface CourseSummary {
   place: string;
   /** Total par if known. */
   par: number | null;
+  /** Where it is on the map, when the source says. Used to spot the same course from two sources. */
+  lat?: number;
+  lng?: number;
 }
 
 /** A course with its hole-by-hole pars (empty when the source doesn't have them). */

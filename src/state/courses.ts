@@ -5,6 +5,7 @@
 
 import type { CourseDetail, CourseSummary } from '../game';
 import { fetchCourse as fetchFromServer, searchCourses as searchServer } from './api';
+import { mergeCourses } from './courseMerge';
 
 const OG = 'https://api.opengolfapi.org/v1';
 const OG_CREDIT = 'Course data © OpenStreetMap contributors (ODbL) via OpenGolfAPI';
@@ -34,7 +35,15 @@ async function searchOpenGolf(q: string): Promise<CourseSummary[]> {
   const data = obj(await getJson(`${OG}/courses/search?q=${encodeURIComponent(q)}`));
   return list(data.courses).map((raw) => {
     const c = obj(raw);
-    return { id: `og:${text(c.id)}`, name: text(c.name) || text(c.course_name), place: place(c.city, c.state), par: num(c.par) };
+    const lat = num(c.latitude);
+    const lng = num(c.longitude);
+    return {
+      id: `og:${text(c.id)}`,
+      name: text(c.name) || text(c.course_name),
+      place: place(c.city, c.state),
+      par: num(c.par),
+      ...(lat != null && lng != null ? { lat, lng } : {}),
+    };
   });
 }
 
@@ -57,14 +66,33 @@ async function detailOpenGolf(id: string): Promise<CourseDetail> {
 /** Searches every source at once. Worldwide results (when switched on) come first. */
 export async function searchCourses(q: string): Promise<CourseSummary[]> {
   const results = await Promise.allSettled([searchServer(q), searchOpenGolf(q)]);
-  const courses = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((c) => c.name && c.id.length > 3);
+  const [server, open] = results.map((r) => (r.status === 'fulfilled' ? r.value : []).filter((c) => c.name && c.id.length > 3));
+  // The same course often comes back from both sources: show it once.
+  const { courses, alsoFrom } = mergeCourses(server, open);
+  for (const [id, other] of alsoFrom) backup.set(id, other);
   if (results.every((r) => r.status === 'rejected')) {
     throw new Error("Couldn't reach course search. You can still play and enter pars on each tee.");
   }
   return courses.slice(0, 20);
 }
 
+/** For a merged course, the other source's id: tried when the first has no hole pars. */
+const backup = new Map<string, string>();
+
 export async function fetchCourse(id: string): Promise<CourseDetail> {
+  const other = backup.get(id);
+  if (other) {
+    const first = await loadCourse(id).catch(() => null);
+    if (first?.pars.length) return first;
+    const second = await loadCourse(other).catch(() => null);
+    if (second?.pars.length) return { ...second, name: first?.name ?? second.name, place: first?.place || second.place };
+    if (first) return first;
+    return loadCourse(other);
+  }
+  return loadCourse(id);
+}
+
+async function loadCourse(id: string): Promise<CourseDetail> {
   if (id.startsWith('og:')) {
     try {
       return await detailOpenGolf(id.slice(3));

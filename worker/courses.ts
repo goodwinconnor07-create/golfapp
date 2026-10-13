@@ -59,6 +59,8 @@ function courseName(c: Obj): string {
   if (short(club).includes(short(course)) || short(course).includes(short(club))) return club;
   return `${club} · ${course}`;
 }
+const coords = (lat: unknown, lng: unknown) =>
+  typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {};
 const obj = (v: unknown): Obj => (typeof v === 'object' && v !== null ? (v as Obj) : {});
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
@@ -67,7 +69,7 @@ async function searchGolfCourse(q: string, key: string): Promise<CourseSummary[]
   return list(data.courses).map((raw) => {
     const c = obj(raw);
     const loc = obj(c.location);
-    return { id: `gc:${String(c.id)}`, name: courseName(c), place: place(loc.city, loc.state, loc.country), par: null };
+    return { id: `gc:${String(c.id)}`, name: courseName(c), place: place(loc.city, loc.state, loc.country), par: null, ...coords(loc.latitude, loc.longitude) };
   });
 }
 
@@ -136,7 +138,7 @@ export async function handleCourses(request: Request, env: CourseEnv, pathname: 
       if (q.length < 3) return json({ courses: [] });
       if (!key) return json({ courses: [] });
       const results = await Promise.allSettled([
-        saved(env, `v2:search:${q.toLowerCase().replace(/\s+/g, ' ')}`, SEARCH_KEEP_MS, () => searchGolfCourse(q, key)),
+        saved(env, `v3:search:${q.toLowerCase().replace(/\s+/g, ' ')}`, SEARCH_KEEP_MS, () => searchGolfCourse(q, key)),
       ]);
       for (const r of results) if (r.status === 'rejected') console.warn('course search failed', String(r.reason));
       const courses = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((c) => c.name);
