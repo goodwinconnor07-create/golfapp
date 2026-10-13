@@ -1,0 +1,59 @@
+import { useApp } from './state/store';
+import { Toasts } from './ui/components';
+import { Home } from './screens/Home';
+import { HowToPlay } from './screens/HowToPlay';
+import { SetupPlayers } from './screens/SetupPlayers';
+import { SetupHoles } from './screens/SetupHoles';
+import { Join, JoinWho } from './screens/Join';
+import { GameScreen } from './screens/game/GameScreen';
+import { Leaderboard } from './screens/Leaderboard';
+import { Scorecard } from './screens/Scorecard';
+import { SheetHost } from './screens/sheets/SheetHost';
+import { ScoreFlash } from './screens/game/ScoreFlash';
+
+export function App() {
+  const route = useApp((s) => s.stack[s.stack.length - 1]);
+  const depth = useApp((s) => s.stack.length);
+  const sheet = useApp((s) => s.sheet);
+  const flash = useApp((s) => s.flash);
+
+  let screen;
+  switch (route.name) {
+    case 'home':
+      screen = <Home />;
+      break;
+    case 'howto':
+      screen = <HowToPlay />;
+      break;
+    case 'setupPlayers':
+      screen = <SetupPlayers />;
+      break;
+    case 'setupHoles':
+      screen = <SetupHoles />;
+      break;
+    case 'join':
+      screen = <Join initialCode={route.code} />;
+      break;
+    case 'joinWho':
+      screen = <JoinWho info={route.info} />;
+      break;
+    case 'game':
+      screen = <GameScreen />;
+      break;
+    case 'leaderboard':
+      screen = <Leaderboard />;
+      break;
+    case 'scorecard':
+      screen = <Scorecard />;
+      break;
+  }
+
+  return (
+    <>
+      <div key={`${depth}-${route.name}`}>{screen}</div>
+      {sheet && <SheetHost sheet={sheet} />}
+      {flash && <ScoreFlash key={flash.key} flash={flash} />}
+      <Toasts />
+    </>
+  );
+}

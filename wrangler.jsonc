@@ -1,0 +1,20 @@
+// Cloudflare config for Send It.
+// One Worker serves the built app (static assets) and the online game API.
+// Each online game lives in its own GameRoom Durable Object, keyed by join code.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "send-it",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    // Unknown paths (like /j/BCDFG join links) fall back to index.html.
+    "not_found_handling": "single-page-application",
+    // Only API calls reach the Worker code; everything else is served as a static file.
+    "run_worker_first": ["/api/*"],
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME_ROOM", "class_name": "GameRoom" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
+  "observability": { "enabled": true },
+}

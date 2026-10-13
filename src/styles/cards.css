@@ -1,0 +1,206 @@
+/* Challenge cards and the flip. */
+
+.ccard {
+  --tier: var(--safe);
+  --tier-lo: var(--safe-lo);
+  --tier-bg: var(--safe-bg);
+  perspective: 1400px;
+  width: 100%;
+}
+
+.ccard-bold {
+  --tier: var(--bold);
+  --tier-lo: var(--bold-lo);
+  --tier-bg: var(--bold-bg);
+}
+
+.ccard-insane {
+  --tier: var(--insane);
+  --tier-lo: var(--insane-lo);
+  --tier-bg: var(--insane-bg);
+}
+
+.ccard-inner {
+  position: relative;
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.3, 1.25, 0.45, 1);
+}
+
+.ccard.flipped .ccard-inner {
+  transform: rotateY(180deg);
+}
+
+.ccard-face {
+  grid-area: 1 / 1;
+  border-radius: 28px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.ccard-back {
+  min-height: 340px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09) 0 14px, transparent 14px 28px),
+    linear-gradient(150deg, var(--tier), var(--tier-lo));
+  box-shadow: 0 22px 40px -22px var(--tier-lo);
+}
+
+.ccard-back-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.ccard-back-label {
+  font-size: 44px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ccard-drawing {
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0.9;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.ccard-front {
+  transform: rotateY(180deg);
+  background: #fff;
+  box-shadow:
+    inset 0 0 0 4px var(--tier),
+    0 22px 40px -24px var(--tier-lo);
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+}
+
+.ccard-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  color: #fff;
+  background: linear-gradient(120deg, var(--tier), var(--tier-lo));
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ccard-tier {
+  font-size: 21px;
+}
+
+.ccard-stake {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ccard-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 22px 24px;
+}
+
+.ccard-title {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  color: var(--tier-lo);
+}
+
+.ccard-pass {
+  margin: 0;
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.22;
+  color: var(--ink);
+}
+
+.ccard-hint {
+  margin: auto 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--tier-bg);
+  color: var(--ink-2);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.ccard-tag {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+/* Compact cards: the "Go play" list. No flip, smaller type. */
+
+.ccard-compact .ccard-face,
+.ccard-compact .ccard-back {
+  min-height: 0;
+  border-radius: 22px;
+}
+
+.ccard-compact .ccard-front {
+  min-height: 0;
+}
+
+.ccard-compact .ccard-back {
+  padding: 22px 0;
+}
+
+.ccard-compact .ccard-band {
+  padding: 10px 14px;
+}
+
+.ccard-compact .ccard-tier {
+  font-size: 17px;
+}
+
+.ccard-compact .ccard-stake {
+  font-size: 15px;
+  padding: 3px 7px;
+}
+
+.ccard-compact .ccard-body {
+  padding: 14px 16px 16px;
+  gap: 6px;
+}
+
+.ccard-compact .ccard-title {
+  font-size: 24px;
+}
+
+.ccard-compact .ccard-pass {
+  font-size: 19px;
+}
+
+.ccard-compact .ccard-hint {
+  font-size: 15px;
+  padding: 7px 11px;
+  margin-top: 4px;
+}
+
+.ccard-compact .ccard-back-label {
+  font-size: 26px;
+}
