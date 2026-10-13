@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { formatDelta, getCard, recap, type Game, type Recap, formatToPar, toParWords } from '../../game';
 import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { confetti, CONFETTI } from '../../ui/effects';
+import { colourWipe, confetti, CONFETTI } from '../../ui/effects';
 import { joinNames, plural } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
 import { resultsImage } from '../../ui/resultsImage';
@@ -178,7 +178,7 @@ export function Final({ game }: { game: Game }) {
           <button type="button" className="btn btn-ghost" onClick={() => navigate({ name: 'scorecard' })}>
             Scorecard
           </button>
-          <button type="button" className="btn btn-green" onClick={startNewGame}>
+          <button type="button" className="btn btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
             New game
           </button>
         </div>

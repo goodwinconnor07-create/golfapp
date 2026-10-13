@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { makeHoles } from '../game';
 import { createLocalGame, useApp, withCoursePars } from '../state/store';
 import { BackBar, Stepper } from '../ui/components';
+import { colourWipe } from '../ui/effects';
 
 const PRESETS = [
   { label: 'Front 9', detail: 'Holes 1 to 9', count: 9, start: 1, className: 'btn-green' },
@@ -41,7 +42,7 @@ export function SetupHoles() {
             key={p.label}
             type="button"
             className={`choice btn ${p.className}`}
-            onClick={() => createLocalGame(makeHoles(p.count, p.start))}
+            onClick={(e) => colourWipe(e, () => createLocalGame(makeHoles(p.count, p.start)))}
           >
             <span className="choice-num">{p.count}</span>
             <span className="choice-text">
@@ -67,7 +68,11 @@ export function SetupHoles() {
               <p className="label">Starting on hole</p>
               <Stepper value={start} min={1} max={18} onChange={setStart} label="starting hole" />
             </div>
-            <button type="button" className="btn btn-xl btn-dark" onClick={() => createLocalGame(makeHoles(count, start))}>
+            <button
+              type="button"
+              className="btn btn-xl btn-dark"
+              onClick={(e) => colourWipe(e, () => createLocalGame(makeHoles(count, start)))}
+            >
               Play {count} hole{count === 1 ? '' : 's'}
             </button>
           </div>

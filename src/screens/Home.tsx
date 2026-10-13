@@ -1,5 +1,6 @@
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
+import { colourWipe } from '../ui/effects';
 import { ArrowIcon, BallIcon, ClockIcon } from '../ui/Icons';
 
 export function Home() {
@@ -57,10 +58,10 @@ export function Home() {
       </div>
 
       <div className="screen-foot clear">
-        <button type="button" className="btn btn-xl btn-green" onClick={startNewGame}>
+        <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
           New game
         </button>
-        <button type="button" className="btn btn-xl btn-blue" onClick={() => navigate({ name: 'join' })}>
+        <button type="button" className="btn btn-xl btn-blue" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
           Join a game
         </button>
         <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'howto' })}>

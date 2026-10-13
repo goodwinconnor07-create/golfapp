@@ -128,3 +128,59 @@ export function confetti(colors: string[] = CONFETTI.party, origin?: { x: number
   };
   requestAnimationFrame(frame);
 }
+
+const WIPE_GROW_MS = 380;
+const WIPE_FADE_MS = 280;
+
+/**
+ * Big-decision transition: the tapped button's colour grows from the touch point to fill
+ * the screen, the next page swaps in underneath, then the colour fades away.
+ * It never blocks taps (pointer-events: none) and is skipped with reduced motion.
+ */
+export function colourWipe(event: { currentTarget: Element; clientX: number; clientY: number }, then: () => void): void {
+  const button = event.currentTarget as HTMLElement;
+  if (reducedMotion() || typeof button.animate !== 'function') {
+    then();
+    return;
+  }
+  const box = button.getBoundingClientRect();
+  // Keyboard "clicks" report 0,0: start from the button's middle instead.
+  const x = event.clientX || box.left + box.width / 2;
+  const y = event.clientY || box.top + box.height / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 20;
+  const look = getComputedStyle(button);
+
+  const wipe = document.createElement('div');
+  wipe.setAttribute('aria-hidden', 'true');
+  Object.assign(wipe.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '90',
+    pointerEvents: 'none',
+    backgroundColor: look.backgroundColor,
+    backgroundImage: look.backgroundImage,
+  });
+  document.body.appendChild(wipe);
+  haptic('medium');
+
+  const grow = wipe.animate(
+    [
+      { clipPath: `circle(${Math.min(box.width, box.height) / 2}px at ${x}px ${y}px)` },
+      { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
+    ],
+    { duration: WIPE_GROW_MS, easing: 'cubic-bezier(0.5, 0, 0.25, 1)', fill: 'forwards' },
+  );
+  let done = false;
+  const swap = () => {
+    if (done) return;
+    done = true;
+    then();
+    wipe
+      .animate([{ opacity: 1 }, { opacity: 0 }], { duration: WIPE_FADE_MS, easing: 'ease-out', fill: 'forwards' })
+      .finished.catch(() => undefined)
+      .finally(() => wipe.remove());
+  };
+  grow.finished.then(swap, swap);
+  // Safety net in case the animation never reports back.
+  setTimeout(swap, WIPE_GROW_MS + 200);
+}

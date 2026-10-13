@@ -2,6 +2,7 @@ import { LIMITS, type Game } from '../../game';
 import { dispatch, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
 import { Avatar } from '../../ui/components';
+import { colourWipe } from '../../ui/effects';
 import { GearIcon, PlusIcon, UsersIcon } from '../../ui/Icons';
 
 export function Lobby({ game }: { game: Game }) {
@@ -78,7 +79,7 @@ export function Lobby({ game }: { game: Game }) {
       <div className="screen-foot">
         {host ? (
           <>
-            <button type="button" className="btn btn-xl btn-green" onClick={() => dispatch({ type: 'start' })}>
+            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, () => dispatch({ type: 'start' }))}>
               Let's go!
             </button>
             <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'options' })}>
