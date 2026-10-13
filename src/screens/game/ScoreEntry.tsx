@@ -45,7 +45,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
               {auto === 'made' ? 'Completed' : 'Failed'}
               <small>{auto === 'made' ? '· your strokes prove it' : '· not possible with that many strokes'}</small>
             </div>
-            <button type="button" className="btn btn-xl btn-dark" onClick={() => submitScore(playerId, h, strokes)}>
+            <button type="button" className="btn btn-xl btn-green" onClick={() => submitScore(playerId, h, strokes)}>
               Save score
             </button>
             {card.situational && (
@@ -57,7 +57,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
         ) : (
           <>
             <p className="label" style={{ textAlign: 'center' }}>
-              Did {player.name} complete the challenge?
+              Did {player.name} make the card?
             </p>
             <div className="made-missed">
               <button type="button" className="btn btn-xl btn-green" onClick={() => submitScore(playerId, h, strokes, 'made')}>

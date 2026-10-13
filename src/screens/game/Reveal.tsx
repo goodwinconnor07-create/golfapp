@@ -55,7 +55,7 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
         )}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-dark" disabled={!card} onClick={doneReveal}>
+        <button type="button" className="btn btn-xl btn-green" disabled={!card} onClick={doneReveal}>
           {next ? `Got it · pass to ${next.name}` : 'Got it'}
         </button>
       </div>

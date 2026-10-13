@@ -8,9 +8,9 @@ const STEPS = [
     text: 'Everyone joins on their own phone with the game code. Before each hole, choose Safe, Bold or Insane.',
   },
   { color: '#db2777', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
-  { color: '#16a34a', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
+  { color: '#15803d', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
   {
-    color: '#ea580c',
+    color: '#c2410c',
     title: 'Score it',
     text: "Enter the strokes you took. If they don't settle the card, tap Completed or Failed. Results show when everyone's in.",
   },

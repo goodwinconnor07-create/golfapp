@@ -1624,7 +1624,8 @@
 
 .btn-link-small {
   border: 0;
-  padding: 0;
+  padding: 0 4px;
+  min-height: 44px; /* finger-sized tap area even though the text is small */
   background: none;
   color: var(--blue);
   font: inherit;
@@ -1640,10 +1641,14 @@
 .result-card {
   font-size: 14px;
   font-weight: 800;
+  line-height: 1.2;
   color: var(--ink-3);
+  /* Wrap to two lines rather than cut the card name short. */
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .result-right {

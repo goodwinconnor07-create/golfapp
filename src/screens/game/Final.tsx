@@ -129,7 +129,7 @@ export function Final({ game }: { game: Game }) {
               delay={i * 70}
               sub={
                 <>
-                  {row.totals.made}/{row.totals.holes} ✓ · {row.totals.real} strokes
+                  {row.totals.made}/{row.totals.holes} cards · {row.totals.real} strokes
                 </>
               }
             />
@@ -171,7 +171,7 @@ export function Final({ game }: { game: Game }) {
       </div>
 
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-brand" onClick={() => void share(game, rc, image.current)}>
+        <button type="button" className="btn btn-xl btn-blue" onClick={() => void share(game, rc, image.current)}>
           <ShareIcon width={26} height={26} /> Share results
         </button>
         <div className="made-missed">

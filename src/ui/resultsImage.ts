@@ -115,7 +115,7 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     fitText(ctx, r.player.name, 262, top + 52, 470, 42);
     ctx.fillStyle = MUTED;
     ctx.font = font(26, 800);
-    ctx.fillText(`${r.totals.made}/${r.totals.holes} ✓ · ${r.totals.real} strokes`, 262, top + 86);
+    ctx.fillText(`${r.totals.made}/${r.totals.holes} cards · ${r.totals.real} strokes`, 262, top + 86);
 
     ctx.textAlign = 'right';
     ctx.fillStyle = INK;

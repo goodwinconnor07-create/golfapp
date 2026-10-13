@@ -46,7 +46,10 @@ export function TierChip({ tier, stakes = false, big = false }: { tier: Tier; st
 
 // ── Players ─────────────────────────────────────────────────────────────────
 
-export const PLAYER_COLORS = ['#2563eb', '#db2777', '#059669', '#d97706', '#7c3aed', '#0891b2', '#dc2626', '#4f46e5'];
+export const PLAYER_COLORS = [
+  // Kept away from the tier colours (teal, orange, violet) and from pass/fail green and red.
+  '#2563eb', '#9d174d', '#475569', '#92400e', '#1e3a8a', '#0284c7', '#18181b', '#a16207',
+];
 
 export function playerColor(index: number): string {
   return PLAYER_COLORS[index % PLAYER_COLORS.length];

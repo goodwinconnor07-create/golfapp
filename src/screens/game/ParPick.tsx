@@ -4,7 +4,7 @@ import { dispatch } from '../../state/store';
 const PARS: { par: Par; className: string }[] = [
   { par: 3, className: 'btn-blue' },
   { par: 4, className: 'btn-green' },
-  { par: 5, className: 'btn-brand' },
+  { par: 5, className: 'btn-dark' },
 ];
 
 export function ParPick({ game }: { game: Game }) {

@@ -25,7 +25,7 @@ export function Leaderboard() {
               move={moves[row.player.id]}
               sub={
                 <>
-                  {row.totals.made}/{row.totals.holes} ✓ · {row.totals.real} strokes
+                  {row.totals.made}/{row.totals.holes} cards · {row.totals.real} strokes
                 </>
               }
             />

@@ -7,7 +7,7 @@ import { colourWipe } from '../ui/effects';
 const PRESETS = [
   { label: 'Front 9', detail: 'Holes 1 to 9', count: 9, start: 1, className: 'btn-green' },
   { label: 'Back 9', detail: 'Holes 10 to 18', count: 9, start: 10, className: 'btn-blue' },
-  { label: '18 holes', detail: 'The full round', count: 18, start: 1, className: 'btn-brand' },
+  { label: '18 holes', detail: 'The full round', count: 18, start: 1, className: 'btn-dark' },
 ];
 
 export function SetupHoles() {

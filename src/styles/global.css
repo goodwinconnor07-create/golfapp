@@ -13,8 +13,8 @@
   --bg-2: #f4f4f9;
   --bg-3: #eaeaf2;
 
-  --green: #16a34a;
-  --green-lo: #15803d;
+  --green: #15803d;
+  --green-lo: #166534;
   --green-bg: #e8f9ee;
   --blue: #2563eb;
   --blue-lo: #1d4ed8;
@@ -27,11 +27,11 @@
 
   /* Tiers: teal / orange / violet, chosen to stay apart for colour-blind players
      (icons and 1-2-3 pips back the colour up). */
-  --safe: #0d9488;
-  --safe-lo: #0f766e;
+  --safe: #0f766e;
+  --safe-lo: #115e59;
   --safe-bg: #e3f8f5;
-  --bold: #ea580c;
-  --bold-lo: #c2410c;
+  --bold: #c2410c;
+  --bold-lo: #9a3412;
   --bold-bg: #fff0e5;
   --insane: #7c3aed;
   --insane-lo: #a21caf;
@@ -130,8 +130,10 @@ input {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 18px 0 calc(var(--safe-bottom) + 16px);
-  background: linear-gradient(to top, var(--bg) 78%, rgba(255, 255, 255, 0));
+  /* A taller fade so content scrolling underneath reads as "more below", not cut off. */
+  padding: 36px 0 calc(var(--safe-bottom) + 16px);
+  margin-top: -20px;
+  background: linear-gradient(to top, var(--bg) 70%, rgba(255, 255, 255, 0));
 }
 
 /* Over a colourful background the footer shouldn't paint a white box. */
@@ -254,7 +256,10 @@ input {
 }
 
 .btn[disabled] {
-  opacity: 0.4;
+  /* Grey, not faded: faded white text on colour is too hard to read in sun. */
+  background: var(--bg-3);
+  color: var(--ink-3);
+  text-shadow: none;
   pointer-events: none;
   box-shadow: none;
 }
