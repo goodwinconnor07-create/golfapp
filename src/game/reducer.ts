@@ -1,5 +1,5 @@
 import { getCard } from './cards';
-import { drawCard, returnCard } from './deck';
+import { drawCard, returnCard, takeCard } from './deck';
 import { anyPicked, canAddPlayers, entryKey, holeComplete, judgeFromStrokes, outcomeChoices } from './rules';
 import { isTier } from './tiers';
 import { LIMITS, type Action, type ActionContext, type Entry, type Game, type Hole, type Settings } from './types';
@@ -175,7 +175,9 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       entry.tier = action.tier;
       entry.pickedBy = ctx.deviceId;
       g.entries[key] = entry;
-      if (!ctx.predict) entry.cardId = drawCard(g, action.tier, action.hole, ctx.rng);
+      const own = action.cardId ? takeCard(g, action.tier, action.hole, action.cardId) : null;
+      if (own) entry.cardId = own;
+      else if (!ctx.predict) entry.cardId = drawCard(g, action.tier, action.hole, ctx.rng);
       break;
     }
 
@@ -187,11 +189,16 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!entry || !entry.tier || !card) return unchanged;
       if (!card.needsBunker) return fail('Only bunker cards can be swapped.');
       if (entry.strokes != null) return fail('This hole is already scored.');
-      if (ctx.predict) {
+      const oldId = card.id;
+      const opts = { exclude: [oldId], noBunker: true };
+      const own = action.cardId ? takeCard(g, entry.tier, action.hole, action.cardId, opts) : null;
+      if (own) {
+        entry.cardId = own;
+        returnCard(g, oldId);
+      } else if (ctx.predict) {
         delete entry.cardId;
       } else {
-        const oldId = card.id;
-        entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, { exclude: [oldId], noBunker: true });
+        entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
         returnCard(g, oldId);
       }
       break;

@@ -81,8 +81,9 @@ export type Action =
   | { type: 'setCourse'; course: string }
   | { type: 'setSettings'; settings: Partial<Settings> }
   | { type: 'start' }
-  | { type: 'pick'; playerId: string; hole: number; tier: Tier }
-  | { type: 'swap'; playerId: string; hole: number }
+  /** cardId: a card the phone dealt itself while offline. The server keeps it if it fits, or deals another. */
+  | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string }
+  | { type: 'swap'; playerId: string; hole: number; cardId?: string }
   | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome }
   | { type: 'nextHole'; from: number }
   | { type: 'finish' };

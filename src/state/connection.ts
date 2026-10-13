@@ -35,6 +35,7 @@ export class Connection {
     this.deviceId = deviceId;
     this.h = handlers;
     window.addEventListener('online', this.reconnectNow);
+    window.addEventListener('offline', this.dropNow);
     document.addEventListener('visibilitychange', this.onVisibility);
     this.open();
   }
@@ -50,6 +51,7 @@ export class Connection {
     clearTimeout(this.retryTimer);
     clearInterval(this.beatTimer);
     window.removeEventListener('online', this.reconnectNow);
+    window.removeEventListener('offline', this.dropNow);
     document.removeEventListener('visibilitychange', this.onVisibility);
     const ws = this.ws;
     this.ws = null;
@@ -138,6 +140,17 @@ export class Connection {
       this.failures = 0;
       this.open();
     }
+  };
+
+  /** The phone says it lost signal: don't wait for the heartbeat to notice. */
+  private dropNow = (): void => {
+    if (this.closed || !this.ws) return;
+    const ws = this.ws;
+    this.ws = null;
+    clearInterval(this.beatTimer);
+    ws.close();
+    this.h.onStatus('offline');
+    this.retryLater();
   };
 
   private onVisibility = (): void => {

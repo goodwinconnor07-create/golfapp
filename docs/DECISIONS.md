@@ -62,3 +62,13 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **OpenGolfAPI** (in use, free, no key): about 17,000 courses with hole pars, mostly in the US. Outside the US it usually finds the course but not its pars. Data is ODbL, so the app shows "© OpenStreetMap contributors" under results.
 - **GolfCourseAPI** (switched on 13 Oct 2026): about 30,000 courses worldwide, including Australia and the UK. Free plan is 35 lookups a day; paid is US$9.99 a month for 10,000. The key lives only in the Worker secret `GOLFCOURSE_API_KEY` and is sent as `Authorization: Bearer <key>`. Its results show first.
 - OpenGolfAPI is called straight from the phone: it refuses requests from Cloudflare Workers (403) but allows browsers. GolfCourseAPI goes through our Worker so its key stays secret, and its answers are saved in a CourseStore Durable Object (courses for 180 days, searches for 30), so each course or search only uses one lookup.
+
+## Playing without signal (online games)
+
+- Picks, scores and next-hole taps made with no signal are saved on the phone and sent when signal returns. The badge under the header says how many are waiting.
+- Cards are normally dealt by the server. With no signal (or if the server's card hasn't arrived after 4 seconds) the phone deals the card itself, from the same tier and only cards that fit the hole, so play doesn't stop.
+- When it syncs, the server keeps the phone's card if it's still allowed. If someone else on that hole already holds it (two phones offline drew the same card), the server deals a different card and that player's card changes. This should be rare.
+
+## Sharing results
+
+- Share on the final screen sends a picture of the results (winner, standings, a few awards) with the text as a caption. On a computer it saves the picture and copies the text.

@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { formatDelta, getCard, recap, type Game, type Recap, formatToPar, toParWords } from '../../game';
 import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { joinNames, plural } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
+import { resultsImage } from '../../ui/resultsImage';
 
 function names(game: Game, ids: string[]): string {
   return joinNames(ids.map((id) => game.players.find((p) => p.id === id)?.name ?? '?'));
@@ -24,9 +25,37 @@ function shareText(game: Game, rc: Recap): string {
   return lines.join('\n');
 }
 
-async function share(game: Game, rc: Recap) {
+function download(file: File) {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
+}
+
+/** Shares the results picture with the text as its caption; falls back to text only. */
+async function share(game: Game, rc: Recap, image: File | null) {
   const text = shareText(game, rc);
   const url = location.origin;
+  if (image && navigator.canShare?.({ files: [image] })) {
+    try {
+      await navigator.share({ files: [image], text: `${text}\n\n${url}` });
+      return;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+    }
+  }
+  if (image && !navigator.share) {
+    // A computer: save the picture and copy the text.
+    download(image);
+    try {
+      await navigator.clipboard.writeText(`${text}\n\n${url}`);
+    } catch {
+      // The picture is enough.
+    }
+    toast('Picture saved, and the results are copied.', 'success');
+    return;
+  }
   if (navigator.share) {
     try {
       await navigator.share({ title: 'Send It results', text, url });
@@ -46,6 +75,21 @@ async function share(game: Game, rc: Recap) {
 export function Final({ game }: { game: Game }) {
   const rc = useMemo(() => recap(game), [game]);
   const played = rc.holesPlayed > 0;
+  // Draw the picture now, so tapping Share opens the share sheet straight away
+  // (iPhones refuse to share if there's a wait after the tap).
+  const image = useRef<File | null>(null);
+  useEffect(() => {
+    if (!played) return;
+    let live = true;
+    resultsImage(game, rc)
+      .then((blob) => {
+        if (live && blob) image.current = new File([blob], 'send-it-results.png', { type: 'image/png' });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [game, rc, played]);
 
   useEffect(() => {
     if (played) confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.22 }, 150);
@@ -127,7 +171,7 @@ export function Final({ game }: { game: Game }) {
       </div>
 
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-brand" onClick={() => void share(game, rc)}>
+        <button type="button" className="btn btn-xl btn-brand" onClick={() => void share(game, rc, image.current)}>
           <ShareIcon width={26} height={26} /> Share results
         </button>
         <div className="made-missed">

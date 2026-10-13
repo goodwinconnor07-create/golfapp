@@ -72,6 +72,8 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
 }
 
 function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn: ConnStatus | 'none' }) {
+  // Changes made with no signal, saved on this phone until they reach the server.
+  const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
   const hole = game.holes[game.current];
   return (
     <div className="topbar">
@@ -88,12 +90,6 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
           </div>
         )}
       </div>
-      {online && conn !== 'open' && (
-        <span className="conn-pill" role="status">
-          <i />
-          {conn === 'connecting' ? 'Connecting' : 'Offline'}
-        </span>
-      )}
       {game.status === 'playing' && (
         <button type="button" className="icon-btn press" aria-label="Leaderboard" onClick={() => navigate({ name: 'leaderboard' })}>
           <TrophyIcon />
@@ -102,6 +98,14 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
       <button type="button" className="icon-btn press" aria-label="Menu" onClick={() => openSheet({ name: 'menu' })}>
         <MenuIcon />
       </button>
+      {online && conn !== 'open' && (
+        // Its own line under the header, so it never squashes the hole and par.
+        <span className="conn-pill" role="status">
+          <i />
+          {conn === 'connecting' ? 'Connecting…' : 'No signal · keep playing'}
+          {waiting > 0 && <b className="num"> · {waiting} to send</b>}
+        </span>
+      )}
     </div>
   );
 }

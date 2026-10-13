@@ -59,10 +59,16 @@ export function parseAction(input: unknown): Action | null {
       return { type: a.type };
     case 'pick':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole) || !isTier(a.tier)) return null;
-      return { type: 'pick', playerId: a.playerId, hole: a.hole, tier: a.tier };
+      if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
+      return a.cardId === undefined
+        ? { type: 'pick', playerId: a.playerId, hole: a.hole, tier: a.tier }
+        : { type: 'pick', playerId: a.playerId, hole: a.hole, tier: a.tier, cardId: a.cardId as string };
     case 'swap':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
-      return { type: 'swap', playerId: a.playerId, hole: a.hole };
+      if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
+      return a.cardId === undefined
+        ? { type: 'swap', playerId: a.playerId, hole: a.hole }
+        : { type: 'swap', playerId: a.playerId, hole: a.hole, cardId: a.cardId as string };
     case 'score':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (!isInt(a.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) return null;

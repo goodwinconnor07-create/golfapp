@@ -72,6 +72,25 @@ export function drawCard(game: Game, tier: Tier, hole: number, rng: () => number
   return id;
 }
 
+/**
+ * Uses a card the phone dealt itself while offline, if it's allowed here: right tier,
+ * fits the hole and settings, and no one else on this hole holds it. Takes it out of
+ * the deck too. Returns null when it isn't allowed, so the caller deals another.
+ */
+export function takeCard(game: Game, tier: Tier, hole: number, cardId: string, opts: DrawOptions = {}): string | null {
+  const par = game.holes[hole]?.par;
+  const card = getCard(cardId);
+  if (par == null || !card || card.tier !== tier || !isEligible(card, par, game.settings)) return null;
+  if ((opts.noBunker && card.needsBunker) || opts.exclude?.includes(cardId)) return null;
+  if (game.players.some((p) => game.entries[entryKey(p.id, hole)]?.cardId === cardId)) return null;
+  const deck = game.decks?.[tier];
+  if (deck) {
+    const i = deck.indexOf(cardId);
+    if (i !== -1) deck.splice(i, 1);
+  }
+  return cardId;
+}
+
 /** Puts a swapped-away card back at the bottom of its deck. */
 export function returnCard(game: Game, cardId: string): void {
   const card = getCard(cardId);

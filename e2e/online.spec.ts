@@ -114,3 +114,62 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(guest.locator('.hole-tag b')).toHaveText('Hole 2');
   await expect(guest.getByText("What's the par?")).toBeVisible();
 });
+
+test('no signal mid-round: deal, score and catch up later', async ({ browser }) => {
+  const host = await phone(browser);
+  await host.goto('/');
+  await newGame(host, ['Hana']);
+  await host.getByRole('button', { name: 'Invite friends to join' }).click();
+  await expect(host.locator('.code-tiles')).toBeVisible();
+  await host.getByRole('button', { name: 'Close' }).click();
+  await host.getByRole('button', { name: "Let's go!" }).click();
+  await host.getByRole('button', { name: /PAR\s*4/ }).click();
+  await expect(host.getByRole('heading', { name: 'Hana' })).toBeVisible();
+
+  // Signal drops on the tee.
+  await host.context().setOffline(true);
+  await expect(host.locator('.conn-pill')).toContainText('No signal', { timeout: 15_000 });
+
+  // The phone deals the card itself, so play goes on.
+  await pickAndReveal(host, 'Bold');
+  await host.getByRole('button', { name: /Hole done/ }).click();
+  await enterScore(host, 4, true);
+  await expect(host.locator('.conn-pill')).toContainText('to send');
+  await shot(host, '29-offline-waiting');
+
+  // Back in signal: everything reaches the server and the badge goes away.
+  await host.context().setOffline(false);
+  await expect(host.locator('.conn-pill')).toBeHidden({ timeout: 20_000 });
+
+  // The server kept the same result: reloading (which loads from the server) still shows it.
+  await host.reload();
+  await expect(host.getByText(/Hole 1 done|done!/)).toBeVisible();
+});
+
+test('a silently dead link still gets a card after a few seconds', async ({ browser }) => {
+  const host = await phone(browser);
+  // Pass everything through, except that the server never hears about picks.
+  let dropPicks = false;
+  await host.routeWebSocket(/\/ws/, (ws) => {
+    const server = ws.connectToServer();
+    ws.onMessage((m) => {
+      if (dropPicks && String(m).includes('"pick"')) return;
+      server.send(m);
+    });
+    server.onMessage((m) => ws.send(m));
+  });
+  await host.goto('/');
+  await newGame(host, ['Hana']);
+  await host.getByRole('button', { name: 'Invite friends to join' }).click();
+  await expect(host.locator('.code-tiles')).toBeVisible();
+  await host.getByRole('button', { name: 'Close' }).click();
+  await host.getByRole('button', { name: "Let's go!" }).click();
+  await host.getByRole('button', { name: /PAR\s*4/ }).click();
+  await expect(host.getByRole('heading', { name: 'Hana' })).toBeVisible();
+
+  dropPicks = true;
+  await host.getByRole('radio', { name: /Bold/ }).click();
+  await host.getByRole('button', { name: 'Draw my Bold card' }).click();
+  await expect(host.getByText('Drawing your card…')).toBeVisible();
+  await expect(host.locator('.ccard-title')).toBeVisible({ timeout: 8_000 });
+});

@@ -285,6 +285,42 @@ describe('dealing cards', () => {
     expect(g.entries[entryKey('player00', 0)]).toMatchObject({ tier: 'bold' });
     expect(g.entries[entryKey('player00', 0)].cardId).toBeUndefined();
   });
+
+  it('keeps a card the phone dealt offline when it fits', () => {
+    let g = run(newGame(['Sam'], [4]), { type: 'start' });
+    const pick: Action = { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B01' };
+    // The phone's own guess and the server agree on the card.
+    const predicted = run(g, pick, { ...ctx(), predict: true });
+    expect(predicted.entries[entryKey('player00', 0)].cardId).toBe('B01');
+    g = run(g, pick);
+    expect(g.entries[entryKey('player00', 0)].cardId).toBe('B01');
+    expect(g.decks?.bold ?? []).not.toContain('B01');
+  });
+
+  it('deals another card when the offline card is taken or the wrong tier', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4]), { type: 'start' });
+    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B01' });
+    g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold', cardId: 'B01' });
+    const alex = getCard(g.entries[entryKey('player01', 0)].cardId)!;
+    expect(alex.id).not.toBe('B01');
+    expect(alex.tier).toBe('bold');
+
+    let h = run(newGame(['Sam'], [4]), { type: 'start' });
+    h = run(h, { type: 'pick', playerId: 'player00', hole: 0, tier: 'safe', cardId: 'B01' });
+    expect(getCard(h.entries[entryKey('player00', 0)].cardId)!.tier).toBe('safe');
+  });
+
+  it('lets an offline swap bring its own card, but not another bunker card', () => {
+    let g = run(newGame(['Sam'], [4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S10');
+    const bunker = CARDS.find((c) => c.tier === 'safe' && c.needsBunker && c.id !== 'S10');
+    if (bunker) {
+      const h = run(g, { type: 'swap', playerId: 'player00', hole: 0, cardId: bunker.id });
+      expect(h.entries[entryKey('player00', 0)].cardId).not.toBe(bunker.id);
+    }
+    g = run(g, { type: 'swap', playerId: 'player00', hole: 0, cardId: 'S01' }, { ...ctx(), predict: true });
+    expect(g.entries[entryKey('player00', 0)].cardId).toBe('S01');
+  });
 });
 
 describe('round flow', () => {

@@ -7,6 +7,7 @@ import {
   cleanName,
   CODE_LENGTH,
   createGame,
+  drawCard,
   getCard,
   getEntry,
   cryptoRng,
@@ -480,10 +481,48 @@ export function leaveGame(): void {
   resetTo();
 }
 
+/**
+ * With no signal in an online game, the phone deals the card itself so play can go on.
+ * The server keeps that card when it syncs, unless someone else got it first.
+ */
+function dealOffline(g: Game, tier: Tier, exclude?: string, force = false): string | undefined {
+  if (state.session?.mode !== 'online' || (state.conn === 'open' && !force)) return undefined;
+  try {
+    return drawCard(structuredClone(g), tier, g.current, Math.random, exclude ? { exclude: [exclude], noBunker: true } : {});
+  } catch {
+    return undefined;
+  }
+}
+
+/** How long to wait for the server's card before the phone deals one. */
+const CARD_WAIT_MS = 4000;
+
+/**
+ * Signal can die without the link noticing for a while. If the server's card hasn't
+ * arrived after a few seconds, deal one on the phone and put it on the waiting pick,
+ * so the player isn't stuck. If the server did get the pick, its card wins.
+ */
+function dealIfStuck(playerId: string, hole: number, tier: Tier): void {
+  setTimeout(() => {
+    const s = state.session;
+    const g = state.game;
+    if (s?.mode !== 'online' || !g || g.current !== hole || getEntry(g, playerId, hole)?.cardId) return;
+    const i = s.pending.findIndex((p) => p.action.type === 'pick' && p.action.playerId === playerId && p.action.hole === hole);
+    if (i === -1) return;
+    const cardId = dealOffline(g, tier, undefined, true);
+    if (!cardId) return;
+    const pending = [...s.pending];
+    pending[i] = { ...pending[i], action: { type: 'pick', playerId, hole, tier, cardId } };
+    setSession({ ...s, pending });
+  }, CARD_WAIT_MS);
+}
+
 export function pickTier(playerId: string, tier: Tier): void {
   const g = state.game;
   if (!g) return;
-  if (dispatch({ type: 'pick', playerId, hole: g.current, tier })) {
+  const cardId = dealOffline(g, tier);
+  if (dispatch({ type: 'pick', playerId, hole: g.current, tier, ...(cardId ? { cardId } : {}) })) {
+    if (!cardId) dealIfStuck(playerId, g.current, tier);
     set({ ui: { ...state.ui, reveal: playerId } });
     haptic('heavy');
   }
@@ -491,7 +530,10 @@ export function pickTier(playerId: string, tier: Tier): void {
 
 export function swapCard(playerId: string): void {
   const g = state.game;
-  if (g && dispatch({ type: 'swap', playerId, hole: g.current })) haptic('medium');
+  if (!g) return;
+  const entry = getEntry(g, playerId, g.current);
+  const cardId = entry?.tier ? dealOffline(g, entry.tier, entry.cardId) : undefined;
+  if (dispatch({ type: 'swap', playerId, hole: g.current, ...(cardId ? { cardId } : {}) })) haptic('medium');
 }
 
 export function doneReveal(): void {

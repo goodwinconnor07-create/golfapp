@@ -93,6 +93,11 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.locator('.screen').evaluate((el) => window.scrollTo(0, el.scrollHeight));
   await shot(page, '18-final-bottom');
 
+  // On a computer, Share saves the results picture.
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Share results' }).click()]);
+  expect(download.suggestedFilename()).toBe('send-it-results.png');
+  if (process.env.SHOTS_DIR) await download.saveAs(`${process.env.SHOTS_DIR}/30-results-picture.png`);
+
   // The game survives a reload.
   await page.reload();
   await expect(page.getByText(/wins!|tie!/).or(page.getByText('SEND IT'))).toBeVisible();
