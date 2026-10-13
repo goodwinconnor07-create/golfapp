@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { getCard, getEntry, hasPicked, type Game, type Player } from '../../game';
-import { doneReveal, swapCard } from '../../state/store';
+import { cardStakes, getCard, getEntry, hasPicked, redrawUsed, type Game, type Player } from '../../game';
+import { doneReveal, redrawCard, swapCard } from '../../state/store';
 import { ChallengeCard, flipDelay, FLIP_MS } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
 import { confetti, CONFETTI, haptic } from '../../ui/effects';
@@ -34,7 +34,20 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
           <Avatar player={player} size={46} />
           <h1 className="h2">{player.name}'s card</h1>
         </div>
-        <ChallengeCard key={entry?.cardId ?? 'drawing'} tier={tier} cardId={entry?.cardId} flip />
+        {entry?.freePass && <div className="free-note">🛟 Free shot: failing this one costs nothing</div>}
+        <ChallengeCard
+          key={entry?.cardId ?? 'drawing'}
+          tier={tier}
+          cardId={entry?.cardId}
+          flip
+          stakes={cardStakes(game, game.current, tier, entry?.freePass)}
+        />
+        {card && !redrawUsed(game, playerId) && (
+          <button type="button" className="btn btn-outline" onClick={() => redrawCard(playerId)}>
+            <SwapIcon width={24} height={24} /> Redraw · once a round
+          </button>
+        )}
+        {card && entry?.redrawn && <p className="note">Redrawn. This one's yours.</p>}
         {card?.needsBunker && (
           <button type="button" className="btn btn-ghost" onClick={() => swapCard(playerId)}>
             <SwapIcon width={24} height={24} /> No bunker in play? Swap card

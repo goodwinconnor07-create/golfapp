@@ -14,10 +14,20 @@ export interface HoleUi {
   /** Players this phone has stepped in for this hole ("Pick for Alex"). */
   extraPick: string[];
   extraScore: string[];
+  /** The everyone-at-once tier reveal has been shown for this hole. */
+  groupShown: boolean;
 }
 
 export function freshUi(game: Game | null): HoleUi {
-  return { gameId: game?.id ?? '', hole: game?.current ?? 0, scoring: false, reveal: null, extraPick: [], extraScore: [] };
+  return {
+    gameId: game?.id ?? '',
+    hole: game?.current ?? 0,
+    scoring: false,
+    reveal: null,
+    extraPick: [],
+    extraScore: [],
+    groupShown: false,
+  };
 }
 
 export type GameView =
@@ -27,6 +37,7 @@ export type GameView =
   | { kind: 'pick'; playerId: string }
   | { kind: 'reveal'; playerId: string }
   | { kind: 'waitPicks' }
+  | { kind: 'groupReveal' }
   | { kind: 'play' }
   | { kind: 'score'; playerId: string }
   | { kind: 'waitScores' }
@@ -43,7 +54,13 @@ export function myPlayers(game: Game, deviceId: string, online: boolean): Player
   return game.players.filter((p) => p.deviceId === deviceId || (host && p.deviceId === null));
 }
 
-export function gameView(game: Game, deviceId: string, online: boolean, ui: HoleUi): GameView {
+export function gameView(
+  game: Game,
+  deviceId: string,
+  online: boolean,
+  ui: HoleUi,
+  groupSeen: (gameId: string, hole: number) => boolean = () => false,
+): GameView {
   if (game.status === 'lobby') return { kind: 'lobby' };
   if (game.status === 'finished') return { kind: 'final' };
 
@@ -57,6 +74,9 @@ export function gameView(game: Game, deviceId: string, online: boolean, ui: Hole
   if (toPick) return { kind: 'pick', playerId: toPick.id };
   if (!allPicked(game, hole)) return { kind: 'waitPicks' };
   if (holeComplete(game, hole)) return { kind: 'results' };
+  // Everyone's in: flip all the tiers over at once, before anyone tees off.
+  const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);
+  if (game.players.length >= 2 && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
   if (!ui.scoring) return { kind: 'play' };
 
   const scorers = [...mine, ...game.players.filter((p) => ui.extraScore.includes(p.id) && !mine.includes(p))];

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getCard, holeResult, standings, type Game } from '../../game';
+import { getCard, getEntry, holeResult, isVoteable, newLeader, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { TierChip } from '../../ui/components';
@@ -10,6 +10,8 @@ import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 export function HoleResults({ game }: { game: Game }) {
   const h = game.current;
   const rows = standings(game);
+  const moves = rankMoves(game);
+  const leader = newLeader(game, h);
   const last = h === game.holes.length - 1;
   const insaneMade = game.players.some((p) => {
     const r = holeResult(game, p.id, h);
@@ -24,6 +26,11 @@ export function HoleResults({ game }: { game: Game }) {
     <>
       <div className="screen-body">
         <h1 className="h1">Hole {game.holes[h].number} done!</h1>
+        {leader && (
+          <div className="lead-banner pop" role="status">
+            👑 {leader.name} takes the lead!
+          </div>
+        )}
         <div className="board">
           {rows.map((row, i) => {
             const r = holeResult(game, row.player.id, h);
@@ -32,6 +39,7 @@ export function HoleResults({ game }: { game: Game }) {
                 key={row.player.id}
                 row={row}
                 delay={i * 70}
+                move={moves[row.player.id]}
                 sub={
                   r && (
                     <>
@@ -40,6 +48,9 @@ export function HoleResults({ game }: { game: Game }) {
                         {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}{' '}
                         {calcText(r.strokes, r.adjustment, r.gameScore, r.par)}
                       </span>
+                      {r.doubled && <span className="tag tag-double">2×</span>}
+                      {r.freePass && <span className="tag tag-free">Free shot</span>}
+                      <VoteTag game={game} playerId={row.player.id} hole={h} />
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
@@ -67,5 +78,18 @@ export function HoleResults({ game }: { game: Game }) {
         </button>
       </div>
     </>
+  );
+}
+
+/** Shows how the group voted on an honour-system claim, and whether it was overturned. */
+function VoteTag({ game, playerId, hole }: { game: Game; playerId: string; hole: number }) {
+  if (!isVoteable(game, playerId, hole)) return null;
+  const { fair, unfair } = voteTally(getEntry(game, playerId, hole));
+  if (fair + unfair === 0) return null;
+  return (
+    <span className={`tag ${unfair > fair ? 'tag-overturned' : 'tag-upheld'}`}>
+      👍{fair} 👎{unfair}
+      {unfair > fair ? ' · overturned' : ''}
+    </span>
   );
 }

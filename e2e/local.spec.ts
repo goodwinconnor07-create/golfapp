@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { enterScore, pickAndReveal, shot } from './helpers';
+import { enterScore, passGroupReveal, pickAndReveal, shot } from './helpers';
 
 test('a one-phone round: setup, picks, scores, fixes and final results', async ({ page }) => {
   await page.goto('/');
@@ -51,7 +51,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();
   await pickAndReveal(page, 'Insane');
 
-  await expect(page.getByText('Go play!')).toBeVisible();
+  await passGroupReveal(page, '09b-group-reveal');
   await expect(page.locator('.ccard')).toHaveCount(2);
   await shot(page, '10-play');
   await page.getByRole('button', { name: /Hole done/ }).click();
@@ -202,4 +202,79 @@ test('picking a course fills in the pars', async ({ page }) => {
   await expect(page.getByText('Recent')).toBeVisible();
   await expect(page.getByRole('button', { name: /Palmer Links/ })).toBeVisible();
   await shot(page, '26-course-recent');
+});
+
+test('late in the round: 2× stakes, the gap to the leader, free shot and redraw', async ({ page }) => {
+  await page.goto('/');
+  const device = await page.evaluate(() => JSON.parse(localStorage.getItem('sendit.device') ?? '""'));
+  const done = (tier: string, cardId: string, strokes: number, outcome: string) => ({ tier, cardId, pickedBy: device, strokes, outcome });
+  // Six holes at par 4; three played. Sam leads, Alex has dropped to last on hole 3.
+  const game = {
+    v: 1,
+    id: 'lategame01',
+    code: null,
+    hostDeviceId: device,
+    createdAt: 1,
+    updatedAt: 1,
+    course: '',
+    status: 'playing',
+    holes: [1, 2, 3, 4, 5, 6].map((number) => ({ number, par: 4 })),
+    current: 3,
+    players: [
+      { id: 'sam0000001', name: 'Sam', color: 0, deviceId: device },
+      { id: 'alex000001', name: 'Alex', color: 1, deviceId: null },
+    ],
+    entries: {
+      'sam0000001:0': done('bold', 'B01', 5, 'missed'),
+      'alex000001:0': done('bold', 'B01', 4, 'made'),
+      'sam0000001:1': done('bold', 'B01', 4, 'made'),
+      'alex000001:1': done('bold', 'B01', 4, 'made'),
+      'sam0000001:2': done('bold', 'B01', 4, 'made'),
+      'alex000001:2': done('bold', 'B01', 6, 'missed'),
+    },
+    settings: { distanceCards: true, situationCards: false, tiebreakOnStrokes: false },
+    decks: {},
+    seq: 1,
+  };
+  await page.evaluate(
+    (g) => localStorage.setItem('sendit.session', JSON.stringify({ mode: 'local', code: null, game: g, pending: [] })),
+    game,
+  );
+
+  // The leaderboard shows who moved after the last hole.
+  await page.reload();
+  await page.getByRole('button', { name: 'Leaderboard' }).click();
+  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.rank-move.up')).toHaveText('▲1');
+  await expect(page.locator('.board-row', { hasText: 'Alex' }).locator('.rank-move.down')).toHaveText('▼1');
+  await shot(page, '34-leaderboard-moves');
+  await page.getByRole('button', { name: 'Back' }).click();
+
+  // Hole 4 of 6: double stakes, and Sam sees how far ahead he is.
+  await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
+  await expect(page.getByText('You lead Alex by 1 stroke')).toBeVisible();
+  await expect(page.locator('.double-banner')).toContainText('Double stakes');
+  await expect(page.getByRole('radio', { name: /Safe/ })).toContainText('Complete −4 · Fail +2');
+  await expect(page.getByRole('switch', { name: /free shot/i })).toHaveCount(0);
+  await pickAndReveal(page, 'Safe');
+
+  // Alex is last: the free shot is offered, and failing then costs nothing.
+  await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();
+  await expect(page.getByText("You're 1 stroke behind Sam")).toBeVisible();
+  const free = page.getByRole('switch', { name: /free shot/i });
+  await free.click();
+  await expect(free).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: /Insane/ })).toContainText('Complete −12 · Fail 0');
+  await shot(page, '35-pick-free-shot');
+  await page.getByRole('radio', { name: /Insane/ }).click();
+  await page.getByRole('button', { name: 'Draw my Insane card' }).click();
+  await expect(page.getByText(/Free shot: failing this one costs nothing/)).toBeVisible();
+
+  // One redraw a round.
+  const first = await page.locator('.ccard-title').textContent();
+  await page.getByRole('button', { name: /Redraw/ }).click();
+  await expect(page.locator('.ccard-title')).not.toHaveText(first ?? '');
+  await expect(page.getByRole('button', { name: /Redraw/ })).toHaveCount(0);
+  await shot(page, '36-redrawn');
+  await page.getByRole('button', { name: /^Got it/ }).click();
+  await passGroupReveal(page, '37-group-reveal-free-shot');
 });

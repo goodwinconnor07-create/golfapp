@@ -2,6 +2,40 @@ import { CARDS, getCard, type CardDef } from './cards';
 import { adjustmentFor } from './tiers';
 import type { Entry, Game, Outcome, Par, Settings, Tier } from './types';
 
+/** The last few holes of a round count double, so whoever's behind still has a shot. */
+export const DOUBLE_STAKES_HOLES = 3;
+/** Rounds shorter than this play at normal stakes throughout. */
+export const DOUBLE_STAKES_MIN_ROUND = 6;
+
+export function isDoubleHole(game: Pick<Game, 'holes'>, hole: number): boolean {
+  const n = game.holes.length;
+  return n >= DOUBLE_STAKES_MIN_ROUND && hole >= n - DOUBLE_STAKES_HOLES;
+}
+
+/**
+ * Strokes a card adds or takes off on this hole: the tier's modifier, doubled on the
+ * last holes, and nothing for a failed free shot. The tier values themselves never change.
+ */
+export function stakeFor(game: Pick<Game, 'holes'>, hole: number, tier: Tier, outcome: Outcome, freePass = false): number {
+  if (outcome === 'missed' && freePass) return 0;
+  return adjustmentFor(tier, outcome) * (isDoubleHole(game, hole) ? 2 : 1);
+}
+
+/** What completing and failing a card is worth on this hole, for showing on cards and buttons. */
+export function cardStakes(game: Pick<Game, 'holes'>, hole: number, tier: Tier, freePass = false): { made: number; missed: number } {
+  return { made: stakeFor(game, hole, tier, 'made'), missed: stakeFor(game, hole, tier, 'missed', freePass) };
+}
+
+/** Honour-system cards (judged by eye) go to a group vote when someone says they made it. */
+export function needsVote(card: CardDef | undefined): boolean {
+  return Boolean(card?.distance);
+}
+
+export function voteTally(entry: Entry | undefined): { fair: number; unfair: number } {
+  const votes = Object.values(entry?.votes ?? {});
+  return { fair: votes.filter(Boolean).length, unfair: votes.filter((v) => !v).length };
+}
+
 export function entryKey(playerId: string, hole: number): string {
   return `${playerId}:${hole}`;
 }
@@ -54,7 +88,32 @@ export function resolveOutcome(entry: Entry | undefined, par: Par | null): Outco
   if (card.situational && entry.outcome === 'na') return 'na';
   const auto = judgeFromStrokes(card, par, entry.strokes);
   if (auto) return auto;
-  return entry.outcome ?? null;
+  const claimed = entry.outcome ?? null;
+  // A claim the group votes down (more "no way" than "fair") counts as failed.
+  if (claimed === 'made' && needsVote(card)) {
+    const { fair, unfair } = voteTally(entry);
+    if (unfair > fair) return 'missed';
+  }
+  return claimed;
+}
+
+/** Is this player's claim on the hole open to a group vote? */
+export function isVoteable(game: Game, playerId: string, hole: number): boolean {
+  const entry = getEntry(game, playerId, hole);
+  const par = game.holes[hole]?.par;
+  const card = getCard(entry?.cardId);
+  if (!entry || !card || entry.strokes == null || par == null || !needsVote(card)) return false;
+  return entry.outcome === 'made' && !judgeFromStrokes(card, par, entry.strokes);
+}
+
+/** Has this player used their redraw this round? */
+export function redrawUsed(game: Game, playerId: string): boolean {
+  return game.holes.some((_, h) => getEntry(game, playerId, h)?.redrawn);
+}
+
+/** Has this player used their free shot this round? */
+export function freePassUsed(game: Game, playerId: string): boolean {
+  return game.holes.some((_, h) => getEntry(game, playerId, h)?.freePass);
 }
 
 export interface HoleResult {
@@ -68,6 +127,10 @@ export interface HoleResult {
   par: Par;
   /** gameScore against par: negative = under. */
   toPar: number;
+  /** Played on a double-stakes hole. */
+  doubled: boolean;
+  /** Played with the free shot. */
+  freePass: boolean;
 }
 
 /** Full result for one player on one hole, or null if it isn't finished yet. */
@@ -76,7 +139,7 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
   const par = game.holes[hole]?.par ?? null;
   const outcome = resolveOutcome(entry, par);
   if (!entry || !entry.tier || !entry.cardId || entry.strokes == null || outcome == null) return null;
-  const adjustment = adjustmentFor(entry.tier, outcome);
+  const adjustment = stakeFor(game, hole, entry.tier, outcome, entry.freePass);
   return {
     tier: entry.tier,
     cardId: entry.cardId,
@@ -86,6 +149,8 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
     gameScore: entry.strokes + adjustment,
     par: par!,
     toPar: entry.strokes + adjustment - par!,
+    doubled: isDoubleHole(game, hole),
+    freePass: Boolean(entry.freePass),
   };
 }
 

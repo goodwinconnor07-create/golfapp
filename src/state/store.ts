@@ -487,10 +487,10 @@ export function leaveGame(): void {
  * With no signal in an online game, the phone deals the card itself so play can go on.
  * The server keeps that card when it syncs, unless someone else got it first.
  */
-function dealOffline(g: Game, tier: Tier, exclude?: string, force = false): string | undefined {
+function dealOffline(g: Game, tier: Tier, exclude?: string, force = false, noBunker = true): string | undefined {
   if (state.session?.mode !== 'online' || (state.conn === 'open' && !force)) return undefined;
   try {
-    return drawCard(structuredClone(g), tier, g.current, Math.random, exclude ? { exclude: [exclude], noBunker: true } : {});
+    return drawCard(structuredClone(g), tier, g.current, Math.random, exclude ? { exclude: [exclude], noBunker } : {});
   } catch {
     return undefined;
   }
@@ -514,16 +514,18 @@ function dealIfStuck(playerId: string, hole: number, tier: Tier): void {
     const cardId = dealOffline(g, tier, undefined, true);
     if (!cardId) return;
     const pending = [...s.pending];
-    pending[i] = { ...pending[i], action: { type: 'pick', playerId, hole, tier, cardId } };
+    const before = pending[i].action;
+    // Keep the rest of the pick (like a free shot) and just add the card.
+    if (before.type === 'pick') pending[i] = { ...pending[i], action: { ...before, cardId } };
     setSession({ ...s, pending });
   }, CARD_WAIT_MS);
 }
 
-export function pickTier(playerId: string, tier: Tier): void {
+export function pickTier(playerId: string, tier: Tier, freePass = false): void {
   const g = state.game;
   if (!g) return;
   const cardId = dealOffline(g, tier);
-  if (dispatch({ type: 'pick', playerId, hole: g.current, tier, ...(cardId ? { cardId } : {}) })) {
+  if (dispatch({ type: 'pick', playerId, hole: g.current, tier, ...(cardId ? { cardId } : {}), ...(freePass ? { freePass } : {}) })) {
     if (!cardId) dealIfStuck(playerId, g.current, tier);
     set({ ui: { ...state.ui, reveal: playerId } });
     haptic('heavy');
@@ -536,6 +538,43 @@ export function swapCard(playerId: string): void {
   const entry = getEntry(g, playerId, g.current);
   const cardId = entry?.tier ? dealOffline(g, entry.tier, entry.cardId) : undefined;
   if (dispatch({ type: 'swap', playerId, hole: g.current, ...(cardId ? { cardId } : {}) })) haptic('medium');
+}
+
+/** Swap your card for another from the same tier. Once per player per round. */
+export function redrawCard(playerId: string): void {
+  const g = state.game;
+  if (!g) return;
+  const entry = getEntry(g, playerId, g.current);
+  const cardId = entry?.tier ? dealOffline(g, entry.tier, entry.cardId, false, false) : undefined;
+  if (dispatch({ type: 'redraw', playerId, hole: g.current, ...(cardId ? { cardId } : {}) })) haptic('medium');
+}
+
+/** Call someone's honour-system claim fair or not. */
+export function castVote(playerId: string, voterId: string, fair: boolean): void {
+  const g = state.game;
+  if (g && dispatch({ type: 'vote', playerId, hole: g.current, voterId, fair })) haptic(fair ? 'light' : 'medium');
+}
+
+const REVEALED_KEY = 'sendit.revealed';
+
+/** Has this phone already shown the group reveal for this hole? (Survives a reload.) */
+export function groupRevealSeen(gameId: string, hole: number): boolean {
+  try {
+    return localStorage.getItem(REVEALED_KEY) === `${gameId}:${hole}`;
+  } catch {
+    return false;
+  }
+}
+
+export function doneGroupReveal(): void {
+  const g = state.game;
+  if (!g) return;
+  try {
+    localStorage.setItem(REVEALED_KEY, `${g.id}:${g.current}`);
+  } catch {
+    // Storage blocked: the reveal may replay after a reload, which is harmless.
+  }
+  set({ ui: { ...state.ui, groupShown: true } });
 }
 
 export function doneReveal(): void {

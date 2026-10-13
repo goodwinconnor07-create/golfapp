@@ -64,3 +64,13 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   await flash.click();
   await expect(flash).toBeHidden();
 }
+
+/** Everyone has picked: the 3-2-1 group reveal plays, then "Go play!" moves on. */
+export async function passGroupReveal(page: Page, shotName?: string) {
+  await expect(page.getByRole('heading', { name: "Everyone's in!" })).toBeVisible();
+  const go = page.getByRole('button', { name: 'Go play!' });
+  await expect(go).toBeEnabled({ timeout: 8_000 });
+  if (shotName) await shot(page, shotName);
+  await go.click();
+  await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
+}

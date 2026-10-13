@@ -80,3 +80,13 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - Adding a player to the host's phone is still possible for someone without a phone, but it's a small link ("No phone? Add them here").
 - Starting with nobody else in the game asks "Start on your own?" first.
 - With no signal, the game is still created on the phone and the lobby offers "Get invite code" to try again.
+
+## Round twists (approved by the product owner, Oct 2026)
+
+- **2× finish.** In rounds of 6 holes or more, the last 3 holes count double: every card's complete and fail values are doubled (Insane −12 / +6). The tier values in `tiers.ts` are unchanged; the doubling is applied in `stakeFor()` in `rules.ts`. Shorter rounds play at normal stakes throughout.
+- **Free shot.** Whoever is in last place (after at least one finished hole; not when everyone is tied) can play one card a round where failing costs nothing. Completing it still counts in full (doubled on the last holes). Players tied for last can each use theirs. It's chosen on the pick screen before the card is drawn.
+- **Redraw.** Each player can swap one card a round for another from the same tier, on the card screen, before scoring.
+- **Group vote.** On cards judged by eye (distance cards), when a player says they completed it, everyone else in an online game gets 👍 Fair / 👎 No way on their own phone. More 👎 than 👍 turns it into a fail. Ties and no votes leave the claim standing. Voting is open while the hole is being played and closes when the group moves on. Players without their own phone don't vote. One-phone games have no vote.
+- **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once.
+- **Standings while picking.** The pick screen says how far you are behind the leader (or ahead of second).
+- **Leaderboard movement.** Places gained or lost on the last hole show as ▲/▼, and the hole results say when someone takes the lead.

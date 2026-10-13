@@ -1,4 +1,4 @@
-import { completedHoles, standings } from '../game';
+import { completedHoles, rankMoves, standings } from '../game';
 import { useApp } from '../state/store';
 import { BoardRow } from '../ui/BoardRow';
 import { BackBar } from '../ui/components';
@@ -10,6 +10,7 @@ export function Leaderboard() {
 
   const holes = completedHoles(game);
   const rows = standings(game, 'game', holes);
+  const moves = rankMoves(game);
 
   return (
     <div className="screen">
@@ -21,9 +22,10 @@ export function Leaderboard() {
               key={row.player.id}
               row={row}
               delay={i * 50}
+              move={moves[row.player.id]}
               sub={
                 <>
-                  {row.totals.made}/{row.totals.holes} completed · {row.totals.real} strokes
+                  {row.totals.made}/{row.totals.holes} ✓ · {row.totals.real} strokes
                 </>
               }
             />

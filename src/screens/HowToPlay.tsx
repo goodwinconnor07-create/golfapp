@@ -52,8 +52,26 @@ export function HowToPlay() {
             par 4 with an Insane challenge completed: 3 − 6 = −3, which is <b>7 under</b>. Your total is <b>5 under</b>.
           </p>
         </div>
+        <p className="section-title" style={{ margin: 0 }}>
+          Twists
+        </p>
+        <div className="tile-flat stack" style={{ gap: 10 }}>
+          <p style={{ margin: 0 }}>
+            <b>2× finish:</b> in rounds of 6 holes or more, the last 3 holes count double. Insane is −12 or +6.
+          </p>
+          <p style={{ margin: 0 }}>
+            <b>🛟 Free shot:</b> whoever is in last place can play one card a round where failing costs nothing.
+          </p>
+          <p style={{ margin: 0 }}>
+            <b>Redraw:</b> don't like your card? Swap it for another from the same level, once a round.
+          </p>
+          <p style={{ margin: 0 }}>
+            <b>👍 👎 Group vote:</b> say you made a card judged by eye, and everyone else votes on their phone. More 👎 than 👍 and it
+            counts as failed.
+          </p>
+        </div>
         <p className="muted small" style={{ margin: 0 }}>
-          Your score is a party score, not an official golf score or handicap. Distance cards are honour system: one big step is about 3
+          Your score is a party score, not an official golf score or handicap. Distance cards are judged by eye: one big step is about 3
           feet, or use the course markers.
         </p>
       </div>

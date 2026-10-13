@@ -60,9 +60,24 @@ export function parseAction(input: unknown): Action | null {
     case 'pick':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole) || !isTier(a.tier)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
+      if (a.freePass !== undefined && typeof a.freePass !== 'boolean') return null;
+      return {
+        type: 'pick',
+        playerId: a.playerId,
+        hole: a.hole,
+        tier: a.tier,
+        ...(a.cardId === undefined ? {} : { cardId: a.cardId as string }),
+        ...(a.freePass ? { freePass: true } : {}),
+      };
+    case 'redraw':
+      if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
+      if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
       return a.cardId === undefined
-        ? { type: 'pick', playerId: a.playerId, hole: a.hole, tier: a.tier }
-        : { type: 'pick', playerId: a.playerId, hole: a.hole, tier: a.tier, cardId: a.cardId as string };
+        ? { type: 'redraw', playerId: a.playerId, hole: a.hole }
+        : { type: 'redraw', playerId: a.playerId, hole: a.hole, cardId: a.cardId as string };
+    case 'vote':
+      if (!isPlayerId(a.playerId) || !isPlayerId(a.voterId) || !isInt(a.hole, 0, maxHole) || typeof a.fair !== 'boolean') return null;
+      return { type: 'vote', playerId: a.playerId, hole: a.hole, voterId: a.voterId, fair: a.fair };
     case 'swap':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
@@ -150,6 +165,14 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       if (isDeviceId(raw.pickedBy)) entry.pickedBy = raw.pickedBy;
       if (isInt(raw.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) entry.strokes = raw.strokes;
       if (isOutcome(raw.outcome) && (raw.outcome !== 'na' || card.situational)) entry.outcome = raw.outcome;
+      if (raw.freePass === true) entry.freePass = true;
+      if (raw.redrawn === true) entry.redrawn = true;
+      if (isObj(raw.votes)) {
+        const votes: Record<string, boolean> = {};
+        for (const [voter, fair] of Object.entries(raw.votes))
+          if (ids.has(voter) && voter !== pid && typeof fair === 'boolean') votes[voter] = fair;
+        if (Object.keys(votes).length) entry.votes = votes;
+      }
       entries[key] = entry;
     }
   }

@@ -22,7 +22,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 
 ## Rules that matter
 
-- Don't change the stroke modifiers in `tiers.ts` (Safe −2/+1, Bold −4/+2, Insane −6/+3) without the product owner asking.
+- Don't change the stroke modifiers in `tiers.ts` (Safe −2/+1, Bold −4/+2, Insane −6/+3) without the product owner asking. The last 3 holes of a 6+ hole round count double and a free shot makes a fail cost 0; both are applied in `stakeFor()` in `rules.ts`, never by editing the tier values.
 - Never overwrite real strokes with game score. Game score is always derived from strokes + card result.
 - Keep pass-condition text exactly as approved. Card ids are permanent: retire a card with `enabled: false`, never delete or renumber it.
 - Anything arriving over the network goes through `parseAction()` / `sanitizeUpload()` in `validate.ts`.

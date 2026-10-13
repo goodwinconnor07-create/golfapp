@@ -3,13 +3,22 @@ import { formatToPar, type StandingRow } from '../game';
 import { Avatar } from './components';
 
 /** One leaderboard line: rank, player, big score (lowest wins). Ties show as "=2". */
-export function BoardRow({ row, sub, delay }: { row: StandingRow; sub?: ReactNode; delay?: number }) {
+/** move: places gained (+) or lost (−) since the hole before. */
+export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?: ReactNode; delay?: number; move?: number }) {
   return (
     <div
       className={`board-row ${row.rank === 1 ? 'first' : ''} ${delay != null ? 'rise' : ''}`}
       style={delay != null ? { animationDelay: `${delay}ms` } : undefined}
     >
-      <span className="rank">{row.tied ? `=${row.rank}` : row.rank}</span>
+      <span className="rank">
+        {row.tied ? `=${row.rank}` : row.rank}
+        {move !== 0 && (
+          <span className={`rank-move ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
+            {move > 0 ? '▲' : '▼'}
+            {Math.abs(move)}
+          </span>
+        )}
+      </span>
       <Avatar player={row.player} size={44} />
       <div className="board-main">
         <span className="board-name">{row.player.name}</span>

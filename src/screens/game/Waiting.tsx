@@ -1,4 +1,4 @@
-import { getEntry, hasPicked, holeResult, type Game } from '../../game';
+import { cardStakes, getEntry, hasPicked, holeResult, type Game } from '../../game';
 import { stepIn, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
@@ -47,7 +47,7 @@ export function WaitPicks({ game }: { game: Game }) {
         return (
           <div key={p.id} className="stack" style={{ gap: 8 }}>
             <p className="section-title">{mineWithCards.length > 1 ? `${p.name}'s card` : 'Your card'}</p>
-            <ChallengeCard compact tier={e.tier!} cardId={e.cardId} />
+            <ChallengeCard compact tier={e.tier!} cardId={e.cardId} stakes={cardStakes(game, h, e.tier!, e.freePass)} />
           </div>
         );
       })}

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   applyAction,
   CARDS,
+  freePassAvailable,
+  gapText,
+  newLeader,
+  rankMoves,
   createGame,
   eligibleCards,
   entryKey,
@@ -443,5 +447,127 @@ describe('online safety', () => {
     expect(clean.decks?.safe).not.toContain('S02');
     expect(sanitizeUpload({ holes: [], players: [] }, OTHER, 5_000, seeded())).toBeNull();
     expect(sanitizeUpload(upload, 'bad id!', 5_000, seeded())).toBeNull();
+  });
+});
+
+describe('double stakes, free shot, redraw and votes', () => {
+  /** Sam and Alex on a round of `pars`, already on hole `at`, with earlier holes played. */
+  function midRound(pars: Par[], at: number): Game {
+    let g = run(newGame(['Sam', 'Alex'], pars), { type: 'start' });
+    g = structuredClone(g);
+    g.current = at;
+    return g;
+  }
+  // B01 Par Hunter: par or better, settled by strokes alone.
+  const parHunter = (g: Game, playerId: string, hole: number, strokes: number) =>
+    run(giveCard(g, playerId, hole, 'B01'), { type: 'score', playerId, hole, strokes });
+
+  it('doubles the stakes on the last 3 holes of a round of 6 or more', () => {
+    let g = midRound([4, 4, 4, 4, 4, 4], 5);
+    g = parHunter(g, 'player00', 5, 4);
+    expect(holeResult(g, 'player00', 5)).toMatchObject({ adjustment: -8, doubled: true, toPar: -8 });
+    g = parHunter(g, 'player01', 5, 5);
+    expect(holeResult(g, 'player01', 5)).toMatchObject({ adjustment: 4, doubled: true });
+
+    let early = midRound([4, 4, 4, 4, 4, 4], 2);
+    early = parHunter(early, 'player00', 2, 4);
+    expect(holeResult(early, 'player00', 2)).toMatchObject({ adjustment: -4, doubled: false });
+
+    // Short rounds stay at normal stakes.
+    let short = midRound([4, 4, 4], 2);
+    short = parHunter(short, 'player00', 2, 4);
+    expect(holeResult(short, 'player00', 2)?.adjustment).toBe(-4);
+  });
+
+  it('gives last place one free shot a round, where failing costs nothing', () => {
+    let g = midRound([4, 4, 4], 0);
+    g = parHunter(g, 'player00', 0, 4); // Sam makes it
+    g = parHunter(g, 'player01', 0, 5); // Alex fails
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(freePassAvailable(g, 'player01')).toBe(true);
+    expect(freePassAvailable(g, 'player00')).toBe(false);
+    expect(applyAction(g, { type: 'pick', playerId: 'player00', hole: 1, tier: 'bold', freePass: true }, ctx()).ok).toBe(false);
+
+    g = run(g, { type: 'pick', playerId: 'player01', hole: 1, tier: 'insane', freePass: true });
+    const key = entryKey('player01', 1);
+    g = structuredClone(g);
+    g.entries[key].cardId = 'I01';
+    // I01 settles from strokes; a bogey is a fail.
+    g = run(g, { type: 'score', playerId: 'player01', hole: 1, strokes: 6, outcome: 'missed' });
+    const r = holeResult(g, 'player01', 1)!;
+    expect(r.outcome).toBe('missed');
+    expect(r).toMatchObject({ adjustment: 0, freePass: true });
+    // Used up.
+    expect(freePassAvailable(g, 'player01')).toBe(false);
+  });
+
+  it('nobody gets the free shot when everyone is tied', () => {
+    let g = midRound([4, 4, 4], 0);
+    g = parHunter(g, 'player00', 0, 4);
+    g = parHunter(g, 'player01', 0, 4);
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(freePassAvailable(g, 'player00')).toBe(false);
+    expect(freePassAvailable(g, 'player01')).toBe(false);
+  });
+
+  it('allows one redraw per player per round, from the same tier', () => {
+    let g = run(newGame(['Sam'], [4, 4]), { type: 'start' });
+    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold' });
+    const first = g.entries[entryKey('player00', 0)].cardId;
+    g = run(g, { type: 'redraw', playerId: 'player00', hole: 0 });
+    const second = getCard(g.entries[entryKey('player00', 0)].cardId)!;
+    expect(second.id).not.toBe(first);
+    expect(second.tier).toBe('bold');
+    expect(applyAction(g, { type: 'redraw', playerId: 'player00', hole: 0 }, ctx()).ok).toBe(false);
+  });
+
+  it('lets the group vote down an honour-system claim', () => {
+    let g = midRound([4, 4, 4], 0);
+    g = run(g, { type: 'claimPlayer', playerId: 'player01' }, ctx(OTHER));
+    g = giveCard(g, 'player01', 0, 'B02'); // Pin Pointer, judged by eye
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 4, outcome: 'made' }, ctx(OTHER));
+    expect(holeResult(g, 'player01', 0)?.outcome).toBe('made');
+
+    // Alex can't vote on their own claim, and Sam can't vote as Alex.
+    expect(applyAction(g, { type: 'vote', playerId: 'player01', hole: 0, voterId: 'player01', fair: true }, ctx(OTHER)).ok).toBe(false);
+    expect(applyAction(g, { type: 'vote', playerId: 'player01', hole: 0, voterId: 'player01', fair: true }, ctx(HOST)).ok).toBe(false);
+
+    g = run(g, { type: 'vote', playerId: 'player01', hole: 0, voterId: 'player00', fair: false });
+    const r = holeResult(g, 'player01', 0)!;
+    expect(r.outcome).toBe('missed');
+    expect(r.adjustment).toBe(2);
+    // Strokes are never touched.
+    expect(r.strokes).toBe(4);
+
+    // Changing your mind puts it back.
+    g = run(g, { type: 'vote', playerId: 'player01', hole: 0, voterId: 'player00', fair: true });
+    expect(holeResult(g, 'player01', 0)?.outcome).toBe('made');
+  });
+
+  it('parses the new actions and keeps their fields on upload', () => {
+    expect(parseAction({ type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', freePass: true })).toMatchObject({ freePass: true });
+    expect(parseAction({ type: 'redraw', playerId: 'player00', hole: 0 })).toEqual({ type: 'redraw', playerId: 'player00', hole: 0 });
+    expect(parseAction({ type: 'vote', playerId: 'player00', hole: 0, voterId: 'player01', fair: 'yes' })).toBeNull();
+    const g = giveCard(newGame(), 'player01', 0, 'B02');
+    g.entries[entryKey('player01', 0)].votes = { player00: false, nobody99: true };
+    g.entries[entryKey('player01', 0)].redrawn = true;
+    const up = sanitizeUpload(g, HOST, 5, seeded())!;
+    expect(up.entries[entryKey('player01', 0)]).toMatchObject({ votes: { player00: false }, redrawn: true });
+  });
+
+  it('tracks rank moves, lead changes and the gap to the leader', () => {
+    let g = midRound([4, 4, 4], 0);
+    g = parHunter(g, 'player00', 0, 4);
+    g = parHunter(g, 'player01', 0, 5);
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(gapText(g, 'player01')).toBe("You're 7 strokes behind Sam");
+    expect(gapText(g, 'player00')).toBe('You lead Alex by 7 strokes');
+    // Alex makes an Insane card, Sam fails: Alex takes the lead.
+    g = structuredClone(g);
+    g.entries[entryKey('player01', 1)] = { tier: 'insane', cardId: 'I01', pickedBy: HOST };
+    g = run(g, { type: 'score', playerId: 'player01', hole: 1, strokes: 3, outcome: 'made' });
+    g = parHunter(g, 'player00', 1, 6);
+    expect(rankMoves(g)).toEqual({ player00: -1, player01: 1 });
+    expect(newLeader(g, 1)?.name).toBe('Alex');
   });
 });

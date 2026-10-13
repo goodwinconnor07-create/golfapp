@@ -11,6 +11,8 @@ interface Props {
   /** Play the flip when the card face first becomes available. */
   flip?: boolean;
   compact?: boolean;
+  /** What completing / failing is worth on this hole (doubled holes, free shot). Defaults to the tier's values. */
+  stakes?: { made: number; missed: number };
 }
 
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
@@ -23,7 +25,7 @@ export function flipDelay(tier: Tier): number {
 export const FLIP_MS = 420;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
-export function ChallengeCard({ tier, cardId, flip = false, compact = false }: Props) {
+export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes }: Props) {
   const card = getCard(cardId);
   const [shown, setShown] = useState(!flip && Boolean(card));
 
@@ -65,10 +67,10 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false }: P
             <Pips n={TIER_LOOK[tier].pips} />
             <span className="spacer" />
             <span className="ccard-stake">
-              <CheckIcon width={18} height={18} /> {formatDelta(t.made)}
+              <CheckIcon width={18} height={18} /> {formatDelta(stakes?.made ?? t.made)}
             </span>
             <span className="ccard-stake">
-              <CrossIcon width={18} height={18} /> {formatDelta(t.missed)}
+              <CrossIcon width={18} height={18} /> {formatDelta(stakes?.missed ?? t.missed)}
             </span>
           </div>
           {card && (
@@ -76,7 +78,7 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false }: P
               <h3 className="ccard-title">{card.title}</h3>
               <p className="ccard-pass">{card.pass}</p>
               {card.hint && <p className="ccard-hint">{card.hint}</p>}
-              {card.distance && !compact && <p className="ccard-tag">Honour system: judge it as a group.</p>}
+              {card.distance && !compact && <p className="ccard-tag">Judged by eye: the group decides.</p>}
             </div>
           )}
         </div>

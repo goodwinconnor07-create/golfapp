@@ -1,6 +1,7 @@
 import { getCard } from './cards';
 import { drawCard, returnCard, takeCard } from './deck';
-import { anyPicked, canAddPlayers, entryKey, holeComplete, judgeFromStrokes, outcomeChoices } from './rules';
+import { anyPicked, canAddPlayers, entryKey, holeComplete, isVoteable, judgeFromStrokes, outcomeChoices, redrawUsed } from './rules';
+import { freePassAvailable } from './selectors';
 import { isTier } from './tiers';
 import { LIMITS, type Action, type ActionContext, type Entry, type Game, type Hole, type Settings } from './types';
 
@@ -172,6 +173,10 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry: Entry = g.entries[key] ?? {};
       // Picks are locked in: a second pick for the same hole changes nothing.
       if (entry.tier) return unchanged;
+      if (action.freePass) {
+        if (!freePassAvailable(g, action.playerId)) return fail('The free shot is for whoever is in last place, once a round.');
+        entry.freePass = true;
+      }
       entry.tier = action.tier;
       entry.pickedBy = ctx.deviceId;
       g.entries[key] = entry;
@@ -204,6 +209,42 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       break;
     }
 
+    case 'redraw': {
+      if (g.status !== 'playing' || action.hole !== g.current) return fail("That hole isn't being played.");
+      const key = entryKey(action.playerId, action.hole);
+      const entry = g.entries[key];
+      const card = getCard(entry?.cardId);
+      if (!entry || !entry.tier || !card) return unchanged;
+      if (entry.strokes != null) return fail('This hole is already scored.');
+      if (redrawUsed(g, action.playerId)) return fail("You've used your redraw this round.");
+      const oldId = card.id;
+      const opts = { exclude: [oldId] };
+      entry.redrawn = true;
+      const own = action.cardId ? takeCard(g, entry.tier, action.hole, action.cardId, opts) : null;
+      if (own) {
+        entry.cardId = own;
+        returnCard(g, oldId);
+      } else if (ctx.predict) {
+        delete entry.cardId;
+      } else {
+        entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
+        returnCard(g, oldId);
+      }
+      break;
+    }
+
+    case 'vote': {
+      if (g.status !== 'playing' || action.hole !== g.current) return fail('Voting has closed on that hole.');
+      const voter = findPlayer(action.voterId);
+      if (!voter || voter.deviceId !== ctx.deviceId) return fail('You can only vote for yourself.');
+      if (action.voterId === action.playerId) return fail("You can't vote on your own claim.");
+      if (!isVoteable(g, action.playerId, action.hole)) return fail('Nothing to vote on.');
+      const entry = g.entries[entryKey(action.playerId, action.hole)];
+      if (entry.votes?.[action.voterId] === action.fair) return unchanged;
+      entry.votes = { ...entry.votes, [action.voterId]: action.fair };
+      break;
+    }
+
     case 'score': {
       if (g.status === 'lobby') return fail("The game hasn't started.");
       const hole = g.holes[action.hole];
@@ -221,6 +262,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         const choices = outcomeChoices(card);
         if (choices.length > 0 && !choices.includes(action.outcome)) return fail("That result doesn't fit this card.");
       }
+      // A changed claim starts a fresh vote.
+      if (entry.strokes !== strokes || (action.outcome !== undefined && action.outcome !== entry.outcome)) delete entry.votes;
       entry.strokes = strokes;
       // Store the result the strokes settle too, so it survives a later par correction.
       // "Didn't happen" on a situational card stands even if the strokes would rule it out.

@@ -1,16 +1,18 @@
-import type { Game } from '../../game';
+import { isDoubleHole, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
-import { navigate, openSheet, useApp } from '../../state/store';
+import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
 import { gameView, myPlayers, type GameView } from '../../state/view';
 import { BackBar, Spinner } from '../../ui/components';
 import { MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
+import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
 import { Lobby } from './Lobby';
 import { ParPick } from './ParPick';
 import { PickTier } from './PickTier';
 import { PlayHole } from './PlayHole';
 import { Reveal } from './Reveal';
+import { VotePrompt } from './VotePrompt';
 import { ScoreEntry } from './ScoreEntry';
 import { WaitPicks, WaitScores } from './Waiting';
 
@@ -33,7 +35,7 @@ export function GameScreen() {
     );
   }
 
-  const view = gameView(game, deviceId, online, ui);
+  const view = gameView(game, deviceId, online, ui, groupRevealSeen);
   const mine = myPlayers(game, deviceId, online);
   const helpers = game.players.filter((p) => ui.extraPick.includes(p.id) && !mine.includes(p));
   const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${game.current}`;
@@ -41,6 +43,7 @@ export function GameScreen() {
   return (
     <div className="screen">
       <GameTopBar game={game} online={online} conn={conn} />
+      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
   );
@@ -56,6 +59,8 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
       return <ParPick game={game} />;
     case 'pick':
       return <PickTier game={game} playerId={view.playerId} />;
+    case 'groupReveal':
+      return <GroupReveal game={game} />;
     case 'reveal':
       return <Reveal game={game} playerId={view.playerId} pickers={pickers} />;
     case 'waitPicks':
@@ -84,9 +89,16 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
           <div className="hole-tag">
             <b>Hole {hole.number}</b>
             {hole.par && <span className="par-chip">PAR {hole.par}</span>}
-            <span className="muted small num">
-              {game.current + 1}/{game.holes.length}
-            </span>
+            {/* On the double-stakes holes the 2× badge takes the place of the hole count. */}
+            {isDoubleHole(game, game.current) ? (
+              <span className="tag tag-double" aria-label="Double stakes">
+                2×
+              </span>
+            ) : (
+              <span className="muted small num">
+                {game.current + 1}/{game.holes.length}
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { getCard } from './cards';
-import { allPicked, entryKey, holeComplete, holeResult } from './rules';
+import { allPicked, entryKey, freePassUsed, holeComplete, holeResult } from './rules';
 import { formatDelta } from './tiers';
 import type { Game, Player, Tier } from './types';
 
@@ -98,6 +98,61 @@ export function standings(game: Game, by: 'game' | 'real' = 'game', holes: reado
   });
   for (const row of out) row.tied = out.some((o) => o !== row && o.rank === row.rank);
   return out;
+}
+
+/**
+ * Free shot: the player in last place (not a tie shared by everyone) can play one card
+ * a round where failing costs nothing. Needs at least one finished hole to know who's last.
+ */
+export function freePassAvailable(game: Game, playerId: string): boolean {
+  if (game.players.length < 2 || freePassUsed(game, playerId)) return false;
+  const holes = completedHoles(game).filter((h) => h < game.current);
+  if (holes.length === 0) return false;
+  const rows = standings(game, 'game', holes);
+  const worst = Math.max(...rows.map((r) => r.rank));
+  if (worst === 1) return false;
+  return rows.some((r) => r.player.id === playerId && r.rank === worst);
+}
+
+/** Places moved since the hole before the latest finished one: +2 = up two places. */
+export function rankMoves(game: Game): Record<string, number> {
+  const holes = completedHoles(game);
+  if (holes.length < 2) return {};
+  const before = new Map(standings(game, 'game', holes.slice(0, -1)).map((r) => [r.player.id, r.rank]));
+  const out: Record<string, number> = {};
+  for (const r of standings(game, 'game', holes)) out[r.player.id] = (before.get(r.player.id) ?? r.rank) - r.rank;
+  return out;
+}
+
+/** The new outright leader if this hole changed who leads, else null. */
+export function newLeader(game: Game, hole: number): Player | null {
+  const holes = completedHoles(game).filter((h) => h <= hole);
+  if (holes.length < 2 || holes[holes.length - 1] !== hole) return null;
+  const sole = (rows: StandingRow[]) => (rows.filter((r) => r.rank === 1).length === 1 ? rows[0].player : null);
+  const now = sole(standings(game, 'game', holes));
+  const was = sole(standings(game, 'game', holes.slice(0, -1)));
+  return now && now.id !== was?.id ? now : null;
+}
+
+/** How this player stands against the leader (or the chaser, if they lead). */
+export function gapText(game: Game, playerId: string): string | null {
+  if (game.players.length < 2) return null;
+  const holes = completedHoles(game).filter((h) => h < game.current);
+  if (holes.length === 0) return null;
+  const rows = standings(game, 'game', holes);
+  const me = rows.find((r) => r.player.id === playerId);
+  if (!me) return null;
+  const leaders = rows.filter((r) => r.rank === 1);
+  const n = (v: number) => `${v} stroke${v === 1 ? '' : 's'}`;
+  if (me.rank === 1) {
+    if (leaders.length > 1) {
+      const other = leaders.find((r) => r !== me)!;
+      return `Tied for the lead with ${other.player.name}`;
+    }
+    const next = rows[1];
+    return `You lead ${next.player.name} by ${n(next.totals.toPar - me.totals.toPar)}`;
+  }
+  return `You're ${n(me.totals.toPar - leaders[0].totals.toPar)} behind ${leaders[0].player.name}`;
 }
 
 export interface Award {

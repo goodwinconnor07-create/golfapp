@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { enterScore, newGame, pickAndReveal, shot } from './helpers';
+import { enterScore, newGame, passGroupReveal, pickAndReveal, shot } from './helpers';
 
 async function phone(browser: Browser): Promise<Page> {
   const { viewport, deviceScaleFactor, isMobile, hasTouch, baseURL } = test.info().project.use;
@@ -83,8 +83,9 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
 
   // Guest picks; now both phones show both cards.
   await pickAndReveal(guest, 'Insane');
-  await expect(guest.getByText('Go play!')).toBeVisible();
-  await expect(host.getByText('Go play!')).toBeVisible();
+  // Both phones get the 3-2-1 reveal of everyone's level.
+  await passGroupReveal(guest);
+  await passGroupReveal(host);
   await expect(host.locator('.ccard')).toHaveCount(2);
   await expect(guest.locator('.ccard')).toHaveCount(2);
 
@@ -164,4 +165,75 @@ test('a silently dead link still gets a card after a few seconds', async ({ brow
   await host.getByRole('button', { name: 'Draw my Bold card' }).click();
   await expect(host.getByText('Drawing your card…')).toBeVisible();
   await expect(host.locator('.ccard-title')).toBeVisible({ timeout: 8_000 });
+});
+
+test('the group votes down an honour-system claim', async ({ browser }) => {
+  const host = await phone(browser);
+  const guest = await phone(browser);
+
+  // Set up a round on the host's phone that's already on hole 1, where Hana has a card judged by eye.
+  await host.goto('/');
+  const hostDevice = await host.evaluate(() => JSON.parse(localStorage.getItem('sendit.device') ?? '""'));
+  const game = {
+    v: 1,
+    id: 'votegame01',
+    code: null,
+    hostDeviceId: hostDevice,
+    createdAt: 1,
+    updatedAt: 1,
+    course: '',
+    status: 'playing',
+    holes: [1, 2, 3].map((number) => ({ number, par: 4 })),
+    current: 0,
+    players: [
+      { id: 'hana000001', name: 'Hana', color: 0, deviceId: hostDevice },
+      { id: 'gus0000001', name: 'Gus', color: 1, deviceId: null },
+    ],
+    entries: {
+      'hana000001:0': { tier: 'bold', cardId: 'B02', pickedBy: hostDevice }, // Pin Pointer
+      'gus0000001:0': { tier: 'safe', cardId: 'S01', pickedBy: hostDevice }, // Bogey Buffer
+    },
+    settings: { distanceCards: true, situationCards: false, tiebreakOnStrokes: false },
+    decks: {},
+    seq: 1,
+  };
+  await host.evaluate((g) => {
+    localStorage.setItem('sendit.session', JSON.stringify({ mode: 'local', code: null, game: g, pending: [] }));
+    localStorage.setItem('sendit.revealed', `${g.id}:0`);
+  }, game);
+  await host.reload();
+  await expect(host.getByRole('heading', { name: 'Go play!' })).toBeVisible();
+
+  // Put it online and let Gus join on his own phone.
+  await host.getByRole('button', { name: 'Menu' }).click();
+  await host.getByRole('button', { name: 'Invite friends' }).click();
+  const tiles = host.locator('.code-tiles');
+  await expect(tiles).toBeVisible();
+  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  await host.getByRole('button', { name: 'Close' }).click();
+  await guest.goto(`/j/${code}`);
+  await guest.locator('.player-row', { hasText: 'Gus' }).click();
+  await passGroupReveal(guest);
+
+  // Hana says she made Pin Pointer.
+  await host.getByRole('button', { name: /Hole done/ }).click();
+  await enterScore(host, 4, true);
+
+  // Gus gets the vote on his phone and calls it.
+  const vote = guest.getByRole('group', { name: "Vote on Hana's claim" });
+  await expect(vote).toBeVisible();
+  await shot(guest, '32-vote');
+  await vote.getByRole('button', { name: /No way/ }).click();
+  await expect(vote).toBeHidden();
+
+  await guest.getByRole('button', { name: /Hole done/ }).click();
+  await enterScore(guest, 4, true);
+
+  // Voted down: Hana's card counts as failed (+2), and both phones say so.
+  for (const page of [host, guest]) {
+    await expect(page.getByText('Hole 1 done!')).toBeVisible();
+    await expect(page.locator('.board-row', { hasText: 'Hana' }).getByText(/overturned/)).toBeVisible();
+    await expect(page.locator('.board-row', { hasText: 'Hana' })).toContainText('+2');
+  }
+  await shot(host, '33-vote-result');
 });

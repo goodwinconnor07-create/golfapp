@@ -37,6 +37,12 @@ export interface Entry {
   outcome?: Outcome;
   /** Set by the server when this pick is hidden from the viewer until everyone has picked. */
   hidden?: boolean;
+  /** Free shot (last place, once a round): failing this card costs nothing. */
+  freePass?: boolean;
+  /** This card replaced one the player redrew (one redraw per player per round). */
+  redrawn?: boolean;
+  /** Group vote on an honour-system claim: voter's player id → true if they call it fair. */
+  votes?: Record<string, boolean>;
 }
 
 export interface Settings {
@@ -82,7 +88,11 @@ export type Action =
   | { type: 'setSettings'; settings: Partial<Settings> }
   | { type: 'start' }
   /** cardId: a card the phone dealt itself while offline. The server keeps it if it fits, or deals another. */
-  | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string }
+  | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean }
+  /** Swap this hole's card for another from the same tier. Once per player per round. */
+  | { type: 'redraw'; playerId: string; hole: number; cardId?: string }
+  /** voterId calls playerId's honour-system claim on this hole fair (or not). */
+  | { type: 'vote'; playerId: string; hole: number; voterId: string; fair: boolean }
   | { type: 'swap'; playerId: string; hole: number; cardId?: string }
   | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome }
   | { type: 'nextHole'; from: number }

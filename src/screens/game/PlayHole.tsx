@@ -1,4 +1,4 @@
-import { getEntry, holeResult, type Game } from '../../game';
+import { cardStakes, getEntry, holeResult, type Game } from '../../game';
 import { startScoring } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
@@ -27,7 +27,7 @@ export function PlayHole({ game }: { game: Game }) {
                 </span>
                 {holeResult(game, p.id, h) && <span className="tag tag-done">Scored</span>}
               </div>
-              {e?.tier && <ChallengeCard compact tier={e.tier} cardId={e.cardId} />}
+              {e?.tier && <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />}
             </div>
           );
         })}

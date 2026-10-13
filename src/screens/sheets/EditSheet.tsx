@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { adjustmentFor, getCard, getEntry, judgeFromStrokes, LIMITS, outcomeChoices, type Outcome } from '../../game';
+import { cardStakes, getCard, stakeFor, getEntry, judgeFromStrokes, LIMITS, outcomeChoices, type Outcome } from '../../game';
 import { closeSheet, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { scoreName, Sheet, Stepper } from '../../ui/components';
@@ -19,7 +19,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const auto = judgeFromStrokes(card, par, strokes);
   const choices = outcomeChoices(card);
   const effective: Outcome | undefined = card.situational && outcome === 'na' ? 'na' : (auto ?? outcome);
-  const adjustment = effective ? adjustmentFor(entry.tier, effective) : null;
+  const adjustment = effective ? stakeFor(game, hole, entry.tier, effective, entry.freePass) : null;
   const showChoices = choices.length > 0 && auto === null;
 
   const save = () => {
@@ -32,7 +32,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   return (
     <Sheet title={`${player.name} · hole ${game.holes[hole].number}`}>
       <div className="stack" style={{ gap: 14 }}>
-        <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} />
+        <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, hole, entry.tier, entry.freePass)} />
         <div className="center">
           <p className="label">Strokes taken · par {par}</p>
           <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={setStrokes} label="strokes" />
