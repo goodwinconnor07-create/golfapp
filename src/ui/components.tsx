@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { formatDelta, TIERS, type Par, type Player, type Tier } from '../game';
+import { formatDelta, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
+import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
 
@@ -80,6 +81,55 @@ export function scoreName(strokes: number, par: Par): string {
     3: 'Triple bogey',
   };
   return names[diff] ?? (diff > 0 ? `+${diff}` : `${diff}`);
+}
+
+export type ScoreTone = 'ace' | 'eagle' | 'birdie' | 'par' | 'bogey' | 'double' | 'worse';
+
+/** Look and feel for a stroke count against par: colour tone plus an emoji. */
+export function scoreLook(strokes: number, par: Par): { tone: ScoreTone; emoji: string } {
+  if (strokes === 1) return { tone: 'ace', emoji: '🎯' };
+  const diff = strokes - par;
+  if (diff <= -2) return { tone: 'eagle', emoji: diff <= -3 ? '🕊️' : '🦅' };
+  if (diff === -1) return { tone: 'birdie', emoji: '🐦' };
+  if (diff === 0) return { tone: 'par', emoji: '👌' };
+  if (diff === 1) return { tone: 'bogey', emoji: '😬' };
+  if (diff === 2) return { tone: 'double', emoji: '😩' };
+  return { tone: 'worse', emoji: '💀' };
+}
+
+/**
+ * Stroke picker with instant feedback: the number and panel change colour with the
+ * score, and the name pops in with an emoji (🐦 birdie, 🦅 eagle…). Good scores buzz.
+ */
+export function StrokePicker({
+  strokes,
+  par,
+  onChange,
+  label,
+}: {
+  strokes: number;
+  par: Par;
+  onChange: (v: number) => void;
+  label?: string;
+}) {
+  const look = scoreLook(strokes, par);
+  const set = (v: number) => {
+    const next = scoreLook(v, par).tone;
+    if (next !== look.tone && (next === 'ace' || next === 'eagle' || next === 'birdie')) haptic('success');
+    onChange(v);
+  };
+  return (
+    <div className={`stroke-picker tone-${look.tone}`}>
+      {label && <p className="label">{label}</p>}
+      <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={set} label="strokes" />
+      <p key={look.tone} className="score-name pop" aria-live="polite">
+        <span className="score-emoji" aria-hidden>
+          {look.emoji}
+        </span>
+        {scoreName(strokes, par)}
+      </p>
+    </div>
+  );
 }
 
 // ── Controls ────────────────────────────────────────────────────────────────

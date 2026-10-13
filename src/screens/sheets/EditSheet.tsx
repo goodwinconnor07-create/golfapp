@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { cardStakes, getCard, stakeFor, getEntry, judgeFromStrokes, LIMITS, outcomeChoices, type Outcome } from '../../game';
+import { cardStakes, getCard, stakeFor, getEntry, judgeFromStrokes, outcomeChoices, type Outcome } from '../../game';
 import { closeSheet, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { scoreName, Sheet, Stepper } from '../../ui/components';
+import { Sheet, StrokePicker } from '../../ui/components';
 import { calcText } from '../../ui/format';
 
 /** Fix a score after the fact. Totals recalculate from the corrected strokes and result. */
@@ -33,11 +33,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
     <Sheet title={`${player.name} · hole ${game.holes[hole].number}`}>
       <div className="stack" style={{ gap: 14 }}>
         <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, hole, entry.tier, entry.freePass)} />
-        <div className="center">
-          <p className="label">Strokes taken · par {par}</p>
-          <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={setStrokes} label="strokes" />
-          <p className="score-name">{scoreName(strokes, par)}</p>
-        </div>
+        <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label={`Strokes taken · par ${par}`} />
         {showChoices ? (
           <>
             <div className="made-missed">

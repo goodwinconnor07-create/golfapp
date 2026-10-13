@@ -1763,3 +1763,83 @@
 .result-vote:empty {
   display: none;
 }
+
+/* Stroke picker: the number and panel take on the score's colour instantly. */
+.stroke-picker {
+  --tone: var(--ink);
+  --tone-bg: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 6px 10px;
+  border-radius: 22px;
+  background: var(--tone-bg);
+  transition: background-color 0.18s ease;
+}
+
+.stroke-picker .stepper-value {
+  color: var(--tone);
+  transition: color 0.12s ease;
+}
+
+.stroke-picker .score-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--tone);
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 21px;
+}
+
+.score-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.tone-ace,
+.tone-eagle {
+  --tone: #b45309;
+  --tone-bg: linear-gradient(135deg, #fef3c7, #fde68a);
+  background-image: var(--tone-bg);
+}
+
+.tone-birdie {
+  --tone: #15803d;
+  --tone-bg: #dcfce7;
+}
+
+.tone-par {
+  --tone: #1d4ed8;
+  --tone-bg: #e0ecff;
+}
+
+.tone-bogey {
+  --tone: #c2410c;
+  --tone-bg: #ffedd5;
+}
+
+.tone-double {
+  --tone: #b91c1c;
+  --tone-bg: #fee2e2;
+}
+
+.tone-worse {
+  --tone: #7f1d1d;
+  --tone-bg: #fecaca;
+}
+
+/* The tile around it on the score screen shouldn't add its own padding twice. */
+.score-tile:has(.stroke-picker) {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.score-tile .stroke-picker {
+  padding: 16px 8px 14px;
+}

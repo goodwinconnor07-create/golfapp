@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { getCard, getEntry, judgeFromStrokes, LIMITS, outcomeChoices, type Game } from '../../game';
+import { getCard, getEntry, judgeFromStrokes, outcomeChoices, type Game } from '../../game';
 import { submitScore } from '../../state/store';
-import { Avatar, scoreName, Stepper, TierChip } from '../../ui/components';
+import { Avatar, StrokePicker, TierChip } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
 export function ScoreEntry({ game, playerId }: { game: Game; playerId: string }) {
@@ -36,9 +36,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
         </div>
 
         <div className="tile score-tile">
-          <p className="label">Strokes taken</p>
-          <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={setStrokes} label="strokes" />
-          <p className="score-name">{scoreName(strokes, par)}</p>
+          <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label="Strokes taken" />
         </div>
 
         <div className="recall">
