@@ -49,6 +49,14 @@ function courseName(c: Obj): string {
   const course = tidy(c.course_name);
   if (!course || course === club) return club;
   if (!club || course.toLowerCase().includes(club.toLowerCase())) return course;
+  // "Rosewood Golf Club" and "Rosewood GC" are the same place: keep just the club name.
+  const short = (v: string) =>
+    v
+      .toLowerCase()
+      .replace(/golf club/g, 'gc')
+      .replace(/country club/g, 'cc')
+      .replace(/[^a-z0-9]/g, '');
+  if (short(club).includes(short(course)) || short(course).includes(short(club))) return club;
   return `${club} · ${course}`;
 }
 const obj = (v: unknown): Obj => (typeof v === 'object' && v !== null ? (v as Obj) : {});
@@ -128,17 +136,24 @@ export async function handleCourses(request: Request, env: CourseEnv, pathname: 
       if (q.length < 3) return json({ courses: [] });
       if (!key) return json({ courses: [] });
       const results = await Promise.allSettled([
-        saved(env, `search:${q.toLowerCase().replace(/\s+/g, ' ')}`, SEARCH_KEEP_MS, () => searchGolfCourse(q, key)),
+        saved(env, `v2:search:${q.toLowerCase().replace(/\s+/g, ' ')}`, SEARCH_KEEP_MS, () => searchGolfCourse(q, key)),
       ]);
       for (const r of results) if (r.status === 'rejected') console.warn('course search failed', String(r.reason));
       const courses = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((c) => c.name);
       if (results.every((r) => r.status === 'rejected')) return json({ error: "Course search isn't answering right now." }, 502);
       return json({ courses: courses.slice(0, 20) });
     }
-    const m = pathname.match(/^\/api\/courses\/gc:([A-Za-z0-9-]{1,64})$/);
+    // The app encodes the id, so "gc:abc" arrives as "gc%3Aabc".
+    let path = pathname;
+    try {
+      path = decodeURIComponent(pathname);
+    } catch {
+      return json({ error: 'Not found.' }, 404);
+    }
+    const m = path.match(/^\/api\/courses\/gc:([A-Za-z0-9-]{1,64})$/);
     if (!m) return json({ error: 'Not found.' }, 404);
     if (!key) return json({ error: 'That course source is switched off.' }, 404);
-    return json(await saved(env, `course:${m[1]}`, COURSE_KEEP_MS, () => detailGolfCourse(m[1], key)));
+    return json(await saved(env, `v2:course:${m[1]}`, COURSE_KEEP_MS, () => detailGolfCourse(m[1], key)));
   } catch (e) {
     console.warn('course lookup failed', String(e));
     return json({ error: "Couldn't load that course right now." }, 502);
