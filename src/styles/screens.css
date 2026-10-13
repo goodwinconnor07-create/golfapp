@@ -1303,3 +1303,54 @@
 .invite-panel .label {
   margin: 0;
 }
+
+/* "Back to your game" on Home: a slim strip at the top, beside the Past games button. */
+.resume-strip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 14px);
+  left: 16px;
+  right: 72px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(120deg, #f97316, #ec4899 55%, #8b5cf6);
+  box-shadow: 0 10px 24px -14px rgba(236, 72, 153, 0.8);
+  text-align: left;
+  font: inherit;
+}
+
+.resume-strip svg {
+  flex: none;
+}
+
+.resume-strip-text {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.resume-strip-text b {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.resume-strip-text small {
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-hero.with-strip {
+  padding-top: calc(7vh + 44px);
+}

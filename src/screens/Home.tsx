@@ -15,8 +15,22 @@ export function Home() {
       <button type="button" className="icon-btn press home-corner" aria-label="Past games" onClick={() => navigate({ name: 'history' })}>
         <ClockIcon width={24} height={24} />
       </button>
+      {/* A slim strip at the top, so it never crowds the big buttons at the bottom. */}
+      {active && (
+        <button type="button" className="resume-strip press" onClick={() => navigate({ name: 'game' })}>
+          <ArrowIcon width={20} height={20} />
+          <span className="resume-strip-text">
+            <b>Back to your game</b>
+            <small>
+              {game
+                ? `${game.status === 'lobby' ? 'Lobby' : `Hole ${game.holes[game.current].number}`}${online ? ` · ${game.code}` : ''}`
+                : 'Joining…'}
+            </small>
+          </span>
+        </button>
+      )}
       <div className="screen-body">
-        <div className="home-hero center">
+        <div className={`home-hero center${active ? ' with-strip' : ''}`}>
           <div className="home-icon" aria-hidden>
             <div className="row" style={{ gap: 4 }}>
               <span className="lines">
@@ -37,24 +51,6 @@ export function Home() {
             <TierChip tier="insane" />
           </div>
         </div>
-
-        {active && (
-          <button type="button" className="resume press" onClick={() => navigate({ name: 'game' })}>
-            <span className="resume-badge">
-              <ArrowIcon />
-            </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="h3" style={{ display: 'block' }}>
-                Back to your game
-              </span>
-              <span className="muted small" style={{ display: 'block' }}>
-                {game
-                  ? `${game.status === 'lobby' ? 'In the lobby' : `Hole ${game.holes[game.current].number}`} · ${game.players.length} player${game.players.length === 1 ? '' : 's'}${online ? ` · ${game.code}` : ''}`
-                  : 'Joining…'}
-              </span>
-            </span>
-          </button>
-        )}
       </div>
 
       <div className="screen-foot clear">
