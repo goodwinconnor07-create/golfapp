@@ -49,7 +49,7 @@ export function OptionsSheet() {
           on={game.settings.distanceCards}
           disabled={!host}
           title="Distance cards"
-          detail="Cards like “within 15 feet”. Judged by eye or pacing, honour system."
+          detail="Cards like “within 15 feet”, judged by eye. Online, the group votes on them."
           onChange={(v) => set({ distanceCards: v })}
         />
         <Toggle

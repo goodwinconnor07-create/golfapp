@@ -2,24 +2,25 @@
 
 Golf, but riskier. Send It is a phone game that sits on top of a normal round of golf with friends.
 
-Before each hole, every player picks **Safe**, **Bold** or **Insane** and draws a random challenge card from that pile. Everyone gets a different card. You play the hole for real, then enter your real strokes and whether you made the card.
+Before each hole, every player picks **Safe**, **Bold** or **Insane** and draws a random challenge card from that pile. Everyone gets a different card. You play the hole for real, then enter your real strokes and whether you completed the card.
 
-| Level  | Made the card | Missed the card |
-| ------ | ------------- | --------------- |
-| Safe   | −2 strokes    | +1 stroke       |
-| Bold   | −4 strokes    | +2 strokes      |
-| Insane | −6 strokes    | +3 strokes      |
+| Level  | Completed  | Failed     |
+| ------ | ---------- | ---------- |
+| Safe   | −2 strokes | +1 stroke  |
+| Bold   | −4 strokes | +2 strokes |
+| Insane | −6 strokes | +3 strokes |
 
-**Game score** = real strokes, minus or plus the card. Lowest game score wins. Real strokes are always kept separately, and the app never passes a game score off as a real golf score.
+Each hole: real strokes, minus or plus the card, scored over or under par like golf. Lowest total wins. Real strokes are always kept separately, and the app never passes a game score off as a real golf score.
+
+Twists: the last 3 holes of a 6+ hole round count double, last place gets one free shot a round, everyone gets one redraw, and cards judged by eye go to a group vote online.
 
 The product spec is in [docs/SPEC.md](docs/SPEC.md). Product calls made while building are in [docs/DECISIONS.md](docs/DECISIONS.md).
 
-## Two ways to play
+## Playing together
 
-- **One phone.** Add everyone's names and pass the phone round. Works with no signal at all, because the whole game lives on the phone.
-- **Everyone's phone.** Tap **Invite friends** in the lobby. The game gets a 5-letter code, a QR code and a share link (`/j/CODE`). Friends open the link or type the code, then tap their name or add themselves. Picks stay hidden until the whole group has locked in, then everyone sees every card. Anyone can enter scores, and the host can fix anything.
+Everyone plays on their own phone. Starting a game gets a 5-letter code straight away, with a share link (`/j/CODE`) and a QR code. Friends open the link or type the code, then tap their name or add themselves. Picks stay hidden until the whole group has locked in, then a 3-2-1 reveal shows everyone's level. After a hole, each phone scores its own player and waits in a room until everyone's in, then the results flip over together.
 
-You can mix the two: a host can run players who don't have a phone while others join on their own.
+Someone without a phone can be added to the host's phone ("No phone? Add them here"). Lost signal mid-round is fine: changes are kept on the phone and sent when signal returns.
 
 ## Run it on your computer
 

@@ -80,22 +80,14 @@ export function ScoreRoom({ game }: { game: Game }) {
           })}
         </div>
       </div>
-      <div className="screen-foot">
-        {myNext ? (
+      {/* Only when there's something to do: the heading already says who we're waiting for. */}
+      {myNext && (
+        <div className="screen-foot">
           <button type="button" className="btn btn-xl btn-blue" onClick={() => enterScoreFor(myNext.id)}>
             {mine.length > 1 ? `Enter ${myNext.name}'s score` : 'Enter my score'}
           </button>
-        ) : (
-          <div className="waiting-line">
-            <span className="dots" aria-hidden>
-              <i />
-              <i />
-              <i />
-            </span>
-            Waiting for {joinNames(notScored.map((p) => p.name))}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }

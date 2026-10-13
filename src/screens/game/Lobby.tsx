@@ -120,14 +120,17 @@ export function Lobby({ game }: { game: Game }) {
           )}
         </div>
 
-        <div className="tile-flat explainer">
-          <span style={{ fontSize: 30 }} aria-hidden>
-            ⛳
-          </span>
-          <span>
-            <b>Each hole</b>: your strokes ± your challenge, scored over or under par. Lowest total wins.
-          </span>
-        </div>
+        {/* Guests get the one-line rules; the host's lobby stays focused on inviting. */}
+        {!host && (
+          <div className="tile-flat explainer">
+            <span style={{ fontSize: 30 }} aria-hidden>
+              ⛳
+            </span>
+            <span>
+              <b>Each hole</b>: your strokes ± your challenge, scored over or under par. Lowest total wins.
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="screen-foot">

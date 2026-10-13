@@ -129,7 +129,7 @@ export function Final({ game }: { game: Game }) {
               delay={i * 70}
               sub={
                 <>
-                  {row.totals.made}/{row.totals.holes} completed · {row.totals.real} strokes
+                  {row.totals.made}/{row.totals.holes} ✓ · {row.totals.real} strokes
                 </>
               }
             />
