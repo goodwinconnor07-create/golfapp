@@ -475,18 +475,6 @@
   color: var(--ink-2);
 }
 
-.recall {
-  border-radius: 20px;
-  padding: 14px 16px;
-  background: var(--bg-2);
-}
-
-.recall p {
-  margin: 4px 0 0;
-  font-size: 19px;
-  color: var(--ink-2);
-}
-
 .made-missed {
   display: grid;
   grid-template-columns: 1fr 1fr;

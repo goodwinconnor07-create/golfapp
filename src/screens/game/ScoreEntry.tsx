@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { getCard, getEntry, judgeFromStrokes, outcomeChoices, type Game } from '../../game';
+import { cardStakes, getCard, getEntry, judgeFromStrokes, outcomeChoices, type Game } from '../../game';
 import { submitScore } from '../../state/store';
-import { Avatar, StrokePicker, TierChip } from '../../ui/components';
+import { ChallengeCard } from '../../ui/ChallengeCard';
+import { Avatar, StrokePicker } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
 export function ScoreEntry({ game, playerId }: { game: Game; playerId: string }) {
@@ -24,25 +25,16 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
       <div className="screen-body">
         <div className="who">
           <Avatar player={player} size={52} />
-          <div style={{ minWidth: 0 }}>
-            <h1 className="h2">{player.name}</h1>
-            <div className="row" style={{ marginTop: 4, gap: 8 }}>
-              <TierChip tier={entry.tier} />
-              <span className="h3" style={{ fontSize: 19 }}>
-                {card.title}
-              </span>
-            </div>
-          </div>
+          <h1 className="h2" style={{ minWidth: 0 }}>
+            {player.name}
+          </h1>
         </div>
 
         <div className="tile score-tile">
           <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label="Strokes taken" />
         </div>
 
-        <div className="recall">
-          <span className="label">The card</span>
-          <p>{card.pass}</p>
-        </div>
+        <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, h, entry.tier, entry.freePass)} />
       </div>
 
       <div className="screen-foot">
