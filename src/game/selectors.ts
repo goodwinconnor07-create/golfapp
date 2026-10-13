@@ -142,8 +142,8 @@ export function recap(game: Game): Recap {
     awards.push({
       id: 'real',
       emoji: '⛳',
-      title: 'Best real golf',
-      detail: `${plural(realBest[0].totals.real, 'real stroke')}`,
+      title: 'Fewest strokes',
+      detail: `${plural(realBest[0].totals.real, 'stroke')} taken`,
       playerIds: realBest.map((r) => r.player.id),
     });
 
@@ -154,7 +154,13 @@ export function recap(game: Game): Recap {
       1,
     );
     if (sent)
-      awards.push({ id: 'sent', emoji: '🔥', title: 'Sent it', detail: `Made ${plural(sent.value, 'Insane card')}`, playerIds: sent.ids });
+      awards.push({
+        id: 'sent',
+        emoji: '🔥',
+        title: 'Sent it',
+        detail: `Completed ${plural(sent.value, 'Insane challenge')}`,
+        playerIds: sent.ids,
+      });
 
     // Comeback: biggest climb from a player's worst position to where they finished.
     if (holes.length >= 2 && game.players.length >= 2) {
@@ -213,7 +219,7 @@ export function recap(game: Game): Recap {
         id: 'shark',
         emoji: '🎯',
         title: 'Card shark',
-        detail: `Made ${shark.value} of ${plural(holes.length, 'card')}`,
+        detail: `Completed ${shark.value} of ${plural(holes.length, 'challenge')}`,
         playerIds: shark.ids,
       });
 
@@ -229,7 +235,13 @@ export function recap(game: Game): Recap {
       3,
     );
     if (ouch)
-      awards.push({ id: 'ouch', emoji: '😬', title: 'Ouch', detail: `${formatDelta(ouch.value)} from missed cards`, playerIds: ouch.ids });
+      awards.push({
+        id: 'ouch',
+        emoji: '😬',
+        title: 'Ouch',
+        detail: `${formatDelta(ouch.value)} from failed challenges`,
+        playerIds: ouch.ids,
+      });
 
     const safeOnly = totals.filter((x) => x.t.holes >= 3 && x.t.picks.safe === x.t.holes).map((x) => x.id);
     if (safeOnly.length)

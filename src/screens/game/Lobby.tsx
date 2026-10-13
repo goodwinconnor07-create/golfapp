@@ -70,7 +70,7 @@ export function Lobby({ game }: { game: Game }) {
             ⛳
           </span>
           <span>
-            <b>Game score</b> = real strokes, ± your card. Lowest wins. Your real strokes are kept too.
+            <b>Score</b> = strokes taken, ± your challenge. Lowest wins, like golf.
           </span>
         </div>
       </div>

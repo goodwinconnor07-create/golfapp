@@ -13,6 +13,10 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 | The Clean Par    | Reworded to "Finish the hole at par **or better** without taking a penalty stroke", so a clean birdie counts.                                                                                  |
 | Long iron        | A 5-iron or longer. Any hybrid counts too. Shown on the card.                                                                                                                                  |
 
+| One score | One golf-style score everywhere: strokes taken, ± the challenge. Lowest wins. No switching between views; strokes taken show as a small detail line. |
+| Wording | Challenges are **Completed** or **Failed** (not made/missed). |
+| Settled by strokes | When the strokes already prove the result, the app sets it and doesn't offer the other button. This covers par-or-better cards at par, and reach-the-green cards when the hole was finished within that many strokes. Cards that also depend on something else (like "without a penalty stroke") still ask. |
+
 ## Following the spec's recommended defaults
 
 | Topic                | What the app does                                                                                                                                                                                                             |

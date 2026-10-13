@@ -20,11 +20,11 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
     <div className="flash" onClick={clearFlash} role="alert">
       <div className={`flash-card ${flash.outcome} ${missed ? 'shake' : 'pop'}`}>
         <div className="flash-icon">{made ? <CheckIcon /> : missed ? <CrossIcon /> : <MinusIcon />}</div>
-        <p className="flash-title">{made ? 'Made it!' : missed ? 'Missed' : 'No change'}</p>
+        <p className="flash-title">{made ? 'Completed!' : missed ? 'Failed' : 'No change'}</p>
         <p className="flash-calc">{calcText(flash.strokes, flash.delta, flash.gameScore)}</p>
         <p className="flash-name">{flash.name}</p>
         <p className="flash-sub">
-          Game score {formatSigned(flash.gameScore)} · Real strokes {flash.strokes}
+          Score {formatSigned(flash.gameScore)} · {flash.strokes} strokes taken
         </p>
       </div>
     </div>

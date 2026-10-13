@@ -48,7 +48,7 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
                     <Pips n={TIER_LOOK[t].pips} />
                   </span>
                   <span className="tier-btn-stakes">
-                    Make it {formatDelta(def.made)} · Miss it {formatDelta(def.missed)}
+                    Complete {formatDelta(def.made)} · Fail {formatDelta(def.missed)}
                   </span>
                 </span>
                 {tier === t && (

@@ -5,11 +5,11 @@ const STEPS = [
   { color: '#2563eb', title: 'Pick your risk', text: 'Before each hole, choose Safe, Bold or Insane.' },
   { color: '#db2777', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
   { color: '#16a34a', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
-  { color: '#ea580c', title: 'Score it', text: 'Enter your real strokes, then tap if you made the card.' },
+  { color: '#ea580c', title: 'Score it', text: 'Enter the strokes you took, then tap Completed or Failed.' },
   {
     color: '#7c3aed',
-    title: 'Lowest game score wins',
-    text: 'Game score = real strokes, minus strokes if you made your card, plus strokes if you missed.',
+    title: 'Lowest score wins',
+    text: 'Like golf, lowest wins. Your score is the strokes you took, minus strokes if you complete your challenge, plus strokes if you fail it.',
   },
 ];
 
@@ -33,8 +33,8 @@ export function HowToPlay() {
         <div className="stakes-table">
           <div className="row small muted" style={{ padding: '0 12px', fontWeight: 900 }}>
             <span className="spacer" />
-            <span style={{ minWidth: 52, textAlign: 'right' }}>Made</span>
-            <span style={{ minWidth: 52, textAlign: 'right' }}>Missed</span>
+            <span style={{ minWidth: 52, textAlign: 'right' }}>Completed</span>
+            <span style={{ minWidth: 52, textAlign: 'right' }}>Failed</span>
           </div>
           {TIER_ORDER.map((t) => (
             <div className="stakes-row" key={t}>
@@ -48,12 +48,12 @@ export function HowToPlay() {
 
         <div className="tile-flat">
           <p style={{ margin: 0 }}>
-            <b>Example:</b> 5 strokes on a par 3 with a Bold card made: 5 − 4 = <b>game score 1</b>. You still took 5 real shots, and the
-            app keeps both.
+            <b>Example:</b> 5 strokes on a par 3 with a Bold challenge completed: 5 − 4 = <b>score of 1</b>. The app still remembers you
+            took 5 shots.
           </p>
         </div>
         <p className="muted small" style={{ margin: 0 }}>
-          Game score is a party score, not an official golf score or handicap. Distance cards are honour system: one big step is about 3
+          Your score is a party score, not an official golf score or handicap. Distance cards are honour system: one big step is about 3
           feet, or use the course markers.
         </p>
       </div>

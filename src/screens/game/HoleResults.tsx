@@ -31,7 +31,6 @@ export function HoleResults({ game }: { game: Game }) {
               <BoardRow
                 key={row.player.id}
                 row={row}
-                metric="game"
                 delay={i * 70}
                 sub={
                   r && (
@@ -48,10 +47,7 @@ export function HoleResults({ game }: { game: Game }) {
             );
           })}
         </div>
-        <p className="note">Big number = game score so far. Lowest wins.</p>
-        <p className="note">
-          <b>Real strokes:</b> {rows.map((row) => `${row.player.name} ${row.totals.real}`).join(' · ')}
-        </p>
+        <p className="note">Big number = score so far. Lowest wins, like golf.</p>
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" onClick={nextHole}>

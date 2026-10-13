@@ -60,8 +60,9 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   // Leaderboard and scorecard keep real strokes separate from game score.
   await page.getByRole('button', { name: 'Leaderboard' }).click();
   await shot(page, '13-leaderboard');
-  await page.getByRole('tab', { name: 'Real strokes' }).click();
-  await expect(page.locator('.board-total b').first()).toHaveText('5');
+  // One golf-style leaderboard; strokes taken show as a detail line.
+  await expect(page.getByRole('tab')).toHaveCount(0);
+  await expect(page.locator('.board-row', { hasText: 'Sam' })).toContainText('5 strokes');
   await page.getByRole('button', { name: 'Back' }).click();
 
   await page.getByRole('button', { name: 'Fix a score' }).click();
@@ -72,7 +73,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await shot(page, '15-edit');
   await page.getByRole('button', { name: 'More strokes' }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.locator('.sc-total .sc-cell').first()).toHaveText('6');
+  await expect(page.locator('.note', { hasText: 'Strokes taken:' })).toContainText('Sam 6');
   await page.getByRole('button', { name: 'Back' }).click();
 
   await page.getByRole('button', { name: /Next hole/ }).click();
@@ -98,6 +99,6 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
 test('how to play explains the stakes', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'How to play' }).click();
-  await expect(page.getByText('Lowest game score wins')).toBeVisible();
+  await expect(page.getByText('Lowest score wins')).toBeVisible();
   await shot(page, '19-howto');
 });

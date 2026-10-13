@@ -16,8 +16,8 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
 
   const auto = judgeFromStrokes(card, par, strokes);
   const choices = outcomeChoices(card);
-  // The strokes settle it: either the card is judged on strokes alone, or they rule it out.
-  const settled = card.score?.decides || auto === 'missed';
+  // The strokes settle it either way (e.g. par on "Par Hunter" can only be completed), so there's nothing to tap.
+  const settled = auto !== null;
 
   return (
     <>
@@ -36,7 +36,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
         </div>
 
         <div className="tile score-tile">
-          <p className="label">Real strokes</p>
+          <p className="label">Strokes taken</p>
           <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={setStrokes} label="strokes" />
           <p className="score-name">{scoreName(strokes, par)}</p>
         </div>
@@ -52,24 +52,29 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
           <>
             <div className={`auto-result ${auto} pop`} key={auto}>
               {auto === 'made' ? <CheckIcon width={28} height={28} /> : <CrossIcon width={28} height={28} />}
-              {auto === 'made' ? 'Made it' : 'Missed it'}
-              <small>{card.score?.decides ? '· your strokes decide this one' : '· too many strokes for this card'}</small>
+              {auto === 'made' ? 'Completed' : 'Failed'}
+              <small>{auto === 'made' ? '· your strokes prove it' : '· not possible with that many strokes'}</small>
             </div>
             <button type="button" className="btn btn-xl btn-dark" onClick={() => submitScore(playerId, h, strokes)}>
               Save score
             </button>
+            {card.situational && (
+              <button type="button" className="btn btn-ghost" onClick={() => submitScore(playerId, h, strokes, 'na')}>
+                It didn't happen (no change)
+              </button>
+            )}
           </>
         ) : (
           <>
             <p className="label" style={{ textAlign: 'center' }}>
-              Did {player.name} make the card?
+              Did {player.name} complete the challenge?
             </p>
             <div className="made-missed">
               <button type="button" className="btn btn-xl btn-green" onClick={() => submitScore(playerId, h, strokes, 'made')}>
-                <CheckIcon /> Made it
+                <CheckIcon /> Completed
               </button>
               <button type="button" className="btn btn-xl btn-red" onClick={() => submitScore(playerId, h, strokes, 'missed')}>
-                <CrossIcon /> Missed
+                <CrossIcon /> Failed
               </button>
             </div>
             {choices.includes('na') && (

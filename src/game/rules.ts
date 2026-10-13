@@ -28,9 +28,12 @@ export function eligibleCards(tier: Tier, par: Par, settings: Settings): CardDef
  * 'made' / 'missed' when the strokes settle it, null when a player has to call it.
  */
 export function judgeFromStrokes(card: CardDef, par: Par, strokes: number): 'made' | 'missed' | null {
-  if (!card.score) return null;
-  if (strokes - par > card.score.maxToPar) return 'missed';
-  return card.score.decides ? 'made' : null;
+  if (card.score && strokes - par > card.score.maxToPar) return 'missed';
+  const within = card.doneWithin;
+  if (within && ((within.strokes != null && strokes <= within.strokes) || (within.toPar != null && strokes - par <= within.toPar))) {
+    return 'made';
+  }
+  return card.score?.decides ? 'made' : null;
 }
 
 /** Outcomes a player can tap for this card. Empty when the strokes decide it. */

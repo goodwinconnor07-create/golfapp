@@ -62,8 +62,8 @@ export function OptionsSheet() {
         <Toggle
           on={game.settings.tiebreakOnStrokes}
           disabled={!host}
-          title="Break ties on real strokes"
-          detail="Off: equal game scores share the place."
+          title="Break ties on strokes taken"
+          detail="Off: equal scores share the place."
           onChange={(v) => set({ tiebreakOnStrokes: v })}
         />
       </div>

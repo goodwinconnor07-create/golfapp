@@ -7,6 +7,7 @@ import {
   entryKey,
   getCard,
   holeResult,
+  judgeFromStrokes,
   makeHoles,
   parseAction,
   recap,
@@ -146,6 +147,18 @@ describe('scoring (spec section 12)', () => {
     expect(holeResult(g, 'player00', 0)!.outcome).toBe('missed');
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 4, outcome: 'made' });
     expect(holeResult(g, 'player00', 0)!.outcome).toBe('made');
+  });
+
+  it('completes reach-the-green cards when the strokes prove it, and offers no fail', () => {
+    let g = run(newGame(['Sam'], [4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'B05'); // Green in Regulation: green in par minus 1
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 3, outcome: 'missed' });
+    expect(holeResult(g, 'player00', 0)!.outcome).toBe('made');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'missed' });
+    expect(holeResult(g, 'player00', 0)!.outcome).toBe('missed');
+    expect(judgeFromStrokes(getCard('B05')!, 4, 5)).toBeNull();
+    expect(judgeFromStrokes(getCard('B01')!, 4, 4)).toBe('made'); // Par Hunter at par
+    expect(judgeFromStrokes(getCard('B01')!, 4, 5)).toBe('missed');
   });
 
   it("gives no change when a situational card's situation never happens", () => {

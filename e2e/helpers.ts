@@ -44,7 +44,7 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   await expect(value).toHaveText(String(strokes));
   const save = page.getByRole('button', { name: 'Save score' });
   if (await save.isVisible()) await save.click();
-  else await page.getByRole('button', { name: made ? /Made it/ : /Missed/ }).click();
+  else await page.getByRole('button', { name: made ? /Completed/ : /Failed/ }).click();
   // Dismiss the result splash.
   const flash = page.locator('.flash');
   await expect(flash).toBeVisible();

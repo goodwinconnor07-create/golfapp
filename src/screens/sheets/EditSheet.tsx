@@ -20,7 +20,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const choices = outcomeChoices(card);
   const effective: Outcome | undefined = card.situational && outcome === 'na' ? 'na' : (auto ?? outcome);
   const adjustment = effective ? adjustmentFor(entry.tier, effective) : null;
-  const showChoices = choices.length > 0 && auto !== 'missed';
+  const showChoices = choices.length > 0 && auto === null;
 
   const save = () => {
     if (submitScore(playerId, hole, strokes, outcome, false)) {
@@ -34,7 +34,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
       <div className="stack" style={{ gap: 14 }}>
         <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} />
         <div className="center">
-          <p className="label">Real strokes · par {par}</p>
+          <p className="label">Strokes taken · par {par}</p>
           <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={setStrokes} label="strokes" />
           <p className="score-name">{scoreName(strokes, par)}</p>
         </div>
@@ -47,7 +47,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
                 aria-pressed={effective === 'made'}
                 onClick={() => setOutcome('made')}
               >
-                Made it
+                Completed
               </button>
               <button
                 type="button"
@@ -55,7 +55,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
                 aria-pressed={effective === 'missed'}
                 onClick={() => setOutcome('missed')}
               >
-                Missed
+                Failed
               </button>
             </div>
             {choices.includes('na') && (
@@ -70,10 +70,12 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
             )}
           </>
         ) : (
-          <div className={`auto-result ${auto}`}>{auto === 'made' ? 'Made it (by strokes)' : 'Missed (by strokes)'}</div>
+          <div className={`auto-result ${auto}`}>
+            {auto === 'made' ? 'Completed (your strokes prove it)' : 'Failed (not possible with that many strokes)'}
+          </div>
         )}
         <p className="h2 center num" style={{ margin: '4px 0' }}>
-          {adjustment != null ? `${calcText(strokes, adjustment, strokes + adjustment)}` : 'Made it or missed?'}
+          {adjustment != null ? `${calcText(strokes, adjustment, strokes + adjustment)}` : 'Completed or failed?'}
         </p>
         <button type="button" className="btn btn-xl btn-dark" disabled={!effective} onClick={save}>
           Save

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { completedHoles, formatSigned, getEntry, holeResult, playerTotals } from '../game';
 import { openSheet, useApp } from '../state/store';
 import { isHost } from '../state/view';
@@ -7,7 +6,6 @@ import { Avatar, BackBar, TIER_LOOK } from '../ui/components';
 export function Scorecard() {
   const game = useApp((s) => s.game);
   const deviceId = useApp((s) => s.deviceId);
-  const [tab, setTab] = useState<'real' | 'game'>('real');
   if (!game) return null;
 
   const host = isHost(game, deviceId);
@@ -19,26 +17,6 @@ export function Scorecard() {
     <div className="screen">
       <BackBar title="Scorecard" />
       <div className="screen-body">
-        <div className="segmented" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'real'}
-            className={tab === 'real' ? 'on' : ''}
-            onClick={() => setTab('real')}
-          >
-            Real strokes
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'game'}
-            className={tab === 'game' ? 'on' : ''}
-            onClick={() => setTab('game')}
-          >
-            Game score
-          </button>
-        </div>
         <p className="note">Tap a score to fix it.</p>
 
         <div className="sc-wrap">
@@ -93,11 +71,11 @@ export function Scorecard() {
                     const entry = getEntry(game, p.id, i);
                     const r = holeResult(game, p.id, i);
                     const editable = i <= lastPlayed && Boolean(entry?.cardId) && game.status !== 'lobby';
-                    const value = r ? (tab === 'real' ? r.strokes : formatSigned(r.gameScore)) : (entry?.strokes ?? '·');
-                    const cls = r ? (tab === 'game' ? r.outcome : '') : 'empty';
+                    const value = r ? formatSigned(r.gameScore) : '·';
+                    const cls = r ? r.outcome : 'empty';
                     const inner = (
                       <>
-                        {tab === 'game' && r && <span className="dot" style={{ background: TIER_LOOK[r.tier].color }} />}
+                        {r && <span className="dot" style={{ background: TIER_LOOK[r.tier].color }} />}
                         {value}
                       </>
                     );
@@ -131,14 +109,17 @@ export function Scorecard() {
                 <td />
                 {totals.map((t, j) => (
                   <td key={game.players[j].id}>
-                    <span className="sc-cell">{tab === 'real' ? t.real : formatSigned(t.game)}</span>
+                    <span className="sc-cell">{formatSigned(t.game)}</span>
                   </td>
                 ))}
               </tr>
             </tbody>
           </table>
         </div>
-        {tab === 'game' && <p className="note">Green = card made, red = missed. The dot shows the level.</p>}
+        <p className="note">Green = challenge completed, red = failed. The dot shows the level. Lowest score wins.</p>
+        <p className="note">
+          <b>Strokes taken:</b> {game.players.map((p, j) => `${p.name} ${totals[j].real}`).join(' · ')}
+        </p>
       </div>
     </div>
   );

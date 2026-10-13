@@ -14,12 +14,10 @@ function shareText(game: Game, rc: Recap): string {
   const lines = [`⛳ Send It${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
   if (rc.winners.length) {
     const who = joinNames(rc.winners.map((w) => w.player.name));
-    lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} on game score ${formatSigned(rc.winners[0].totals.game)}`);
+    lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} with a score of ${formatSigned(rc.winners[0].totals.game)}`);
   }
-  lines.push('', 'Game score (lowest wins):');
+  lines.push('', 'Scores (lowest wins):');
   for (const r of rc.byGame) lines.push(`${r.tied ? '=' : ''}${r.rank}. ${r.player.name}: ${formatSigned(r.totals.game)}`);
-  lines.push('', 'Real strokes:');
-  for (const r of rc.byReal) lines.push(`${r.tied ? '=' : ''}${r.rank}. ${r.player.name}: ${r.totals.real}`);
   const extras = rc.awards.filter((a) => a.id !== 'real');
   if (extras.length) lines.push('');
   for (const a of extras) lines.push(`${a.emoji} ${a.title}: ${names(game, a.playerIds)} (${a.detail})`);
@@ -67,7 +65,7 @@ export function Final({ game }: { game: Game }) {
               {rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`}
             </h1>
             <p className="h3 muted" style={{ margin: 0 }}>
-              Game score {formatSigned(rc.winners[0].totals.game)} over {plural(rc.holesPlayed, 'hole')}
+              Score {formatSigned(rc.winners[0].totals.game)} over {plural(rc.holesPlayed, 'hole')}
             </p>
           </div>
         ) : (
@@ -78,27 +76,19 @@ export function Final({ game }: { game: Game }) {
           </div>
         )}
 
-        <p className="section-title">Game score · lowest wins</p>
+        <p className="section-title">Scores · lowest wins</p>
         <div className="board">
           {rc.byGame.map((row, i) => (
             <BoardRow
               key={row.player.id}
               row={row}
-              metric="game"
               delay={i * 70}
               sub={
                 <>
-                  Made {row.totals.made} of {plural(row.totals.holes, 'card')}
+                  {row.totals.made}/{row.totals.holes} completed · {row.totals.real} strokes
                 </>
               }
             />
-          ))}
-        </div>
-
-        <p className="section-title">Real strokes</p>
-        <div className="board">
-          {rc.byReal.map((row) => (
-            <BoardRow key={row.player.id} row={row} metric="real" />
           ))}
         </div>
 
@@ -122,7 +112,7 @@ export function Final({ game }: { game: Game }) {
 
         {rc.highlights.length > 0 && (
           <>
-            <p className="section-title">Insane cards made</p>
+            <p className="section-title">Insane challenges completed</p>
             {rc.highlights.map((h) => (
               <div key={`${h.playerId}-${h.hole}`} className="highlight">
                 <BoltIcon width={24} height={24} style={{ color: 'var(--insane)', flex: 'none' }} />
