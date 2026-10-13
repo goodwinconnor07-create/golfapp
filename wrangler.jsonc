@@ -13,8 +13,15 @@
     "run_worker_first": ["/api/*"],
   },
   "durable_objects": {
-    "bindings": [{ "name": "GAME_ROOM", "class_name": "GameRoom" }],
+    "bindings": [
+      { "name": "GAME_ROOM", "class_name": "GameRoom" },
+      // Saved course lookups, so GolfCourseAPI is asked about each course once.
+      { "name": "COURSE_STORE", "class_name": "CourseStore" },
+    ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["GameRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["CourseStore"] },
+  ],
   "observability": { "enabled": true },
 }

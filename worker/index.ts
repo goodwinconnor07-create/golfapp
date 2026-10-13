@@ -3,6 +3,7 @@ import { cryptoRng, isCode, isDeviceId, newCode, sanitizeUpload, type CreateGame
 import { handleCourses } from './courses';
 
 export { GameRoom } from './room';
+export { CourseStore } from './courseStore';
 
 const MAX_BODY_CHARS = 64 * 1024;
 

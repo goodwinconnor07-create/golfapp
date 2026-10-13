@@ -1,5 +1,6 @@
 // Golf course lookup for the setup screen. The app only ever talks to this Worker,
-// which calls the course data sources and caches their answers for a day.
+// which calls the course data sources and saves their answers (see CourseStore), so the
+// same course or search only costs one GolfCourseAPI lookup.
 //
 // Only GolfCourseAPI (https://golfcourseapi.com, ~30,000 courses worldwide) goes through here,
 // because its key must stay secret (sent as "Authorization: Bearer <key>"). It's off until the GOLFCOURSE_API_KEY secret is set
@@ -86,6 +87,30 @@ async function detailGolfCourse(id: string, key: string): Promise<CourseDetail> 
   };
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Hole pars rarely change, so a saved course is reused for six months. */
+const COURSE_KEEP_MS = 180 * DAY_MS;
+/** Searches are refreshed sooner so newly added courses turn up. */
+const SEARCH_KEEP_MS = 30 * DAY_MS;
+
+/** Returns the saved answer for key, or runs load() once and saves what it returns. */
+async function saved<T>(env: CourseEnv, key: string, keepMs: number, load: () => Promise<T>): Promise<T> {
+  const store = env.COURSE_STORE.getByName('courses');
+  try {
+    const hit = await store.get(key, keepMs);
+    if (hit) return JSON.parse(hit) as T;
+  } catch (e) {
+    console.warn('course store read failed', String(e));
+  }
+  const value = await load();
+  try {
+    await store.put(key, JSON.stringify(value));
+  } catch (e) {
+    console.warn('course store write failed', String(e));
+  }
+  return value;
+}
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -102,7 +127,9 @@ export async function handleCourses(request: Request, env: CourseEnv, pathname: 
       const q = (new URL(request.url).searchParams.get('q') ?? '').trim().slice(0, 60);
       if (q.length < 3) return json({ courses: [] });
       if (!key) return json({ courses: [] });
-      const results = await Promise.allSettled([searchGolfCourse(q, key)]);
+      const results = await Promise.allSettled([
+        saved(env, `search:${q.toLowerCase().replace(/\s+/g, ' ')}`, SEARCH_KEEP_MS, () => searchGolfCourse(q, key)),
+      ]);
       for (const r of results) if (r.status === 'rejected') console.warn('course search failed', String(r.reason));
       const courses = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).filter((c) => c.name);
       if (results.every((r) => r.status === 'rejected')) return json({ error: "Course search isn't answering right now." }, 502);
@@ -111,7 +138,7 @@ export async function handleCourses(request: Request, env: CourseEnv, pathname: 
     const m = pathname.match(/^\/api\/courses\/gc:([A-Za-z0-9-]{1,64})$/);
     if (!m) return json({ error: 'Not found.' }, 404);
     if (!key) return json({ error: 'That course source is switched off.' }, 404);
-    return json(await detailGolfCourse(m[1], key));
+    return json(await saved(env, `course:${m[1]}`, COURSE_KEEP_MS, () => detailGolfCourse(m[1], key)));
   } catch (e) {
     console.warn('course lookup failed', String(e));
     return json({ error: "Couldn't load that course right now." }, 502);
