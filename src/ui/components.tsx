@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
 import { formatDelta, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
-import { haptic, reducedMotion } from './effects';
+import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
 
@@ -121,7 +121,7 @@ export function StrokePicker({
   return (
     <div className={`stroke-picker tone-${look.tone}`}>
       {label && <p className="label">{label}</p>}
-      <StrokeWheel value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={set} />
+      <StrokeDial value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} par={par} onChange={set} />
       <p key={look.tone} className="score-name pop" aria-live="polite">
         <span className="score-emoji" aria-hidden>
           {look.emoji}
@@ -132,187 +132,144 @@ export function StrokePicker({
   );
 }
 
+const DIAL_STEP = 30; // degrees per stroke: 12 notches a lap, like a clock
+const DIAL_SIZE = 260;
+const DIAL_R = 104; // ring radius
+const DIAL_C = DIAL_SIZE / 2;
+
+/** Point on the ring at an angle (0° = 12 o'clock, clockwise). */
+function ringPoint(deg: number, r = DIAL_R): [number, number] {
+  const rad = ((deg - 90) * Math.PI) / 180;
+  return [DIAL_C + r * Math.cos(rad), DIAL_C + r * Math.sin(rad)];
+}
+
+/** SVG arc from 12 o'clock round to `deg` (up to a full circle). */
+function arcPath(deg: number): string {
+  const d = Math.max(0, Math.min(359.99, deg));
+  if (d <= 0) return '';
+  const [x0, y0] = ringPoint(0);
+  const [x1, y1] = ringPoint(d);
+  return `M ${x0} ${y0} A ${DIAL_R} ${DIAL_R} 0 ${d > 180 ? 1 : 0} 1 ${x1} ${y1}`;
+}
+
 /**
- * Sideways number wheel: swipe or tap a number. It snaps to whole numbers, ticks as it
- * passes each one, and numbers away from the middle shrink, fade and tuck behind it.
- * Small arrows either side do the same as a swipe, for anyone who prefers tapping.
+ * Combination-lock style dial: the stroke count sits in the middle and you drag the knob
+ * round the ring to change it. Each notch (30°, 12 a lap like a clock) clicks with a buzz.
+ * Going past 12 carries on round to 13+. The ring fills in the score's colour.
  */
-export function StrokeWheel({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (v: number) => void }) {
-  const track = useRef<HTMLDivElement>(null);
-  const items = useRef<(HTMLButtonElement | null)[]>([]);
-  const current = useRef(value);
-  // While the wheel glides to a number picked with the arrows or a tap, the numbers it
-  // passes on the way must not count as picks.
-  const target = useRef<number | null>(null);
-  const targetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // Our own snapping: once a swipe stops, glide to the nearest whole number.
-  // (Built-in scroll snapping measures the shrunken numbers and lands off centre.)
-  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+export function StrokeDial({
+  value,
+  min,
+  max,
+  par,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  par: number;
+  onChange: (v: number) => void;
+}) {
+  const svg = useRef<SVGSVGElement>(null);
+  const drag = useRef<{ startValue: number; lastAngle: number; turned: number } | null>(null);
+  const [live, setLive] = useState<number | null>(null); // knob angle while dragging
+  const [bump, setBump] = useState(0);
 
-  // Measured from the real layout, so fonts and sizes can't knock the wheel off centre.
-  const offsetFor = (v: number) => {
-    const el = track.current;
-    const item = items.current[v - min];
-    if (!el || !item) return 0;
-    return item.offsetLeft + item.offsetWidth / 2 - el.clientWidth / 2;
-  };
-  /** Fractional index of the number in the middle right now. */
-  const centreIndex = () => {
-    const el = track.current;
-    const first = items.current[0];
-    if (!el || !first) return value - min;
-    const pitch = items.current[1] ? items.current[1].offsetLeft - first.offsetLeft : first.offsetWidth;
-    return (el.scrollLeft - offsetFor(min)) / pitch;
+  const angleAt = (e: { clientX: number; clientY: number }) => {
+    const box = svg.current!.getBoundingClientRect();
+    const x = e.clientX - (box.left + box.width / 2);
+    const y = e.clientY - (box.top + box.height / 2);
+    return ((Math.atan2(y, x) * 180) / Math.PI + 90 + 360) % 360;
   };
 
-  // Shrink, fade and overlap each number by how far it is from the middle.
-  const paint = () => {
-    const centre = centreIndex();
-    items.current.forEach((item, i) => {
-      if (!item) return;
-      const d = i - centre;
-      const a = Math.min(Math.abs(d), 3);
-      // Pulled in towards the middle so neighbours tuck behind the picked number.
-      item.style.transform = `translateX(${-Math.sign(d) * (a * 8 + a * a * 5)}px) scale(${1 - a * 0.26})`;
-      item.style.opacity = String(Math.max(0.12, 1 - a * 0.34));
-      item.style.zIndex = String(10 - Math.round(a));
-    });
+  const set = (v: number) => {
+    const next = Math.min(max, Math.max(min, v));
+    if (next === value) return;
+    haptic('light');
+    setBump((b) => b + 1);
+    onChange(next);
   };
 
-  /** End a glide by landing exactly on its number, so the wheel always shows the value. */
-  const finishGlide = () => {
-    const el = track.current;
-    const v = target.current;
-    clearTimeout(targetTimer.current);
-    target.current = null;
-    if (el && v !== null && Math.abs(el.scrollLeft - offsetFor(v)) > 1) el.scrollLeft = offsetFor(v);
+  const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    svg.current?.setPointerCapture(e.pointerId);
+    drag.current = { startValue: value, lastAngle: angleAt(e), turned: 0 };
+    setLive(value * DIAL_STEP);
   };
 
-  const scrollTo = (v: number, smooth: boolean) => {
-    const el = track.current;
-    if (!el) return;
-    clearTimeout(targetTimer.current);
-    if (!smooth || reducedMotion()) {
-      // A jump passes no numbers on the way, so nothing to ignore.
-      target.current = null;
-      el.scrollLeft = offsetFor(v);
-      return;
-    }
-    target.current = v;
-    // Safety net if the glide is slow or never quite lands.
-    targetTimer.current = setTimeout(finishGlide, 900);
-    el.scrollTo({ left: offsetFor(v), behavior: 'smooth' });
+  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const a = angleAt(e);
+    let delta = a - d.lastAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    d.lastAngle = a;
+    // Stop the knob at the ends instead of letting it wind past them.
+    const lo = (min - d.startValue) * DIAL_STEP;
+    const hi = (max - d.startValue) * DIAL_STEP;
+    d.turned = Math.min(hi, Math.max(lo, d.turned + delta));
+    setLive(d.startValue * DIAL_STEP + d.turned);
+    set(d.startValue + Math.round(d.turned / DIAL_STEP));
   };
 
-  // Start on the current value, and stay centred if the layout shifts (fonts, rotation).
-  useEffect(() => {
-    scrollTo(value, false);
-    paint();
-    const el = track.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => {
-      scrollTo(current.current, false);
-      paint();
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Follow changes made outside a swipe (the arrows, or a tap on a number).
-  useEffect(() => {
-    const shown = Math.round(centreIndex()) + min;
-    if (shown !== value) scrollTo(value, true);
-    current.current = value;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
-  const onScroll = () => {
-    paint();
-    const el = track.current;
-    if (!el) return;
-    const v = Math.min(max, Math.max(min, Math.round(centreIndex()) + min));
-    if (target.current !== null) {
-      if (v === target.current && Math.abs(el.scrollLeft - offsetFor(v)) < 2) finishGlide();
-      return;
-    }
-    if (v !== current.current) {
-      current.current = v;
-      haptic('light');
-      onChange(v);
-    }
-    clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(() => {
-      if (target.current === null && Math.abs(el.scrollLeft - offsetFor(current.current)) > 1) scrollTo(current.current, true);
-    }, 110);
+  const onUp = () => {
+    drag.current = null;
+    setLive(null); // the knob snaps to the notch
   };
 
-  const step = (v: number) => {
-    if (v < min || v > max) return;
-    current.current = v;
-    onChange(v);
-    scrollTo(v, true);
-  };
+  const knobDeg = live ?? value * DIAL_STEP;
+  const [kx, ky] = ringPoint(knobDeg);
+  const fill = live ?? value * DIAL_STEP;
+  const lapped = value > 12;
+  const [px, py] = ringPoint(par * DIAL_STEP, DIAL_R + 26);
 
   return (
-    <div className="wheel" role="group" aria-label="strokes">
-      <button
-        type="button"
-        className="wheel-arrow press"
-        aria-label="Fewer strokes"
-        disabled={value <= min}
-        onClick={() => step(value - 1)}
-      >
-        <BackIcon />
-      </button>
-      <div
-        className="wheel-track"
-        ref={track}
-        onScroll={onScroll}
-        onScrollEnd={() => {
-          if (target.current !== null) finishGlide();
-        }}
-        // A finger on the wheel takes over from any glide in progress.
-        onPointerDown={() => {
-          target.current = null;
-        }}
-        tabIndex={0}
+    <div className="dial">
+      <svg
+        ref={svg}
+        className={`dial-svg ${live !== null ? 'turning' : ''}`}
+        viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
         role="slider"
         aria-label="Strokes taken"
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}
+        tabIndex={0}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowLeft') step(value - 1);
-          if (e.key === 'ArrowRight') step(value + 1);
+          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') set(value + 1);
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') set(value - 1);
         }}
       >
-        {numbers.map((n, i) => (
-          <button
-            key={n}
-            ref={(el) => {
-              items.current[i] = el;
-            }}
-            type="button"
-            tabIndex={-1}
-            aria-hidden={n !== value}
-            className={`wheel-item ${n === value ? 'stepper-value selected' : ''}`}
-            onClick={() => step(n)}
-          >
-            {n}
-          </button>
-        ))}
+        <circle className={`dial-track ${lapped ? 'lapped' : ''}`} cx={DIAL_C} cy={DIAL_C} r={DIAL_R} />
+        <path className="dial-fill" d={arcPath(lapped ? fill - 360 : fill)} />
+        {Array.from({ length: 12 }, (_, i) => {
+          const [x0, y0] = ringPoint(i * DIAL_STEP, DIAL_R - 20);
+          const [x1, y1] = ringPoint(i * DIAL_STEP, DIAL_R - 13);
+          return <line key={i} className="dial-tick" x1={x0} y1={y0} x2={x1} y2={y1} />;
+        })}
+        <text className="dial-par" x={px} y={py} textAnchor="middle" dominantBaseline="central">
+          ⛳
+        </text>
+        <circle className="dial-knob" cx={kx} cy={ky} r={21} />
+        <circle className="dial-knob-dot" cx={kx} cy={ky} r={6} />
+      </svg>
+      <div className="dial-centre" aria-hidden>
+        <span key={bump} className={`stepper-value dial-value ${bump ? 'bump' : ''}`}>
+          {value}
+        </span>
       </div>
-      <button
-        type="button"
-        className="wheel-arrow wheel-arrow-right press"
-        aria-label="More strokes"
-        disabled={value >= max}
-        onClick={() => step(value + 1)}
-      >
-        <BackIcon />
-      </button>
+      <div className="dial-steps">
+        <button type="button" className="dial-step press" aria-label="Fewer strokes" disabled={value <= min} onClick={() => set(value - 1)}>
+          <MinusIcon />
+        </button>
+        <button type="button" className="dial-step press" aria-label="More strokes" disabled={value >= max} onClick={() => set(value + 1)}>
+          <PlusIcon />
+        </button>
+      </div>
     </div>
   );
 }
