@@ -1166,3 +1166,108 @@
   font-weight: 800;
   color: var(--ink-3);
 }
+
+/* Past games: a small corner button on Home, and the list it opens. */
+
+.home-corner {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 14px);
+  right: 16px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ink-3);
+  background: transparent;
+}
+
+.history-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--bg-2);
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.history-head,
+.history-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-trophy {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(150deg, #fbbf24, #f59e0b);
+}
+
+.history-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-text b {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.history-text small {
+  color: var(--ink-3);
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-score {
+  font-size: 24px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 2px solid rgba(0, 0, 0, 0.06);
+  animation: fade-in 0.15s ease-out;
+}
+
+.history-rank {
+  width: 18px;
+  color: var(--ink-3);
+  font-weight: 900;
+  text-align: center;
+}
+
+.history-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-player b {
+  min-width: 44px;
+  text-align: right;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}

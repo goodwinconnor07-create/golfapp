@@ -11,6 +11,7 @@ import {
   getEntry,
   cryptoRng,
   holeResult,
+  standings,
   newId,
   normalizeCode,
   type Action,
@@ -25,7 +26,16 @@ import {
 import { haptic } from '../ui/effects';
 import { checkServer, createOnlineGame } from './api';
 import { Connection, type ConnStatus } from './connection';
-import { loadDeviceId, loadName, loadSession, saveName, saveSession, type Session } from './persist';
+import {
+  clearHistory as clearSavedHistory,
+  loadDeviceId,
+  loadName,
+  loadSession,
+  saveName,
+  saveRecord,
+  saveSession,
+  type Session,
+} from './persist';
 import { freshUi, type HoleUi } from './view';
 
 export type Route =
@@ -38,7 +48,8 @@ export type Route =
   | { name: 'joinWho'; info: GameInfo }
   | { name: 'game' }
   | { name: 'leaderboard' }
-  | { name: 'scorecard' };
+  | { name: 'scorecard' }
+  | { name: 'history' };
 
 export type Sheet =
   | { name: 'invite' }
@@ -223,9 +234,44 @@ export function clearFlash(): void {
 
 let conn: Connection | null = null;
 
+/** Keeps a summary of every finished round on this phone, for the History screen. */
+function recordIfFinished(game: Game | null): void {
+  if (game?.status !== 'finished') return;
+  const rows = standings(game);
+  if (!rows.some((r) => r.totals.holes > 0)) return;
+  saveRecord({
+    id: game.id,
+    finishedAt: game.updatedAt,
+    course: game.course,
+    // Holes actually played: a round can be finished early.
+    holes: Math.max(...rows.map((r) => r.totals.holes)),
+    players: rows.map((r) => ({
+      name: r.player.name,
+      color: r.player.color,
+      rank: r.rank,
+      toPar: r.totals.toPar,
+      strokes: r.totals.real,
+    })),
+  });
+}
+
+export function clearHistory(onCleared: () => void): void {
+  confirm({
+    title: 'Clear past games?',
+    body: 'This removes every saved round from this phone.',
+    confirm: 'Clear',
+    danger: true,
+    onConfirm: () => {
+      clearSavedHistory();
+      onCleared();
+    },
+  });
+}
+
 function setSession(session: Session | null): void {
   saveSession(session);
   const game = predictedGame(session, state.deviceId);
+  recordIfFinished(game);
   let ui = state.ui;
   if (!game || ui.gameId !== game.id || ui.hole !== game.current) ui = freshUi(game);
   set({ session, game, ui });

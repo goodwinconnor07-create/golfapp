@@ -1,6 +1,6 @@
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
-import { ArrowIcon, BallIcon, TrophyIcon } from '../ui/Icons';
+import { ArrowIcon, BallIcon, ClockIcon, TrophyIcon } from '../ui/Icons';
 
 export function Home() {
   const game = useApp((s) => s.game);
@@ -11,6 +11,9 @@ export function Home() {
   return (
     <div className="screen">
       <Blobs />
+      <button type="button" className="icon-btn press home-corner" aria-label="Past games" onClick={() => navigate({ name: 'history' })}>
+        <ClockIcon width={24} height={24} />
+      </button>
       <div className="screen-body">
         <div className="home-hero center">
           <div className="home-icon" aria-hidden>

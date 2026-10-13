@@ -6,6 +6,7 @@ const KEYS = {
   device: 'sendit.device',
   name: 'sendit.name',
   session: 'sendit.session',
+  history: 'sendit.history',
 } as const;
 
 export interface PendingAction {
@@ -68,4 +69,33 @@ export function loadSession(): Session | null {
 
 export function saveSession(session: Session | null): void {
   write(KEYS.session, session);
+}
+
+/** A finished round, kept small so many fit in storage. */
+export interface GameRecord {
+  /** The game's id, so a round re-saved after a score fix replaces itself. */
+  id: string;
+  finishedAt: number;
+  course: string;
+  holes: number;
+  /** In finishing order. */
+  players: { name: string; color: number; rank: number; toPar: number; strokes: number }[];
+}
+
+const MAX_RECORDS = 50;
+
+export function loadHistory(): GameRecord[] {
+  const list = read<GameRecord[]>(KEYS.history);
+  return Array.isArray(list) ? list.filter((r) => r && typeof r.id === 'string' && Array.isArray(r.players)) : [];
+}
+
+/** Adds or updates a round, newest first. */
+export function saveRecord(record: GameRecord): GameRecord[] {
+  const list = [record, ...loadHistory().filter((r) => r.id !== record.id)].slice(0, MAX_RECORDS);
+  write(KEYS.history, list);
+  return list;
+}
+
+export function clearHistory(): void {
+  write(KEYS.history, null);
 }

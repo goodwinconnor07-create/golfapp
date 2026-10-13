@@ -179,3 +179,10 @@ export const BallIcon = (p: P) => (
     </g>
   </svg>
 );
+
+export const ClockIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <circle cx="12" cy="12" r="8.6" />
+    <path d="M12 7.4V12l3.2 2" />
+  </svg>
+);

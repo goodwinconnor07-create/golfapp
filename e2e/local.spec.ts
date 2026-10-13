@@ -96,6 +96,19 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   // The game survives a reload.
   await page.reload();
   await expect(page.getByText(/wins!|tie!/).or(page.getByText('SEND IT'))).toBeVisible();
+
+  // The round is saved in Past games, behind the small clock button on Home.
+  await page.goto('/');
+  if (!(await page.getByRole('button', { name: 'Past games' }).isVisible())) {
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('button', { name: 'Home' }).click();
+  }
+  await page.getByRole('button', { name: 'Past games' }).click();
+  const round = page.locator('.history-row');
+  await expect(round).toHaveCount(1);
+  await round.click();
+  await expect(round.locator('.history-player')).toHaveCount(2);
+  await shot(page, '28-past-games');
 });
 
 test('how to play explains the stakes', async ({ page }) => {

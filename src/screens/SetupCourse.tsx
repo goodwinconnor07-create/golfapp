@@ -129,7 +129,9 @@ export function SetupCourse() {
             </button>
           ))}
         </div>
-        {results.length > 0 && <p className="note small">Course data from GolfCourseAPI, and © OpenStreetMap contributors (ODbL) via OpenGolfAPI.</p>}
+        {results.length > 0 && (
+          <p className="note small">Course data from GolfCourseAPI, and © OpenStreetMap contributors (ODbL) via OpenGolfAPI.</p>
+        )}
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-ghost" onClick={skip}>

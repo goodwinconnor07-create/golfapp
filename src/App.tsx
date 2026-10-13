@@ -9,6 +9,7 @@ import { Join, JoinWho } from './screens/Join';
 import { GameScreen } from './screens/game/GameScreen';
 import { Leaderboard } from './screens/Leaderboard';
 import { Scorecard } from './screens/Scorecard';
+import { History } from './screens/History';
 import { SheetHost } from './screens/sheets/SheetHost';
 import { ScoreFlash } from './screens/game/ScoreFlash';
 
@@ -49,6 +50,9 @@ export function App() {
       break;
     case 'scorecard':
       screen = <Scorecard />;
+      break;
+    case 'history':
+      screen = <History />;
       break;
   }
 
