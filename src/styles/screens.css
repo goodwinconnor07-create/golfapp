@@ -1843,3 +1843,93 @@
 .score-tile .stroke-picker {
   padding: 16px 8px 14px;
 }
+
+/* Stroke wheel: swipe sideways, snaps to each number, neighbours shrink and overlap. */
+.wheel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.wheel-track {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding: 6px calc(50% - 38px);
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  outline: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+}
+
+.wheel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  flex: none;
+  position: relative;
+  width: 76px;
+  height: 116px;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 104px;
+  font-weight: 900;
+  line-height: 116px;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--tone, var(--ink));
+  transform-origin: center;
+  will-change: transform, opacity;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wheel-item:not(.selected) {
+  color: var(--ink-3);
+}
+
+.wheel-arrow {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin-top: -22px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-2);
+  z-index: 2;
+}
+
+.wheel-arrow svg {
+  width: 22px;
+  height: 22px;
+}
+
+.wheel-arrow-right {
+  left: auto;
+  right: 0;
+}
+
+.wheel-arrow-right svg {
+  transform: scaleX(-1);
+}
+
+.wheel-arrow:disabled {
+  opacity: 0.3;
+}
+
+/* The picked number keeps the wheel's width, not the old counter's minimum width. */
+.wheel-item.stepper-value {
+  min-width: 0;
+}

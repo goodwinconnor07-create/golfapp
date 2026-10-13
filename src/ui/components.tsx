@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
 import { formatDelta, LIMITS, TIERS, type Par, type Player, type Tier } from '../game';
-import { haptic } from './effects';
+import { haptic, reducedMotion } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
 
@@ -121,13 +121,198 @@ export function StrokePicker({
   return (
     <div className={`stroke-picker tone-${look.tone}`}>
       {label && <p className="label">{label}</p>}
-      <Stepper value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={set} label="strokes" />
+      <StrokeWheel value={strokes} min={LIMITS.minStrokes} max={LIMITS.maxStrokes} onChange={set} />
       <p key={look.tone} className="score-name pop" aria-live="polite">
         <span className="score-emoji" aria-hidden>
           {look.emoji}
         </span>
         {scoreName(strokes, par)}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Sideways number wheel: swipe or tap a number. It snaps to whole numbers, ticks as it
+ * passes each one, and numbers away from the middle shrink, fade and tuck behind it.
+ * Small arrows either side do the same as a swipe, for anyone who prefers tapping.
+ */
+export function StrokeWheel({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (v: number) => void }) {
+  const track = useRef<HTMLDivElement>(null);
+  const items = useRef<(HTMLButtonElement | null)[]>([]);
+  const current = useRef(value);
+  // While the wheel glides to a number picked with the arrows or a tap, the numbers it
+  // passes on the way must not count as picks.
+  const target = useRef<number | null>(null);
+  const targetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Our own snapping: once a swipe stops, glide to the nearest whole number.
+  // (Built-in scroll snapping measures the shrunken numbers and lands off centre.)
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+  // Measured from the real layout, so fonts and sizes can't knock the wheel off centre.
+  const offsetFor = (v: number) => {
+    const el = track.current;
+    const item = items.current[v - min];
+    if (!el || !item) return 0;
+    return item.offsetLeft + item.offsetWidth / 2 - el.clientWidth / 2;
+  };
+  /** Fractional index of the number in the middle right now. */
+  const centreIndex = () => {
+    const el = track.current;
+    const first = items.current[0];
+    if (!el || !first) return value - min;
+    const pitch = items.current[1] ? items.current[1].offsetLeft - first.offsetLeft : first.offsetWidth;
+    return (el.scrollLeft - offsetFor(min)) / pitch;
+  };
+
+  // Shrink, fade and overlap each number by how far it is from the middle.
+  const paint = () => {
+    const centre = centreIndex();
+    items.current.forEach((item, i) => {
+      if (!item) return;
+      const d = i - centre;
+      const a = Math.min(Math.abs(d), 3);
+      // Pulled in towards the middle so neighbours tuck behind the picked number.
+      item.style.transform = `translateX(${-Math.sign(d) * (a * 8 + a * a * 5)}px) scale(${1 - a * 0.26})`;
+      item.style.opacity = String(Math.max(0.12, 1 - a * 0.34));
+      item.style.zIndex = String(10 - Math.round(a));
+    });
+  };
+
+  /** End a glide by landing exactly on its number, so the wheel always shows the value. */
+  const finishGlide = () => {
+    const el = track.current;
+    const v = target.current;
+    clearTimeout(targetTimer.current);
+    target.current = null;
+    if (el && v !== null && Math.abs(el.scrollLeft - offsetFor(v)) > 1) el.scrollLeft = offsetFor(v);
+  };
+
+  const scrollTo = (v: number, smooth: boolean) => {
+    const el = track.current;
+    if (!el) return;
+    clearTimeout(targetTimer.current);
+    if (!smooth || reducedMotion()) {
+      // A jump passes no numbers on the way, so nothing to ignore.
+      target.current = null;
+      el.scrollLeft = offsetFor(v);
+      return;
+    }
+    target.current = v;
+    // Safety net if the glide is slow or never quite lands.
+    targetTimer.current = setTimeout(finishGlide, 900);
+    el.scrollTo({ left: offsetFor(v), behavior: 'smooth' });
+  };
+
+  // Start on the current value, and stay centred if the layout shifts (fonts, rotation).
+  useEffect(() => {
+    scrollTo(value, false);
+    paint();
+    const el = track.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      scrollTo(current.current, false);
+      paint();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Follow changes made outside a swipe (the arrows, or a tap on a number).
+  useEffect(() => {
+    const shown = Math.round(centreIndex()) + min;
+    if (shown !== value) scrollTo(value, true);
+    current.current = value;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const onScroll = () => {
+    paint();
+    const el = track.current;
+    if (!el) return;
+    const v = Math.min(max, Math.max(min, Math.round(centreIndex()) + min));
+    if (target.current !== null) {
+      if (v === target.current && Math.abs(el.scrollLeft - offsetFor(v)) < 2) finishGlide();
+      return;
+    }
+    if (v !== current.current) {
+      current.current = v;
+      haptic('light');
+      onChange(v);
+    }
+    clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => {
+      if (target.current === null && Math.abs(el.scrollLeft - offsetFor(current.current)) > 1) scrollTo(current.current, true);
+    }, 110);
+  };
+
+  const step = (v: number) => {
+    if (v < min || v > max) return;
+    current.current = v;
+    onChange(v);
+    scrollTo(v, true);
+  };
+
+  return (
+    <div className="wheel" role="group" aria-label="strokes">
+      <button
+        type="button"
+        className="wheel-arrow press"
+        aria-label="Fewer strokes"
+        disabled={value <= min}
+        onClick={() => step(value - 1)}
+      >
+        <BackIcon />
+      </button>
+      <div
+        className="wheel-track"
+        ref={track}
+        onScroll={onScroll}
+        onScrollEnd={() => {
+          if (target.current !== null) finishGlide();
+        }}
+        // A finger on the wheel takes over from any glide in progress.
+        onPointerDown={() => {
+          target.current = null;
+        }}
+        tabIndex={0}
+        role="slider"
+        aria-label="Strokes taken"
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') step(value - 1);
+          if (e.key === 'ArrowRight') step(value + 1);
+        }}
+      >
+        {numbers.map((n, i) => (
+          <button
+            key={n}
+            ref={(el) => {
+              items.current[i] = el;
+            }}
+            type="button"
+            tabIndex={-1}
+            aria-hidden={n !== value}
+            className={`wheel-item ${n === value ? 'stepper-value selected' : ''}`}
+            onClick={() => step(n)}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="wheel-arrow wheel-arrow-right press"
+        aria-label="More strokes"
+        disabled={value >= max}
+        onClick={() => step(value + 1)}
+      >
+        <BackIcon />
+      </button>
     </div>
   );
 }
