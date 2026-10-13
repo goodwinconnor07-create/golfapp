@@ -74,3 +74,18 @@ export async function passGroupReveal(page: Page, shotName?: string) {
   await go.click();
   await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
 }
+
+/** Online with friends: "Hole done" lands in the waiting room; enter this phone's score from there. */
+export async function scoreFromRoom(page: Page, strokes: number, made: boolean) {
+  await page.getByRole('button', { name: 'Enter my score' }).click();
+  await enterScore(page, strokes, made);
+}
+
+/** Everyone has scored: results flip over one by one, then on to the standings. */
+export async function passResultsReveal(page: Page, shotName?: string) {
+  await expect(page.getByRole('heading', { name: /results$/ })).toBeVisible();
+  const next = page.getByRole('button', { name: 'See standings' });
+  await expect(next).toBeEnabled({ timeout: 8_000 });
+  if (shotName) await shot(page, shotName);
+  await next.click();
+}

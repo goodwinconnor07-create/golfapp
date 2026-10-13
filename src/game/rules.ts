@@ -106,6 +106,12 @@ export function isVoteable(game: Game, playerId: string, hole: number): boolean 
   return entry.outcome === 'made' && !judgeFromStrokes(card, par, entry.strokes);
 }
 
+/** Where a player is on the current hole: still out there, finished, or scored. */
+export function holeStatus(game: Game, playerId: string, hole: number): 'playing' | 'done' | 'scored' {
+  if (holeResult(game, playerId, hole)) return 'scored';
+  return getEntry(game, playerId, hole)?.done ? 'done' : 'playing';
+}
+
 /** Has this player used their redraw this round? */
 export function redrawUsed(game: Game, playerId: string): boolean {
   return game.holes.some((_, h) => getEntry(game, playerId, h)?.redrawn);

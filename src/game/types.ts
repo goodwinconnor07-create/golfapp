@@ -37,6 +37,8 @@ export interface Entry {
   outcome?: Outcome;
   /** Set by the server when this pick is hidden from the viewer until everyone has picked. */
   hidden?: boolean;
+  /** The player has finished playing the hole (tapped "Hole done"), scored or not. */
+  done?: boolean;
   /** Free shot (last place, once a round): failing this card costs nothing. */
   freePass?: boolean;
   /** This card replaced one the player redrew (one redraw per player per round). */
@@ -91,6 +93,8 @@ export type Action =
   | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean }
   /** Swap this hole's card for another from the same tier. Once per player per round. */
   | { type: 'redraw'; playerId: string; hole: number; cardId?: string }
+  /** The player has finished playing the hole and is ready to score it. */
+  | { type: 'holeDone'; playerId: string; hole: number }
   /** voterId calls playerId's honour-system claim on this hole fair (or not). */
   | { type: 'vote'; playerId: string; hole: number; voterId: string; fair: boolean }
   | { type: 'swap'; playerId: string; hole: number; cardId?: string }

@@ -16,6 +16,10 @@ export interface HoleUi {
   extraScore: string[];
   /** The everyone-at-once tier reveal has been shown for this hole. */
   groupShown: boolean;
+  /** Online: the player whose score this phone is entering from the waiting room. */
+  scoreFor: string | null;
+  /** Online: everyone's results have been revealed for this hole. */
+  resultsShown: boolean;
 }
 
 export function freshUi(game: Game | null): HoleUi {
@@ -27,6 +31,8 @@ export function freshUi(game: Game | null): HoleUi {
     extraPick: [],
     extraScore: [],
     groupShown: false,
+    scoreFor: null,
+    resultsShown: false,
   };
 }
 
@@ -41,6 +47,8 @@ export type GameView =
   | { kind: 'play' }
   | { kind: 'score'; playerId: string }
   | { kind: 'waitScores' }
+  | { kind: 'scoreRoom' }
+  | { kind: 'resultsReveal' }
   | { kind: 'results' };
 
 export function isHost(game: Game, deviceId: string): boolean {
@@ -60,6 +68,7 @@ export function gameView(
   online: boolean,
   ui: HoleUi,
   groupSeen: (gameId: string, hole: number) => boolean = () => false,
+  resultsSeen: (gameId: string, hole: number) => boolean = () => false,
 ): GameView {
   if (game.status === 'lobby') return { kind: 'lobby' };
   if (game.status === 'finished') return { kind: 'final' };
@@ -73,10 +82,21 @@ export function gameView(
   const toPick = pickers.find((p) => !hasPicked(getEntry(game, p.id, hole)));
   if (toPick) return { kind: 'pick', playerId: toPick.id };
   if (!allPicked(game, hole)) return { kind: 'waitPicks' };
-  if (holeComplete(game, hole)) return { kind: 'results' };
+  // Online with friends on other phones: everyone waits in a room after "Hole done",
+  // then results are revealed together. (With everyone on this phone there's no one to wait for.)
+  const room = online && game.players.some((p) => !mine.includes(p));
+  if (holeComplete(game, hole)) {
+    return room && !ui.resultsShown && !resultsSeen(game.id, hole) ? { kind: 'resultsReveal' } : { kind: 'results' };
+  }
   // Everyone's in: flip all the tiers over at once, before anyone tees off.
   const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);
   if (game.players.length >= 2 && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
+  if (room) {
+    const mineDone = mine.length > 0 && mine.every((p) => getEntry(game, p.id, hole)?.done);
+    if (!ui.scoring && !mineDone) return { kind: 'play' };
+    if (ui.scoreFor && !holeResult(game, ui.scoreFor, hole)) return { kind: 'score', playerId: ui.scoreFor };
+    return { kind: 'scoreRoom' };
+  }
   if (!ui.scoring) return { kind: 'play' };
 
   const scorers = [...mine, ...game.players.filter((p) => ui.extraScore.includes(p.id) && !mine.includes(p))];

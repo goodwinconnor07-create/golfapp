@@ -233,6 +233,15 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       break;
     }
 
+    case 'holeDone': {
+      if (g.status !== 'playing' || action.hole !== g.current) return fail("That hole isn't being played.");
+      const entry = g.entries[entryKey(action.playerId, action.hole)];
+      if (!entry?.tier) return fail('Draw a card for this hole first.');
+      if (entry.done) return unchanged;
+      entry.done = true;
+      break;
+    }
+
     case 'vote': {
       if (g.status !== 'playing' || action.hole !== g.current) return fail('Voting has closed on that hole.');
       const voter = findPlayer(action.voterId);
@@ -265,6 +274,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       // A changed claim starts a fresh vote.
       if (entry.strokes !== strokes || (action.outcome !== undefined && action.outcome !== entry.outcome)) delete entry.votes;
       entry.strokes = strokes;
+      entry.done = true;
       // Store the result the strokes settle too, so it survives a later par correction.
       // "Didn't happen" on a situational card stands even if the strokes would rule it out.
       const requested = action.outcome ?? entry.outcome;

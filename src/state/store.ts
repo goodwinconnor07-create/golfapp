@@ -37,7 +37,7 @@ import {
   saveSession,
   type Session,
 } from './persist';
-import { freshUi, type HoleUi } from './view';
+import { freshUi, myPlayers, type HoleUi } from './view';
 
 export type Route =
   | { name: 'home' }
@@ -581,19 +581,54 @@ export function doneReveal(): void {
   set({ ui: { ...state.ui, reveal: null } });
 }
 
+/** "Hole done": online, tell everyone this phone's players have finished the hole. */
 export function startScoring(): void {
+  const g = state.game;
+  if (g && state.session?.mode === 'online') {
+    for (const p of myPlayers(g, state.deviceId, true)) {
+      if (!getEntry(g, p.id, g.current)?.done) dispatch({ type: 'holeDone', playerId: p.id, hole: g.current });
+    }
+  }
   set({ ui: { ...state.ui, scoring: true } });
+}
+
+/** From the waiting room: enter this player's score now. */
+export function enterScoreFor(playerId: string): void {
+  set({ ui: { ...state.ui, scoring: true, scoreFor: playerId } });
+}
+
+const RESULTS_KEY = 'sendit.resultsRevealed';
+
+export function resultsRevealSeen(gameId: string, hole: number): boolean {
+  try {
+    return localStorage.getItem(RESULTS_KEY) === `${gameId}:${hole}`;
+  } catch {
+    return false;
+  }
+}
+
+export function doneResultsReveal(): void {
+  const g = state.game;
+  if (!g) return;
+  try {
+    localStorage.setItem(RESULTS_KEY, `${g.id}:${g.current}`);
+  } catch {
+    // Storage blocked: the reveal may replay after a reload, which is harmless.
+  }
+  set({ ui: { ...state.ui, resultsShown: true } });
 }
 
 /** "Pick for Alex" / "Enter for Alex": this phone steps in for someone this hole. */
 export function stepIn(kind: 'pick' | 'score', playerId: string): void {
   const ui = state.ui;
   if (kind === 'pick') set({ ui: { ...ui, extraPick: [...ui.extraPick, playerId] } });
-  else set({ ui: { ...ui, scoring: true, extraScore: [...ui.extraScore, playerId] } });
+  else set({ ui: { ...ui, scoring: true, scoreFor: playerId, extraScore: [...ui.extraScore, playerId] } });
 }
 
 export function submitScore(playerId: string, hole: number, strokes: number, outcome?: Outcome, splash = true): boolean {
   if (!dispatch({ type: 'score', playerId, hole, strokes, outcome })) return false;
+  // Back to the waiting room once this player's score is in.
+  if (state.ui.scoreFor === playerId) set({ ui: { ...state.ui, scoreFor: null } });
   const g = state.game;
   const r = g ? holeResult(g, playerId, hole) : null;
   if (r) {

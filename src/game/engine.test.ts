@@ -11,6 +11,7 @@ import {
   entryKey,
   getCard,
   holeResult,
+  holeStatus,
   formatToPar,
   toParWords,
   judgeFromStrokes,
@@ -569,5 +570,22 @@ describe('double stakes, free shot, redraw and votes', () => {
     g = parHunter(g, 'player00', 1, 6);
     expect(rankMoves(g)).toEqual({ player00: -1, player01: 1 });
     expect(newLeader(g, 1)?.name).toBe('Alex');
+  });
+});
+
+describe('hole done', () => {
+  it('tracks each player from playing to done to scored', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'B01');
+    g = giveCard(g, 'player01', 0, 'B01');
+    expect(holeStatus(g, 'player00', 0)).toBe('playing');
+    g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0 });
+    expect(holeStatus(g, 'player00', 0)).toBe('done');
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player00', hole: 0 }, ctx()).changed).toBe(false);
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 4 });
+    // Scoring counts as done too.
+    expect(holeStatus(g, 'player01', 0)).toBe('scored');
+    expect(g.entries[entryKey('player01', 0)].done).toBe(true);
+    expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0 })).toEqual({ type: 'holeDone', playerId: 'player00', hole: 0 });
   });
 });

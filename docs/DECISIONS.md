@@ -90,3 +90,11 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once.
 - **Standings while picking.** The pick screen says how far you are behind the leader (or ahead of second).
 - **Leaderboard movement.** Places gained or lost on the last hole show as ▲/▼, and the hole results say when someone takes the lead.
+
+## Finishing a hole online (waiting room)
+
+- "Hole done" plays the colour fill. In an online game where some players are on other phones, it marks this phone's players as done (everyone sees it) and opens a waiting room listing each player as Still playing, Done · scoring, or Scored.
+- Players can enter their own score from the room while others are still playing. Other players' numbers aren't shown in the room.
+- When everyone has scored, each phone reveals the hole's results one player at a time, worst first, so the best score on the hole lands last with a 👑. Then the standings.
+- Hiding scores in the room is a screen choice, not a server secret: phones do receive the numbers.
+- With everyone on one phone, there's no room: scoring works as before.

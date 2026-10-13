@@ -2,6 +2,7 @@ import { cardStakes, getEntry, holeResult, type Game } from '../../game';
 import { startScoring } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
+import { colourWipe } from '../../ui/effects';
 import { FlagIcon } from '../../ui/Icons';
 
 /** Everyone has a card: put the phone away and play. */
@@ -33,7 +34,7 @@ export function PlayHole({ game }: { game: Game }) {
         })}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-green" onClick={startScoring}>
+        <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startScoring)}>
           <FlagIcon width={28} height={28} /> Hole done
         </button>
       </div>

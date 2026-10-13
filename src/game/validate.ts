@@ -69,6 +69,9 @@ export function parseAction(input: unknown): Action | null {
         ...(a.cardId === undefined ? {} : { cardId: a.cardId as string }),
         ...(a.freePass ? { freePass: true } : {}),
       };
+    case 'holeDone':
+      if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
+      return { type: 'holeDone', playerId: a.playerId, hole: a.hole };
     case 'redraw':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
@@ -167,6 +170,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       if (isOutcome(raw.outcome) && (raw.outcome !== 'na' || card.situational)) entry.outcome = raw.outcome;
       if (raw.freePass === true) entry.freePass = true;
       if (raw.redrawn === true) entry.redrawn = true;
+      if (raw.done === true) entry.done = true;
       if (isObj(raw.votes)) {
         const votes: Record<string, boolean> = {};
         for (const [voter, fair] of Object.entries(raw.votes))
