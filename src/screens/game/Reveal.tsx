@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { getCard, getEntry, hasPicked, type Game, type Player } from '../../game';
 import { doneReveal, swapCard } from '../../state/store';
-import { ChallengeCard } from '../../ui/ChallengeCard';
+import { ChallengeCard, flipDelay, FLIP_MS } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
 import { confetti, CONFETTI, haptic } from '../../ui/effects';
 import { SwapIcon } from '../../ui/Icons';
@@ -15,10 +15,13 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
 
   useEffect(() => {
     if (!card || !tier) return;
-    const timer = setTimeout(() => {
-      confetti(CONFETTI[tier], { x: innerWidth / 2, y: innerHeight * 0.4 }, tier === 'insane' ? 110 : 70);
-      haptic('success');
-    }, 420);
+    const timer = setTimeout(
+      () => {
+        confetti(CONFETTI[tier], { x: innerWidth / 2, y: innerHeight * 0.4 }, tier === 'insane' ? 110 : 70);
+        haptic('success');
+      },
+      flipDelay(tier) + FLIP_MS - 90,
+    );
     return () => clearTimeout(timer);
   }, [card, tier]);
 

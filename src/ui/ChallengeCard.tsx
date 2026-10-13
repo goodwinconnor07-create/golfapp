@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatDelta, getCard, TIERS, type Tier } from '../game';
+import { haptic, reducedMotion } from './effects';
 import { CheckIcon, CrossIcon } from './Icons';
 import { TierIcon, TIER_LOOK, Pips } from './components';
 
@@ -12,6 +13,15 @@ interface Props {
   compact?: boolean;
 }
 
+/** How long the card back waits before flipping. Insane winds up with a shake first. */
+export function flipDelay(tier: Tier): number {
+  if (reducedMotion()) return 0;
+  return tier === 'insane' ? 460 : tier === 'bold' ? 160 : 90;
+}
+
+/** About when the card face is showing, for timing confetti on the reveal screen. */
+export const FLIP_MS = 420;
+
 /** A challenge card: tier band on top, title and exact pass condition below. */
 export function ChallengeCard({ tier, cardId, flip = false, compact = false }: Props) {
   const card = getCard(cardId);
@@ -23,15 +33,23 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false }: P
       setShown(true);
       return;
     }
-    const t = setTimeout(() => setShown(true), 90);
+    if (tier === 'insane' && !reducedMotion()) haptic('heavy');
+    const t = setTimeout(() => setShown(true), flipDelay(tier));
     return () => clearTimeout(t);
-  }, [card, flip]);
+  }, [card, flip, tier]);
 
   const t = TIERS[tier];
-  const classes = ['ccard', `ccard-${tier}`, compact ? 'ccard-compact' : '', shown ? 'flipped' : ''].join(' ');
+  const classes = [
+    'ccard',
+    `ccard-${tier}`,
+    compact ? 'ccard-compact' : '',
+    shown ? 'flipped' : '',
+    flip && card && !shown ? 'winding' : '',
+  ].join(' ');
 
   return (
-    <div className={classes}>
+    // Tapping the back skips the wind-up.
+    <div className={classes} onClick={() => card && setShown(true)}>
       <div className="ccard-inner">
         <div className="ccard-face ccard-back" aria-hidden={shown}>
           <div className="ccard-back-art">

@@ -49,7 +49,12 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   // Dismiss the result splash.
   const flash = page.locator('.flash');
   await expect(flash).toBeVisible();
-  if (shotName && process.env.SHOTS_DIR) await page.screenshot({ path: `${process.env.SHOTS_DIR}/${shotName}.png` });
+  // The splash names the result (on its stamp, or as a heading when there's no card).
+  await expect(flash).toContainText(made ? /Completed/ : /Failed/);
+  if (shotName && process.env.SHOTS_DIR) {
+    await page.waitForTimeout(600); // let the stamp land
+    await page.screenshot({ path: `${process.env.SHOTS_DIR}/${shotName}.png` });
+  }
   await flash.click();
   await expect(flash).toBeHidden();
 }

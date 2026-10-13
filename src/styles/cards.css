@@ -204,3 +204,119 @@
 .ccard-compact .ccard-back-label {
   font-size: 26px;
 }
+
+/* Tier wind-up before the flip: Bold flips with more bounce, Insane shakes and glows first. */
+
+.ccard-bold .ccard-inner {
+  transition-timing-function: cubic-bezier(0.25, 1.6, 0.4, 1);
+}
+
+.ccard-insane .ccard-inner {
+  transition: transform 0.55s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+.ccard-insane.winding .ccard-inner {
+  animation: wind-up 0.46s ease-in-out;
+}
+
+.ccard-insane.winding .ccard-back {
+  animation: glow 0.46s ease-in;
+}
+
+@keyframes wind-up {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  15% {
+    transform: rotate(-3deg) scale(1.01);
+  }
+  30% {
+    transform: rotate(3deg) scale(1.02);
+  }
+  45% {
+    transform: rotate(-4deg) scale(1.03);
+  }
+  60% {
+    transform: rotate(4deg) scale(1.04);
+  }
+  75% {
+    transform: rotate(-2deg) scale(1.05);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 22px 40px -22px var(--tier-lo);
+  }
+  to {
+    box-shadow:
+      0 0 0 6px var(--tier-bg),
+      0 0 48px 6px var(--tier);
+  }
+}
+
+/* The mini card on the score splash, with a Completed / Failed stamp that lands on it. */
+
+.stamp-card {
+  position: relative;
+  margin: 0 auto 6px;
+  max-width: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  box-shadow: inset 0 0 0 4px var(--tier);
+}
+
+.stamp-card .ccard-band {
+  padding: 8px 14px;
+  font-size: 15px;
+}
+
+.stamp-card-title {
+  margin: 0;
+  padding: 12px 16px 18px;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--tier-lo);
+}
+
+.stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 4px 14px;
+  border: 5px solid currentColor;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 28px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(-9deg);
+  animation: stamp 0.32s cubic-bezier(0.3, 1.5, 0.5, 1) 0.18s both;
+}
+
+.stamp.made {
+  color: var(--green);
+}
+
+.stamp.missed {
+  color: var(--red);
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-24deg) scale(2.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-9deg) scale(1);
+  }
+}

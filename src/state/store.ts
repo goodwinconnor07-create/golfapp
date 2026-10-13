@@ -7,6 +7,8 @@ import {
   cleanName,
   CODE_LENGTH,
   createGame,
+  getCard,
+  getEntry,
   cryptoRng,
   holeResult,
   newId,
@@ -63,6 +65,8 @@ export interface Flash {
   delta: number;
   gameScore: number;
   par: number;
+  /** The challenge the stamp lands on. */
+  cardTitle?: string;
 }
 
 export interface AppState {
@@ -464,7 +468,8 @@ export function submitScore(playerId: string, hole: number, strokes: number, out
   const g = state.game;
   const r = g ? holeResult(g, playerId, hole) : null;
   if (r) {
-    haptic(r.outcome === 'made' ? 'success' : r.outcome === 'missed' ? 'error' : 'light');
+    // With a splash, the buzz comes when the stamp lands instead.
+    if (!splash) haptic(r.outcome === 'made' ? 'success' : r.outcome === 'missed' ? 'error' : 'light');
     if (splash) {
       const name = g?.players.find((p) => p.id === playerId)?.name ?? '';
       set({
@@ -477,6 +482,7 @@ export function submitScore(playerId: string, hole: number, strokes: number, out
           delta: r.adjustment,
           gameScore: r.gameScore,
           par: r.par,
+          cardTitle: g ? getCard(getEntry(g, playerId, hole)?.cardId)?.title : undefined,
         },
       });
     }
