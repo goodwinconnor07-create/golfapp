@@ -150,35 +150,47 @@ export function colourWipe(event: { currentTarget: Element; clientX: number; cli
   const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 20;
   const look = getComputedStyle(button);
 
+  // A plain circle grown with transform runs on the graphics chip, so it stays smooth
+  // on phones (animating clip-path repaints the whole screen every frame).
+  const start = Math.min(box.width, box.height) / 2 / radius;
   const wipe = document.createElement('div');
   wipe.setAttribute('aria-hidden', 'true');
   Object.assign(wipe.style, {
     position: 'fixed',
-    inset: '0',
+    left: `${x - radius}px`,
+    top: `${y - radius}px`,
+    width: `${radius * 2}px`,
+    height: `${radius * 2}px`,
+    borderRadius: '50%',
     zIndex: '90',
     pointerEvents: 'none',
+    willChange: 'transform, opacity',
+    transform: `scale(${start})`,
     backgroundColor: look.backgroundColor,
     backgroundImage: look.backgroundImage,
   });
   document.body.appendChild(wipe);
   haptic('medium');
 
-  const grow = wipe.animate(
-    [
-      { clipPath: `circle(${Math.min(box.width, box.height) / 2}px at ${x}px ${y}px)` },
-      { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
-    ],
-    { duration: WIPE_GROW_MS, easing: 'cubic-bezier(0.5, 0, 0.25, 1)', fill: 'forwards' },
-  );
+  const grow = wipe.animate([{ transform: `scale(${start})` }, { transform: 'scale(1)' }], {
+    duration: WIPE_GROW_MS,
+    easing: 'cubic-bezier(0.5, 0, 0.25, 1)',
+    fill: 'forwards',
+  });
   let done = false;
   const swap = () => {
     if (done) return;
     done = true;
     then();
-    wipe
-      .animate([{ opacity: 1 }, { opacity: 0 }], { duration: WIPE_FADE_MS, easing: 'ease-out', fill: 'forwards' })
-      .finished.catch(() => undefined)
-      .finally(() => wipe.remove());
+    // Let the new page paint under the colour before fading, so the two don't compete.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        wipe
+          .animate([{ opacity: 1 }, { opacity: 0 }], { duration: WIPE_FADE_MS, easing: 'ease-out', fill: 'forwards' })
+          .finished.catch(() => undefined)
+          .finally(() => wipe.remove()),
+      ),
+    );
   };
   grow.finished.then(swap, swap);
   // Safety net in case the animation never reports back.
