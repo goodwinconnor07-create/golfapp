@@ -549,7 +549,7 @@ export function redrawCard(playerId: string): void {
   if (dispatch({ type: 'redraw', playerId, hole: g.current, ...(cardId ? { cardId } : {}) })) haptic('medium');
 }
 
-/** Call someone's honour-system claim fair or not. */
+/** Call someone's judged-by-eye claim fair or not. */
 export function castVote(playerId: string, voterId: string, fair: boolean): void {
   const g = state.game;
   if (g && dispatch({ type: 'vote', playerId, hole: g.current, voterId, fair })) haptic(fair ? 'light' : 'medium');
@@ -629,11 +629,9 @@ export function markResultsRevealed(): void {
   }
 }
 
-/** "Pick for Alex" / "Enter for Alex": this phone steps in for someone this hole. */
-export function stepIn(kind: 'pick' | 'score', playerId: string): void {
-  const ui = state.ui;
-  if (kind === 'pick') set({ ui: { ...ui, extraPick: [...ui.extraPick, playerId] } });
-  else set({ ui: { ...ui, scoring: true, scoreFor: playerId, extraScore: [...ui.extraScore, playerId] } });
+/** "Pick for them": this phone picks for someone else this hole (say their phone died). */
+export function stepIn(playerId: string): void {
+  set({ ui: { ...state.ui, extraPick: [...state.ui.extraPick, playerId] } });
 }
 
 export function submitScore(playerId: string, hole: number, strokes: number, outcome?: Outcome, splash = true): boolean {
@@ -701,5 +699,19 @@ export function boot(): void {
   }
   if (s?.mode === 'online' && s.code) connect(s.code);
 
-  checkServer().then((ok) => set({ server: ok ? 'up' : 'down' }));
+  void recheckServer();
+  // Signal comes and goes on a course: notice when the server is reachable again.
+  window.addEventListener('online', () => void recheckServer());
+  setInterval(() => {
+    if (state.server === 'down' && document.visibilityState === 'visible') void recheckServer();
+  }, 20_000);
+}
+
+/** Checks the server; when it comes back, a game made with no signal gets its invite code. */
+async function recheckServer(): Promise<void> {
+  const ok = await checkServer();
+  const was = state.server;
+  set({ server: ok ? 'up' : 'down' });
+  const s = state.session;
+  if (ok && was !== 'up' && s?.mode === 'local' && s.game?.status === 'lobby') void goOnline(true);
 }

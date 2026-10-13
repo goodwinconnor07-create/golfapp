@@ -3,7 +3,7 @@ import { castVote, useApp } from '../../state/store';
 import { Avatar } from '../../ui/components';
 
 /**
- * Honour-system cards (judged by eye) go to the group: when someone says they made one,
+ * Cards judged by eye go to the group: when someone says they made one,
  * everyone else gets a thumbs up or down on their own phone. More downs than ups = failed.
  */
 export function VotePrompt({ game }: { game: Game }) {

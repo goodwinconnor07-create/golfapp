@@ -77,7 +77,7 @@ export function Join({ initialCode }: { initialCode?: string }) {
             {error}
           </p>
         )}
-        {server === 'down' && <p className="note">Online play isn't switched on yet, so codes won't work until it is.</p>}
+        {server === 'down' && <p className="note">Can't reach the server right now. Check your signal.</p>}
       </div>
       <div className="screen-foot">
         <button

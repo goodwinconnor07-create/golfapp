@@ -57,14 +57,12 @@ export function Lobby({ game }: { game: Game }) {
               <>
                 <p style={{ margin: 0 }}>
                   {server === 'down'
-                    ? "Online play isn't available right now, so friends can't join with a code."
+                    ? "No signal right now. The code will appear as soon as you're back online."
                     : 'No code yet. Check your signal, then get one so friends can join.'}
                 </p>
-                {server !== 'down' && (
-                  <button type="button" className="btn btn-xl btn-blue" onClick={() => void goOnline()}>
-                    Get invite code
-                  </button>
-                )}
+                <button type="button" className="btn btn-xl btn-blue" onClick={() => void goOnline()}>
+                  Get invite code
+                </button>
               </>
             )}
           </div>
@@ -77,7 +75,15 @@ export function Lobby({ game }: { game: Game }) {
           </button>
         )}
 
-        <p className="section-title">Who's in · {game.players.length}</p>
+        <div className="section-row">
+          <p className="section-title">Who's in · {game.players.length}</p>
+          {host && game.players.length < LIMITS.maxPlayers && (
+            // Kept small on purpose: everyone on their own phone is the way to play.
+            <button type="button" className="btn-link-small" onClick={() => openSheet({ name: 'player', playerId: 'new' })}>
+              No phone? Add them here
+            </button>
+          )}
+        </div>
         <div className="stack">
           {game.players.map((p) => {
             const tag =
@@ -111,12 +117,6 @@ export function Lobby({ game }: { game: Game }) {
               </span>
               Waiting for friends to join
             </div>
-          )}
-          {host && game.players.length < LIMITS.maxPlayers && (
-            // Kept small on purpose: everyone on their own phone is the way to play.
-            <button type="button" className="btn btn-link small" onClick={() => openSheet({ name: 'player', playerId: 'new' })}>
-              No phone? Add them here
-            </button>
           )}
         </div>
 

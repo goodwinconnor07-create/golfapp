@@ -68,13 +68,12 @@ export function InviteSheet() {
           <div className="stack">
             <p style={{ marginTop: 0 }}>
               {server === 'down'
-                ? "Online play isn't switched on yet. Once it is, friends can join this game with a code."
+                ? "Can't reach the server right now. Check your signal and try again."
                 : "Couldn't get a code just now. Check your signal and try again."}
             </p>
             <button type="button" className="btn btn-blue" onClick={() => void goOnline()}>
               Try again
             </button>
-            <p className="note">Friends without signal can be added to your phone from the lobby.</p>
           </div>
         )}
       </Sheet>

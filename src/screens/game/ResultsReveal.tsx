@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatToPar, getCard, holeResult, newLeader, rankMoves, standings, type Game } from '../../game';
 import { markResultsRevealed, navigate, nextHole, resultsRevealSeen } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
@@ -34,18 +34,22 @@ export function ResultsReveal({ game }: { game: Game }) {
   const moves = rankMoves(game);
   const board = standings(game);
 
+  // Timing only depends on how many rows have flipped, so votes or other updates
+  // arriving mid-reveal don't restart it.
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
   useEffect(() => {
     if (done) return;
     const t = setTimeout(
       () => {
-        const next = rows[shown];
-        haptic(next.r.outcome === 'made' ? (next.r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
-        setShown((s) => s + 1);
+        const next = rowsRef.current[shown];
+        if (next) haptic(next.r.outcome === 'made' ? (next.r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
+        setShown((n) => n + 1);
       },
       shown === 0 ? 250 : GAP_MS,
     );
     return () => clearTimeout(t);
-  }, [shown, done, rows]);
+  }, [shown, done]);
 
   useEffect(() => {
     if (!done || !best) return;

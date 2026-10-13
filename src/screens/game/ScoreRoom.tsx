@@ -1,5 +1,5 @@
 import { holeStatus, type Game } from '../../game';
-import { enterScoreFor, stepIn, useApp } from '../../state/store';
+import { enterScoreFor, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Avatar } from '../../ui/components';
 import { joinNames } from '../../ui/format';
@@ -58,7 +58,7 @@ export function ScoreRoom({ game }: { game: Game }) {
                     <span key={s} className={`tag room-tag pop ${look.className}`}>
                       {look.label}
                     </span>
-                    <button type="button" className="btn-link-small" onClick={() => stepIn('score', p.id)}>
+                    <button type="button" className="btn-link-small" onClick={() => enterScoreFor(p.id)}>
                       Enter for them
                     </button>
                   </span>

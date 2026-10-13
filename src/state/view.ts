@@ -13,7 +13,6 @@ export interface HoleUi {
   reveal: string | null;
   /** Players this phone has stepped in for this hole ("Pick for Alex"). */
   extraPick: string[];
-  extraScore: string[];
   /** The everyone-at-once tier reveal has been shown for this hole. */
   groupShown: boolean;
   /** Online: the player whose score this phone is entering from the waiting room. */
@@ -27,7 +26,6 @@ export function freshUi(game: Game | null): HoleUi {
     scoring: false,
     reveal: null,
     extraPick: [],
-    extraScore: [],
     groupShown: false,
     scoreFor: null,
   };
@@ -43,7 +41,6 @@ export type GameView =
   | { kind: 'groupReveal' }
   | { kind: 'play' }
   | { kind: 'score'; playerId: string }
-  | { kind: 'waitScores' }
   | { kind: 'scoreRoom' }
   | { kind: 'resultsReveal' }
   | { kind: 'results' };
@@ -95,8 +92,7 @@ export function gameView(
   }
   if (!ui.scoring) return { kind: 'play' };
 
-  const scorers = [...mine, ...game.players.filter((p) => ui.extraScore.includes(p.id) && !mine.includes(p))];
-  const toScore = scorers.find((p) => !holeResult(game, p.id, hole));
-  if (toScore) return { kind: 'score', playerId: toScore.id };
-  return { kind: 'waitScores' };
+  // Everyone is on this phone here, so once all are scored the hole is complete (handled above).
+  const toScore = mine.find((p) => !holeResult(game, p.id, hole));
+  return toScore ? { kind: 'score', playerId: toScore.id } : { kind: 'results' };
 }

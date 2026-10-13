@@ -2,10 +2,18 @@ import { formatDelta, TIER_ORDER, TIERS } from '../game';
 import { BackBar, TierChip } from '../ui/components';
 
 const STEPS = [
-  { color: '#2563eb', title: 'Pick your risk', text: 'Before each hole, choose Safe, Bold or Insane.' },
+  {
+    color: '#2563eb',
+    title: 'Pick your risk',
+    text: 'Everyone joins on their own phone with the game code. Before each hole, choose Safe, Bold or Insane.',
+  },
   { color: '#db2777', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
   { color: '#16a34a', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
-  { color: '#ea580c', title: 'Score it', text: 'Enter the strokes you took, then tap Completed or Failed.' },
+  {
+    color: '#ea580c',
+    title: 'Score it',
+    text: "Enter the strokes you took. If they don't settle the card, tap Completed or Failed. Results show when everyone's in.",
+  },
   {
     color: '#7c3aed',
     title: 'Lowest score wins',

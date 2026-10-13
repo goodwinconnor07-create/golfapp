@@ -1,6 +1,6 @@
 # Send It: notes for Claude
 
-A golf party game: before each hole every player picks Safe, Bold or Insane, draws a random card from that level, plays the hole, then enters real strokes and whether they made the card. Read `docs/SPEC.md` (the product spec) and `docs/DECISIONS.md` (what's been decided since) before changing game rules.
+A golf party game: before each hole every player picks Safe, Bold or Insane, draws a random card from that level, plays the hole, then enters real strokes and whether they completed the card. Read `docs/SPEC.md` (the product spec) and `docs/DECISIONS.md` (what's been decided since) before changing game rules.
 
 ## Commands
 

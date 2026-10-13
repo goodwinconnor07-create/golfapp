@@ -16,7 +16,7 @@ import { ResultsReveal } from './ResultsReveal';
 import { ScoreRoom } from './ScoreRoom';
 import { VotePrompt } from './VotePrompt';
 import { ScoreEntry } from './ScoreEntry';
-import { WaitPicks, WaitScores } from './Waiting';
+import { WaitPicks } from './Waiting';
 
 export function GameScreen() {
   const game = useApp((s) => s.game);
@@ -75,8 +75,6 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
       return <PlayHole game={game} />;
     case 'score':
       return <ScoreEntry game={game} playerId={view.playerId} />;
-    case 'waitScores':
-      return <WaitScores game={game} />;
     case 'results':
       return <HoleResults game={game} />;
   }
