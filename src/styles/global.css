@@ -1063,21 +1063,6 @@ input {
   flex: none;
 }
 
-.avatar-edit {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--ink);
-  color: #fff;
-  font-size: 12px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 0 0 2px var(--bg);
-}
-
 /* Closing: the sheet slides back down and the dimming fades (200ms, see SHEET_OUT_MS). */
 .sheet-backdrop.leaving {
   animation: fade-out 0.2s ease-in forwards;

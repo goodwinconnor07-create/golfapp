@@ -29,11 +29,6 @@ export function SetupPlayers() {
             onClick={() => openSheet({ name: 'look' })}
           >
             <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={50} />
-            <span className="avatar-edit" aria-hidden>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 20h4L19 9l-4-4L4 16v4z" />
-              </svg>
-            </span>
           </button>
           <input
             className="field"
