@@ -420,41 +420,39 @@ function RestingBall({ c, x, y, r = 6.5, s }: { c: Ctx; x: number; y: number; r?
 }
 
 /**
- * The ball dropping into the hole. The clip is everything above the cup's middle plus the inside of
- * its front half, so the front lip hides the ball as it falls instead of the ball sliding across it.
- * It comes to rest with just its top showing.
+ * The ball dropping into the hole once it's over it: it falls straight down and is gone. The clip
+ * is the cup opening plus everything above it, so the front lip swallows the ball as it falls (the
+ * rolling ball crosses over the lip on its way in). The still shows it halfway in.
  */
 function CupDrop({ c, x, y, s, r = 5 }: { c: Ctx; x: number; y: number; s: number; r?: number }) {
   const rx = 9;
   const ry = 4;
   return (
-    <g>
+    <g opacity={c.still ? 1 : 0}>
+      {!c.still && <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.95;1" begin={at(c, s)} dur="0.3s" fill="freeze" />}
       <clipPath id={c.id('in-cup')}>
         <path d={`M${x - rx} 0 H ${x + rx} V ${y} A ${rx} ${ry} 0 0 1 ${x - rx} ${y} Z`} />
       </clipPath>
-      <g clipPath={`url(#${c.id('in-cup')})`} opacity={c.still ? 1 : 0}>
-        {!c.still && <animate attributeName="opacity" to="1" begin={at(c, s)} dur="0.01s" fill="freeze" />}
-        <g transform={c.still ? `translate(0 ${r * 0.9})` : undefined}>
+      <g clipPath={`url(#${c.id('in-cup')})`}>
+        <g transform={c.still ? `translate(0 ${r * 0.8})` : undefined}>
           {!c.still && (
-            <>
-              <animateTransform
-                attributeName="transform"
-                type="translate"
-                values={`0 -1;0.6 ${r * 0.4};0 ${r * 0.9}`}
-                keyTimes="0;0.5;1"
-                calcMode="spline"
-                keySplines="0.5 0 1 1;0.2 0 0.4 1"
-                begin={at(c, s)}
-                dur="0.24s"
-                fill="freeze"
-              />
-            </>
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values={`0 0;0.5 ${r * 0.6};0 ${r * 2.6}`}
+              keyTimes="0;0.35;1"
+              calcMode="spline"
+              keySplines="0.5 0 1 1;0.6 0 1 1"
+              begin={at(c, s)}
+              dur="0.3s"
+              fill="freeze"
+            />
           )}
           <circle cx={x} cy={y} r={r} fill={`url(#${c.id('ball')})`} />
           <circle cx={x - r * 0.35} cy={y - r * 0.35} r={r * 0.22} fill="#ffffff" opacity="0.9" />
         </g>
       </g>
-      {/* Front lip, drawn over the ball. */}
+      {/* While it drops, the front lip sits over it. */}
       <path d={`M${x - rx} ${y} A ${rx} ${ry} 0 0 0 ${x + rx} ${y}`} fill="none" stroke="#7fcf6c" strokeWidth="1.2" />
     </g>
   );

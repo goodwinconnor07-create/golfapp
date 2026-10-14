@@ -176,43 +176,17 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         />
         <path d="M300 78 L 330 96 L 314 99 Z" fill="#0d3a15" fillOpacity="0.2" filter={`url(#${id('soft')})`} />
 
-        {/* Cup. */}
+        {/* Cup and its rim, drawn under the rolling ball so the ball crosses over the front lip. */}
         <ellipse cx="262" cy="66" rx="12.5" ry="5.6" fill={`url(#${id('cup')})`} />
-        {/* The drop: the ball falls into the hole and the front lip hides it as it goes, so it
-            never slides across the lip. It comes to rest with just its top showing. */}
-        <clipPath id={id('in-cup')}>
-          <path d="M249.5 0 H 274.5 V 66 A 12.5 5.6 0 0 1 249.5 66 Z" />
-        </clipPath>
-        <g clipPath={`url(#${id('in-cup')})`} opacity={still ? 1 : 0}>
-          {!still && <animate attributeName="opacity" to="1" begin={sunk} dur="0.01s" fill="freeze" />}
-          <g transform={still ? 'translate(0 6.5)' : undefined}>
-            {!still && (
-              <>
-                <animateTransform
-                  attributeName="transform"
-                  type="translate"
-                  values="0 -1;0.8 3;0 6.5"
-                  keyTimes="0;0.5;1"
-                  calcMode="spline"
-                  keySplines="0.5 0 1 1;0.2 0 0.4 1"
-                  begin={sunk}
-                  dur="0.26s"
-                  fill="freeze"
-                />
-              </>
-            )}
-            <circle cx="262" cy="66" r="6.4" fill={`url(#${id('ball')})`} />
-            <circle cx="259.8" cy="63.8" r="1.4" fill="#ffffff" opacity="0.9" />
-          </g>
-        </g>
         <ellipse cx="262" cy="64.6" rx="12.5" ry="4.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
+        <path d="M249.5 66 A 12.5 5.6 0 0 0 274.5 66" fill="none" stroke="#7fcf6c" strokeWidth="1.6" />
 
         {/* Ball and its shadow, rolling on the line. */}
         <g>
           {still ? null : (
             <g>
               <animateMotion path={line} begin="0s" dur={`${total}s`} fill="freeze" calcMode="spline" {...held} />
-              {/* At the hole the dropping ball (above) takes over. */}
+              {/* Over the hole the dropping ball (below) takes over. */}
               <g>
                 <animate attributeName="opacity" to="0" begin={sunk} dur="0.01s" fill="freeze" />
                 <g>
@@ -233,8 +207,36 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
           )}
         </g>
 
-        {/* Front lip of the cup, drawn over the ball. */}
-        <path d="M249.5 66 A 12.5 5.6 0 0 0 274.5 66" fill="none" stroke="#7fcf6c" strokeWidth="1.6" />
+        {/* The drop: once it's over the hole the ball falls straight down and is gone. The clip
+            is the cup opening plus everything above it, so the front lip swallows the ball as it
+            falls. The still shows it halfway in. */}
+        <clipPath id={id('in-cup')}>
+          <path d="M249.5 0 H 274.5 V 66 A 12.5 5.6 0 0 1 249.5 66 Z" />
+        </clipPath>
+        <g opacity={still ? 1 : 0}>
+          {!still && <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.95;1" begin={sunk} dur="0.3s" fill="freeze" />}
+          <g clipPath={`url(#${id('in-cup')})`}>
+            <g transform={still ? 'translate(0 5)' : undefined}>
+              {!still && (
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  values="0 0;0.6 4;0 15"
+                  keyTimes="0;0.35;1"
+                  calcMode="spline"
+                  keySplines="0.5 0 1 1;0.6 0 1 1"
+                  begin={sunk}
+                  dur="0.3s"
+                  fill="freeze"
+                />
+              )}
+              <circle cx="262" cy="66" r="6.4" fill={`url(#${id('ball')})`} />
+              <circle cx="259.8" cy="63.8" r="1.4" fill="#ffffff" opacity="0.9" />
+            </g>
+          </g>
+          {/* While it drops, the front lip sits over it. */}
+          <path d="M249.5 66 A 12.5 5.6 0 0 0 274.5 66" fill="none" stroke="#7fcf6c" strokeWidth="1.6" />
+        </g>
 
         {/* Ripple when it drops. */}
         {!still && (
