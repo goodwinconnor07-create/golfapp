@@ -36,8 +36,8 @@ test('mulligans: on by default, 2 for 9 holes, taken on the Go play! screen', as
   await enterScore(page, 5, true);
 
   // It shows on the hole results.
-  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.tag-mulligan')).toBeVisible();
-  await expect(page.locator('.board-row', { hasText: 'Alex' }).locator('.tag-mulligan')).toHaveCount(0);
+  await expect(page.locator('.board-row', { hasText: 'Sam' }).getByText('🔁 Mulligan')).toBeVisible();
+  await expect(page.locator('.board-row', { hasText: 'Alex' }).getByText('🔁 Mulligan')).toHaveCount(0);
   await shot(page, '46-mulligan-results');
 
   // Once the round has started, the option is locked.

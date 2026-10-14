@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatToPar, getCard, holeResult, newLeader, rankMoves, standings, type Game } from '../../game';
 import { markResultsRevealed, navigate, nextHole, resultsRevealSeen } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { Avatar, Breakdown, TierChip } from '../../ui/components';
+import { Avatar, HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { VoteTag } from './HoleResults';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
@@ -74,15 +74,17 @@ export function ResultsReveal({ game }: { game: Game }) {
               >
                 <Avatar player={player} size={44} />
                 <span className="reveal-name">
-                  <span>
-                    {top && '👑 '}
-                    {player.name}
+                  <span className="reveal-name-line">
+                    <span className="board-name-text">
+                      {top && '👑 '}
+                      {player.name}
+                    </span>
+                    {open && <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />}
                   </span>
                   {open && <small className="result-card">{getCard(r.cardId)?.title}</small>}
                 </span>
                 {open ? (
                   <span className="result-right">
-                    <TierChip tier={r.tier} />
                     <b className="result-topar">{formatToPar(r.toPar)}</b>
                   </span>
                 ) : (
@@ -93,19 +95,14 @@ export function ResultsReveal({ game }: { game: Game }) {
                 {open && (
                   // Its own line, so the working never squeezes the name.
                   <span className="result-sum">
-                    <Breakdown
+                    <Working
                       strokes={r.strokes}
                       par={r.par}
                       adjustment={r.adjustment}
                       outcome={r.outcome}
+                      tier={r.tier}
                       doubled={r.doubled}
-                      freePass={r.freePass}
                     />
-                    {r.mulligan && <span className="tag tag-mulligan">Mulligan</span>}
-                  </span>
-                )}
-                {open && (
-                  <span className="result-vote">
                     <VoteTag game={game} playerId={player.id} hole={h} />
                   </span>
                 )}

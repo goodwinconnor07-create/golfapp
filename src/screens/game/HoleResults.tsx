@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { getCard, getEntry, holeResult, isVoteable, newLeader, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { Breakdown, TierChip } from '../../ui/components';
+import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
@@ -42,23 +42,20 @@ export function HoleResults({ game }: { game: Game }) {
                 sub={
                   r && (
                     <>
-                      <TierChip tier={r.tier} />
-                      <Breakdown
+                      <Working
                         strokes={r.strokes}
                         par={r.par}
                         adjustment={r.adjustment}
                         outcome={r.outcome}
+                        tier={r.tier}
                         doubled={r.doubled}
-                        freePass={r.freePass}
                       />
-                      {r.doubled && <span className="tag tag-double">2×</span>}
-                      {r.freePass && <span className="tag tag-free">Free shot</span>}
-                      {r.mulligan && <span className="tag tag-mulligan">Mulligan</span>}
                       <VoteTag game={game} playerId={row.player.id} hole={h} />
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
                 }
+                meta={r && <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />}
               />
             );
           })}
@@ -91,7 +88,7 @@ export function VoteTag({ game, playerId, hole }: { game: Game; playerId: string
   const { fair, unfair } = voteTally(getEntry(game, playerId, hole));
   if (fair + unfair === 0) return null;
   return (
-    <span className={`tag ${unfair > fair ? 'tag-overturned' : 'tag-upheld'}`}>
+    <span className={`vote-note${unfair > fair ? ' meta-bad' : ''}`}>
       👍{fair} 👎{unfair}
       {unfair > fair ? ' · overturned' : ''}
     </span>

@@ -524,3 +524,52 @@ export function CountUp({ value, from = 0, format = String }: { value: number; f
   }, [value]);
   return <>{format(shown)}</>;
 }
+
+/**
+ * A hole's working as one pill in two halves: the golf score, then the card (its level's icon,
+ * ✓ or ✗, and what it was worth). Together they add up to the big number. Doubled holes show 2×.
+ */
+export function Working({
+  strokes,
+  par,
+  adjustment,
+  outcome,
+  tier,
+  doubled,
+}: {
+  strokes: number;
+  par: Par;
+  adjustment: number;
+  outcome: Outcome;
+  tier: Tier;
+  doubled?: boolean;
+}) {
+  // Golfers just say "a double": shorter names keep the pill on one line in a narrow row.
+  const golf = breakdownParts(strokes, par, adjustment).golf.replace(/^(Double|Triple) bogey/, '$1');
+  const mark = outcome === 'made' ? '✓' : outcome === 'missed' ? '✗' : '–';
+  const label = `${golf}, ${TIERS[tier].label} card ${outcome === 'made' ? 'completed' : outcome === 'missed' ? 'failed' : 'no change'} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
+  return (
+    <span className="working" aria-label={label}>
+      <span className="working-golf">{golf}</span>
+      <span className={`working-card ${outcome}`}>
+        <span className={`working-tier tier-ink-${tier}`}>
+          <TierIcon tier={tier} size={14} />
+        </span>
+        {mark} {formatDelta(adjustment)}
+        {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
+      </span>
+    </span>
+  );
+}
+
+/** Small grey notes beside a name: mulligan, free shot. Kept quiet so the score reads first. */
+export function HoleMeta({ mulligan, freePass, children }: { mulligan?: boolean; freePass?: boolean; children?: ReactNode }) {
+  if (!mulligan && !freePass && !children) return null;
+  return (
+    <span className="hole-meta">
+      {mulligan && <span>🔁 Mulligan</span>}
+      {freePass && <span>🛟 Free shot</span>}
+      {children}
+    </span>
+  );
+}
