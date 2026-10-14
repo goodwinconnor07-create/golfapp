@@ -32,7 +32,7 @@ for (const card of ['B12', 'S04'])
     await page.getByRole('button', { name: `Draw my ${tier} card` }).click();
     const scene = page.locator('.putt-scene');
     await expect(scene).toBeVisible();
-    await expect(scene).toHaveAttribute('aria-label', card === 'S04' ? /lag putt and a tap-in/ : /8 foot putt/);
+    await expect(scene).toHaveAttribute('aria-label', card === 'S04' ? /lag putt and a tap-in, 2 putts max/ : /8 foot putt/);
     if (process.env.SHOTS_DIR) {
       await page.waitForTimeout(2500);
       await page.screenshot({ path: `${process.env.SHOTS_DIR}/44-putt-${card}.png` });

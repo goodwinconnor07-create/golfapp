@@ -3,7 +3,7 @@ import { cardStakes, getCard, getEntry, hasPicked, redrawUsed, type Game, type P
 import { doneReveal, redrawCard, swapCard } from '../../state/store';
 import { ChallengeCard, flipDelay, FLIP_MS } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
-import { confetti, CONFETTI, haptic } from '../../ui/effects';
+import { haptic } from '../../ui/effects';
 import { SwapIcon } from '../../ui/Icons';
 
 export function Reveal({ game, playerId, pickers }: { game: Game; playerId: string; pickers: Player[] }) {
@@ -13,15 +13,11 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
   const tier = entry?.tier;
   const next = pickers.find((p) => p.id !== playerId && !hasPicked(getEntry(game, p.id, game.current)));
 
+  // A buzz as the card lands. No confetti here: drawing a card isn't a win yet, and the
+  // card face (and any shot animation on it) should have the screen to itself.
   useEffect(() => {
     if (!card || !tier) return;
-    const timer = setTimeout(
-      () => {
-        confetti(CONFETTI[tier], { x: innerWidth / 2, y: innerHeight * 0.4 }, tier === 'insane' ? 110 : 70);
-        haptic('success');
-      },
-      flipDelay(tier) + FLIP_MS - 90,
-    );
+    const timer = setTimeout(() => haptic('success'), flipDelay(tier) + FLIP_MS - 90);
     return () => clearTimeout(timer);
   }, [card, tier]);
 

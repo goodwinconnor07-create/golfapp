@@ -1,18 +1,20 @@
-import { useId, useState } from 'react';
-import { reducedMotion } from './effects';
+import { useEffect, useId, useState } from 'react';
+import { haptic, reducedMotion } from './effects';
 
 // Illustration colours (grass, cup, ball, flag) are part of the drawing, not UI tokens.
 
 /**
  * A short putting scene for putting cards: a mown green with grain, a cup with depth, a flag
  * that moves in the breeze, and a lit ball that rolls on a slight break and drops in.
- * Plays once when it appears (and again on tap). With Reduce Motion it's a still of the
- * line to the hole.
+ * Plays once when it appears (and again on tap), then settles on a still that explains the
+ * card: the ball in the cup, the aim line and distance, and the card's tag. With Reduce
+ * Motion it shows that still straight away.
  *
  * two: a lag putt that stops short, then a tap-in (for "two putts or fewer").
  * feet: shows the distance on the aim line.
+ * tag: the card's extra condition ("for par", "2 putts max"), shown by the flag.
  */
-export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; two?: boolean; delay?: number }) {
+export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: number; two?: boolean; tag?: string; delay?: number }) {
   const uid = useId().replace(/:/g, '');
   const [run, setRun] = useState(0);
   const still = reducedMotion();
@@ -34,11 +36,18 @@ export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; 
     ? { keyPoints: '0;0;0.84;0.84;1', keyTimes: `0;${t(0)};${t(0.62)};${t(0.78)};1`, keySplines: `0 0 1 1;${motion.keySplines}` }
     : { keyPoints: '0;0;1', keyTimes: `0;${t(0)};1`, keySplines: `0 0 1 1;${motion.keySplines}` };
 
+  // A light tap on the phone as the ball drops.
+  useEffect(() => {
+    if (still) return;
+    const timer = setTimeout(() => haptic('light'), total * 1000);
+    return () => clearTimeout(timer);
+  }, [run, still, total]);
+
   return (
     <button
       type="button"
       className="putt-scene"
-      aria-label={two ? 'Animation: a lag putt and a tap-in' : `Animation: a ${feet ? `${feet} foot ` : ''}putt dropping in`}
+      aria-label={`${two ? 'Animation: a lag putt and a tap-in' : `Animation: a ${feet ? `${feet} foot ` : ''}putt dropping in`}${tag ? `, ${tag}` : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         setRun((n) => n + 1);
@@ -98,7 +107,7 @@ export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; 
         <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('stripes')})`} />
         <ellipse cx="176" cy="92" rx="214" ry="86" fill="#000" filter={`url(#${id('grain')})`} />
 
-        {/* Aim line and distance, fading as the ball sets off. */}
+        {/* Aim line and distance: they dim while the ball rolls and come back once it drops. */}
         <g>
           <path d={line} fill="none" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="2" strokeDasharray="1 7" strokeLinecap="round" />
           {feet != null && (
@@ -117,7 +126,16 @@ export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; 
               </text>
             </g>
           )}
-          {!still && <animate attributeName="opacity" from="1" to="0" begin={begin(0.15)} dur="0.5s" fill="freeze" />}
+          {!still && (
+            <animate
+              attributeName="opacity"
+              values="1;0.2;0.2;1"
+              keyTimes={`0;${(0.5 / (roll + 0.9)).toFixed(3)};${((roll + 0.3) / (roll + 0.9)).toFixed(3)};1`}
+              begin={begin(0.15)}
+              dur={`${roll + 0.9}s`}
+              fill="freeze"
+            />
+          )}
         </g>
 
         {/* The track the ball leaves in the dew. */}
@@ -158,17 +176,21 @@ export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; 
         />
         <path d="M300 78 L 330 96 L 314 99 Z" fill="#0d3a15" fillOpacity="0.2" filter={`url(#${id('soft')})`} />
 
-        {/* Cup: back half, so the ball can drop behind the front lip. */}
+        {/* Cup, and the ball resting in it once it drops (just its top shows above the lip). */}
         <ellipse cx="262" cy="66" rx="12.5" ry="5.6" fill={`url(#${id('cup')})`} />
+        <clipPath id={id('in-cup')}>
+          <ellipse cx="262" cy="66" rx="12.5" ry="5.6" />
+        </clipPath>
+        <g clipPath={`url(#${id('in-cup')})`} opacity={still ? 1 : 0}>
+          <circle cx="262" cy="68.5" r="6.4" fill={`url(#${id('ball')})`} />
+          <circle cx="259.6" cy="65.4" r="1.4" fill="#ffffff" opacity="0.9" />
+          {!still && <animate attributeName="opacity" to="1" begin={begin(roll + 0.1)} dur="0.12s" fill="freeze" />}
+        </g>
         <ellipse cx="262" cy="64.6" rx="12.5" ry="4.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
 
         {/* Ball and its shadow, rolling on the line. */}
         <g>
-          {still ? (
-            <g transform="translate(54 116)">
-              <Ball id={id} />
-            </g>
-          ) : (
+          {still ? null : (
             <g>
               <animateMotion path={line} begin="0s" dur={`${total}s`} fill="freeze" calcMode="spline" {...held} />
               {/* Drop into the cup: sink a touch and vanish behind the lip. */}
@@ -213,12 +235,39 @@ export function PuttScene({ feet, two = false, delay = 0.35 }: { feet?: number; 
             <animate
               attributeName="d"
               dur="1.6s"
-              repeatCount="indefinite"
+              repeatDur={`${(total + 1.2).toFixed(2)}s`}
               values="M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z;M263.4 8 C 275 5, 287 11, 298 11 C 288 17, 275 20, 263.4 26 Z;M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z"
             />
           )}
         </path>
         <path d="M263.4 8 C 276 10, 286 7, 298 13" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
+
+        {/* The card's extra condition, by the flag once the ball is in. */}
+        {tag && (
+          <g opacity={still ? 1 : 0}>
+            <rect
+              x={254 - (tag.length * 7.4 + 20)}
+              y="9"
+              width={tag.length * 7.4 + 20}
+              height="24"
+              rx="12"
+              fill="#0b0b12"
+              fillOpacity="0.72"
+            />
+            <text
+              x={254 - (tag.length * 7.4 + 20) / 2}
+              y="25.5"
+              textAnchor="middle"
+              fontSize="13"
+              fontWeight="800"
+              fill="#ffffff"
+              fontFamily="-apple-system, system-ui, sans-serif"
+            >
+              {tag}
+            </text>
+            {!still && <animate attributeName="opacity" to="1" begin={begin(roll + 0.35)} dur="0.25s" fill="freeze" />}
+          </g>
+        )}
       </svg>
     </button>
   );

@@ -122,3 +122,8 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - **Shown to everyone:** every change to a locked-in score (or to someone else's) is recorded and listed under "Score changes" on the scorecard and final results, and the cell gets a ✎ mark.
 - **One-phone games:** unchanged; everyone's on one phone, so fixes are direct and unrecorded.
 - Enforced on the server (`scoreAccess()` in `rules.ts`), not just hidden in the app.
+
+## Drawing a card (Oct 2026)
+
+- No confetti when a card is drawn: drawing isn't a win yet, and the card face should have the screen to itself. Confetti stays for completions and wins. The flip, the Insane wind-up and the haptic stay.
+- Trial: putting cards show a short putt scene on the card. It starts after the flip has landed, plays once (tap to replay), gives a light tap on the phone as the ball drops, and settles on a still that explains the card: ball in the cup, the distance, and the card's extra condition ("for par", "2 putts max"). Reduce Motion shows that still straight away. Other shot types wait on the product owner's call.

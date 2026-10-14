@@ -6,6 +6,8 @@ import { PuttScene } from './PuttScene';
 
 /** Putting cards get a short putt animation (trial: putting only for now). */
 const PUTT_CARDS = new Set(['S04', 'B04', 'B12', 'I03', 'I11']);
+/** The extra bit each putting card asks for, shown on the flag once the ball drops. */
+const PUTT_TAGS: Record<string, string> = { S04: '2 putts max', I11: 'for par' };
 import { TierIcon, TIER_LOOK, Pips } from './components';
 
 interface Props {
@@ -78,7 +80,13 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
             </span>
           </div>
           {card && !compact && shown && PUTT_CARDS.has(card.id) && (
-            <PuttScene two={card.id === 'S04'} feet={Number(card.pass.match(/(\d+) feet/)?.[1]) || undefined} delay={flip ? 0.45 : 0.2} />
+            // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
+            <PuttScene
+              two={card.id === 'S04'}
+              feet={Number(card.pass.match(/(\d+) feet/)?.[1]) || undefined}
+              tag={PUTT_TAGS[card.id]}
+              delay={flip ? (FLIP_MS + 320) / 1000 : 0.3}
+            />
           )}
           {card && (
             <div className="ccard-body">
