@@ -67,9 +67,6 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
           </>
         ) : (
           <>
-            <p className="label" style={{ textAlign: 'center' }}>
-              Did {player.name} make the card?
-            </p>
             <div className="made-missed">
               <button type="button" className="btn btn-xl btn-green" onClick={() => send('made')}>
                 <CheckIcon /> Completed
