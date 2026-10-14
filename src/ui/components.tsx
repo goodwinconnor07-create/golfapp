@@ -551,9 +551,7 @@ export function Working({
     <span className="working" aria-label={label}>
       <span className="working-golf">{golf}</span>
       <span className={`working-card ${outcome}`}>
-        <span className={`working-tier tier-ink-${tier}`}>
-          <TierIcon tier={tier} size={14} />
-        </span>
+        <span className={`working-tier tier-ink-${tier}`}>{TIERS[tier].label}</span>
         {/* Colour says completed or failed; the label says it for screen readers. */}
         {formatDelta(adjustment)}
         {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
