@@ -286,8 +286,12 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
   await page.getByRole('button', { name: 'Pick a picture' }).click();
   await page.getByRole('radio', { name: '🦈' }).click();
   await page.getByRole('radio', { name: 'Colour 4' }).click();
+  await expect(page.locator('.look-preview .avatar')).toHaveText('🦈');
   await shot(page, '40-pick-picture');
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await expect(page.locator('.name-row .avatar')).toHaveText('🦈');
+  await shot(page, '41-name-with-picture');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: /Front 9/ }).click();
@@ -305,4 +309,33 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
   // A guest can't take Sam's colour.
   await page.getByRole('button', { name: /No phone\? Add them/ }).click();
   await expect(page.getByRole('radio', { name: 'Colour 2, taken' })).toBeDisabled();
+});
+
+test('sheets slide away: swipe down to close, a short drag springs back', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'New game' }).click();
+  await page.getByLabel('Your name').fill('Sam');
+  await page.getByRole('button', { name: 'Change your picture' }).click();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(400); // let it finish sliding up before measuring
+  const head = page.locator('.sheet-grip-zone');
+  const box = (await head.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  // A short drag isn't enough.
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + 40, { steps: 5 });
+  await page.mouse.up();
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(300); // spring back
+
+  // A longer one closes it.
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + 200, { steps: 8 });
+  await page.mouse.up();
+  await expect(sheet).toBeHidden();
 });

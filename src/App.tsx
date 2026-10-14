@@ -17,6 +17,7 @@ export function App() {
   const route = useApp((s) => s.stack[s.stack.length - 1]);
   const depth = useApp((s) => s.stack.length);
   const sheet = useApp((s) => s.sheet);
+  const sheetKey = useApp((s) => s.sheetKey);
   const flash = useApp((s) => s.flash);
 
   let screen;
@@ -59,7 +60,7 @@ export function App() {
   return (
     <>
       <div key={`${depth}-${route.name}`}>{screen}</div>
-      {sheet && <SheetHost sheet={sheet} />}
+      {sheet && <SheetHost key={sheetKey} sheet={sheet} />}
       {flash && <ScoreFlash key={flash.key} flash={flash} />}
       <Toasts />
     </>

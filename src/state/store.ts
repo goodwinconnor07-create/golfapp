@@ -24,7 +24,7 @@ import {
   type ServerMessage,
   type Tier,
 } from '../game';
-import { haptic } from '../ui/effects';
+import { haptic, reducedMotion } from '../ui/effects';
 import { checkServer, createOnlineGame } from './api';
 import { Connection, type ConnStatus } from './connection';
 import {
@@ -60,6 +60,7 @@ export type Sheet =
   | { name: 'options' }
   | { name: 'menu' }
   | { name: 'pars' }
+  | { name: 'look' }
   | { name: 'player'; playerId: string }
   | { name: 'edit'; playerId: string; hole: number }
   | { name: 'confirm'; title: string; body?: string; confirm: string; danger?: boolean; onConfirm: () => void };
@@ -93,6 +94,10 @@ export interface AppState {
   profileLook: Look;
   stack: Route[];
   sheet: Sheet | null;
+  /** The sheet is sliding down; it's removed when that finishes. */
+  sheetLeaving: boolean;
+  /** Changes on every open, so a sheet opened while another slides away starts fresh. */
+  sheetKey: number;
   session: Session | null;
   /** The game as this phone should show it (online: server state plus unconfirmed actions). */
   game: Game | null;
@@ -132,6 +137,8 @@ let state: AppState = {
   profileLook: loadLook(),
   stack: [ROOT],
   sheet: null,
+  sheetLeaving: false,
+  sheetKey: 0,
   session: bootSession,
   game: bootGame,
   conn: 'none',
@@ -195,30 +202,48 @@ function onPopState(): void {
 }
 
 export function navigate(route: Route): void {
-  set({ stack: [...state.stack, route], sheet: null });
+  clearTimeout(sheetTimer);
+  set({ stack: [...state.stack, route], sheet: null, sheetLeaving: false });
   syncHistory();
 }
 
 export function resetTo(...routes: Route[]): void {
-  set({ stack: [ROOT, ...routes], sheet: null });
+  clearTimeout(sheetTimer);
+  set({ stack: [ROOT, ...routes], sheet: null, sheetLeaving: false });
   syncHistory();
 }
 
 export function back(): void {
-  if (state.sheet) set({ sheet: null });
-  else if (state.stack.length > 1) set({ stack: state.stack.slice(0, -1) });
+  if (state.sheet && !state.sheetLeaving) return closeSheet();
+  // A sheet already sliding away doesn't hold up going back.
+  if (state.sheetLeaving) {
+    clearTimeout(sheetTimer);
+    set({ sheet: null, sheetLeaving: false });
+  }
+  if (state.stack.length > 1) set({ stack: state.stack.slice(0, -1) });
   syncHistory();
 }
+
+let sheetTimer: ReturnType<typeof setTimeout> | undefined;
+/** Matches the sheet-down animation in global.css. */
+const SHEET_OUT_MS = 200;
 
 export function openSheet(sheet: Sheet): void {
-  set({ sheet });
+  clearTimeout(sheetTimer);
+  set({ sheet, sheetLeaving: false, sheetKey: state.sheetKey + 1 });
   syncHistory();
 }
 
+/** Slides the sheet down, then removes it. Taps during the slide do nothing. */
 export function closeSheet(): void {
-  if (!state.sheet) return;
-  set({ sheet: null });
-  syncHistory();
+  if (!state.sheet || state.sheetLeaving) return;
+  const done = () => {
+    set({ sheet: null, sheetLeaving: false });
+    syncHistory();
+  };
+  if (reducedMotion()) return done();
+  set({ sheetLeaving: true });
+  sheetTimer = setTimeout(done, SHEET_OUT_MS);
 }
 
 export function confirm(opts: Omit<Extract<Sheet, { name: 'confirm' }>, 'name'>): void {

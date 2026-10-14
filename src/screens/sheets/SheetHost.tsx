@@ -17,6 +17,7 @@ import { ExitIcon, FlagIcon, GearIcon, HelpIcon, HomeIcon, ListIcon, TrophyIcon,
 import { EditSheet } from './EditSheet';
 import { InviteSheet } from './InviteSheet';
 import { OptionsSheet, ParsSheet } from './OptionsSheet';
+import { LookSheet } from './LookSheet';
 import { PlayerSheet } from './PlayerSheet';
 
 export function SheetHost({ sheet }: { sheet: SheetSpec }) {
@@ -29,6 +30,8 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
       return <ParsSheet />;
     case 'menu':
       return <MenuSheet />;
+    case 'look':
+      return <LookSheet />;
     case 'player':
       return <PlayerSheet playerId={sheet.playerId} />;
     case 'edit':

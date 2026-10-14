@@ -1,14 +1,12 @@
-import { useState } from 'react';
 import { cleanName, LIMITS } from '../game';
-import { navigate, setDraftNames, setProfileLook, useApp } from '../state/store';
-import { Avatar, BackBar, LookPicker } from '../ui/components';
+import { navigate, openSheet, setDraftNames, useApp } from '../state/store';
+import { Avatar, BackBar } from '../ui/components';
 
 /** Setup step 1: just the host's name. Everyone else joins from their own phone with the code. */
 export function SetupPlayers() {
   const name = useApp((s) => s.draft.names[0] ?? '');
   const valid = Boolean(cleanName(name));
   const look = useApp((s) => s.profileLook);
-  const [picking, setPicking] = useState(false);
   const next = () => {
     // Older drafts could hold other players' names: only the host's carries on.
     setDraftNames([name]);
@@ -28,12 +26,13 @@ export function SetupPlayers() {
             type="button"
             className="avatar-button press"
             aria-label="Change your picture"
-            aria-expanded={picking}
-            onClick={() => setPicking((v) => !v)}
+            onClick={() => openSheet({ name: 'look' })}
           >
             <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={50} />
             <span className="avatar-edit" aria-hidden>
-              ✎
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+              </svg>
             </span>
           </button>
           <input
@@ -51,13 +50,9 @@ export function SetupPlayers() {
             }}
           />
         </div>
-        {picking ? (
-          <LookPicker name={name} emoji={look.emoji} color={look.color} onChange={setProfileLook} />
-        ) : (
-          <button type="button" className="btn-link-small" style={{ alignSelf: 'flex-start' }} onClick={() => setPicking(true)}>
-            Pick a picture
-          </button>
-        )}
+        <button type="button" className="btn-link-small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet({ name: 'look' })}>
+          {look.emoji ? 'Change your picture' : 'Pick a picture'}
+        </button>
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={next}>

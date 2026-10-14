@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent, type ReactNode, type SVGProps } from 'react';
 import { AVATAR_EMOJIS, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
@@ -85,6 +85,7 @@ export function LookPicker({
   const initial = [...name.trim()][0]?.toUpperCase() ?? 'A';
   return (
     <div className="look-picker">
+      <p className="section-title">Picture</p>
       <div className="look-grid" role="radiogroup" aria-label="Picture">
         {[null, ...AVATAR_EMOJIS].map((e) => (
           <button
@@ -103,6 +104,7 @@ export function LookPicker({
           </button>
         ))}
       </div>
+      <p className="section-title">Colour</p>
       <div className="look-colors" role="radiogroup" aria-label="Colour">
         {PLAYER_COLORS.map((c, i) => {
           const isTaken = taken.includes(i) && i !== color;
@@ -319,11 +321,42 @@ export function BackBar({ title, right, onBack = back }: { title?: ReactNode; ri
 
 export function Sheet({ title, children, onClose = closeSheet }: { title?: ReactNode; children: ReactNode; onClose?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const leaving = useApp((s) => s.sheetLeaving);
+  const drag = useRef<{ startY: number; dy: number } | null>(null);
   useEffect(() => {
     ref.current?.focus();
   }, []);
+
+  // Swipe down on the grip or title to close. Past 90px (or a quick flick) it closes; otherwise it springs back.
+  const onDown = (e: ReactPointerEvent) => {
+    // Leave taps on the close button alone.
+    if ((e.target as HTMLElement).closest('button')) return;
+    drag.current = { startY: e.clientY, dy: 0 };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    ref.current?.classList.add('dragging');
+  };
+  const onMove = (e: ReactPointerEvent) => {
+    if (!drag.current || !ref.current) return;
+    drag.current.dy = Math.max(0, e.clientY - drag.current.startY);
+    ref.current.style.transform = `translateY(${drag.current.dy}px)`;
+  };
+  const onUp = () => {
+    const d = drag.current;
+    drag.current = null;
+    const el = ref.current;
+    if (!d || !el) return;
+    el.classList.remove('dragging');
+    if (d.dy > 90) {
+      // Carry on down from where the finger let go.
+      el.style.setProperty('--drag', `${d.dy}px`);
+      onClose();
+    }
+    el.style.transform = '';
+  };
+  const dragProps = { onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerCancel: onUp };
+
   return (
-    <div className="sheet-backdrop" onClick={onClose}>
+    <div className={`sheet-backdrop${leaving ? ' leaving' : ''}`} onClick={onClose}>
       <div
         className="sheet"
         role="dialog"
@@ -333,9 +366,11 @@ export function Sheet({ title, children, onClose = closeSheet }: { title?: React
         ref={ref}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sheet-grip" />
+        <div className="sheet-grip-zone" {...dragProps}>
+          <div className="sheet-grip" />
+        </div>
         {title && (
-          <div className="sheet-head">
+          <div className="sheet-head" {...dragProps}>
             <h2 className="h2" style={{ flex: 1 }}>
               {title}
             </h2>
