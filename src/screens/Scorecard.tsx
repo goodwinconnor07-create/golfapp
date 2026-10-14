@@ -1,4 +1,5 @@
-import { completedHoles, getEntry, holeResult, playerTotals, formatToPar } from '../game';
+import { completedHoles, getEntry, holeResult, playerTotals, formatToPar, scoreAccess } from '../game';
+import { EditList } from './game/EditList';
 import { openSheet, useApp } from '../state/store';
 import { isHost } from '../state/view';
 import { Avatar, BackBar, TIER_LOOK } from '../ui/components';
@@ -17,7 +18,7 @@ export function Scorecard() {
     <div className="screen">
       <BackBar title="Scorecard" />
       <div className="screen-body">
-        <p className="note">Tap a score to fix it.</p>
+        <p className="note">{game.code && !host ? 'Tap a score to fix it, or ask to change a locked-in one.' : 'Tap a score to fix it.'}</p>
 
         <div className="sc-wrap">
           <table className="sc">
@@ -70,9 +71,11 @@ export function Scorecard() {
                   {game.players.map((p) => {
                     const entry = getEntry(game, p.id, i);
                     const r = holeResult(game, p.id, i);
-                    const editable = i <= lastPlayed && Boolean(entry?.cardId) && game.status !== 'lobby';
+                    const editable =
+                      i <= lastPlayed && Boolean(entry?.cardId) && game.status !== 'lobby' && scoreAccess(game, deviceId, p.id, i) !== 'none';
+                    const edited = game.edits?.some((e) => e.playerId === p.id && e.hole === i);
                     const value = r ? formatToPar(r.toPar) : '·';
-                    const cls = r ? r.outcome : 'empty';
+                    const cls = `${r ? r.outcome : 'empty'}${edited ? ' edited' : ''}`;
                     const inner = (
                       <>
                         {r && <span className="dot" style={{ background: TIER_LOOK[r.tier].color }} />}
@@ -117,6 +120,7 @@ export function Scorecard() {
           </table>
         </div>
         <p className="note">Green = challenge completed, red = failed. The dot shows the level. Lowest score wins.</p>
+        <EditList game={game} />
         <p className="note">
           <b>Strokes taken:</b> {game.players.map((p, j) => `${p.name} ${totals[j].real}`).join(' · ')}
         </p>

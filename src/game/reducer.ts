@@ -1,9 +1,9 @@
 import { getCard } from './cards';
 import { drawCard, returnCard, takeCard } from './deck';
-import { anyPicked, canAddPlayers, entryKey, holeComplete, isVoteable, judgeFromStrokes, outcomeChoices, redrawUsed } from './rules';
+import { anyPicked, canAddPlayers, canApproveFix, entryKey, getEntry, holeComplete, isLocked, isVoteable, judgeFromStrokes, outcomeChoices, ownsPlayer, redrawUsed, scoreAccess } from './rules';
 import { freePassAvailable } from './selectors';
 import { isTier } from './tiers';
-import { LIMITS, type Action, type ActionContext, type Entry, type Game, type Hole, type Player, type Settings } from './types';
+import { LIMITS, type Action, type ActionContext, type Entry, type FixRequest, type Game, type Hole, type Outcome, type Player, type ScoreEdit, type Settings } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   distanceCards: true,
@@ -77,6 +77,43 @@ export function createGame(input: NewGameInput): Game {
     decks: {},
     seq: 0,
   };
+}
+
+/** Saves strokes (and the tapped result) for a played hole. Returns an error, or null. Mutates g. */
+function writeScore(g: Game, playerId: string, holeIdx: number, strokesIn: number, tapped: Outcome | undefined): string | null {
+  const hole = g.holes[holeIdx];
+  if (!hole || holeIdx > g.current) return "That hole hasn't been played yet.";
+  const strokes = strokesIn;
+  if (!Number.isInteger(strokes) || strokes < LIMITS.minStrokes || strokes > LIMITS.maxStrokes) {
+    return `Strokes must be between ${LIMITS.minStrokes} and ${LIMITS.maxStrokes}.`;
+  }
+  const key = entryKey(playerId, holeIdx);
+  const entry = g.entries[key];
+  const card = getCard(entry?.cardId);
+  if (!entry || !card || hole.par == null) return 'Draw a card for this hole first.';
+  if (tapped !== undefined) {
+    const choices = outcomeChoices(card);
+    if (choices.length > 0 && !choices.includes(tapped)) return "That result doesn't fit this card.";
+  }
+  // A changed claim starts a fresh vote.
+  if (entry.strokes !== strokes || (tapped !== undefined && tapped !== entry.outcome)) delete entry.votes;
+  entry.strokes = strokes;
+  entry.done = true;
+  // Store the result the strokes settle too, so it survives a later par correction.
+  // "Didn't happen" on a situational card stands even if the strokes would rule it out.
+  const requested = tapped ?? entry.outcome;
+  const auto = judgeFromStrokes(card, hole.par, strokes);
+  const outcome = card.situational && requested === 'na' ? 'na' : (auto ?? requested);
+  if (outcome) entry.outcome = outcome;
+  else delete entry.outcome;
+  return null;
+}
+
+function logEdit(g: Game, playerId: string, hole: number, from: ScoreEdit['from'], how: string, at: number): void {
+  const e = getEntry(g, playerId, hole);
+  if (!e || e.strokes == null) return;
+  if (e.strokes === from.strokes && e.outcome === from.outcome) return;
+  g.edits = [...(g.edits ?? []), { playerId, hole, from, to: { strokes: e.strokes, outcome: e.outcome }, how, at }].slice(-100);
 }
 
 export type ApplyResult = { ok: true; game: Game; changed: boolean } | { ok: false; error: string };
@@ -290,32 +327,57 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
 
     case 'score': {
       if (g.status === 'lobby') return fail("The game hasn't started.");
-      const hole = g.holes[action.hole];
-      if (!hole || action.hole > g.current) return fail("That hole hasn't been played yet.");
       if (!findPlayer(action.playerId)) return fail('Player not found.');
-      const strokes = action.strokes;
-      if (!Number.isInteger(strokes) || strokes < LIMITS.minStrokes || strokes > LIMITS.maxStrokes) {
-        return fail(`Strokes must be between ${LIMITS.minStrokes} and ${LIMITS.maxStrokes}.`);
+      const access = scoreAccess(g, ctx.deviceId, action.playerId, action.hole);
+      if (access === 'none') return fail("Only the host can enter someone else's score.");
+      if (access === 'request') return fail('That hole is locked in. Ask to change it instead.');
+      const before = getEntry(g, action.playerId, action.hole);
+      const from = before?.strokes != null ? { strokes: before.strokes, outcome: before.outcome } : null;
+      const err = writeScore(g, action.playerId, action.hole, action.strokes, action.outcome);
+      if (err) return fail(err);
+      // Online, a change to a score after the hole is locked in (or to someone else's) is shown to everyone.
+      if (from && g.code && (isLocked(g, action.hole) || !ownsPlayer(g, ctx.deviceId, action.playerId))) {
+        logEdit(g, action.playerId, action.hole, from, 'Host', ctx.now);
       }
-      const key = entryKey(action.playerId, action.hole);
-      const entry = g.entries[key];
-      const card = getCard(entry?.cardId);
-      if (!entry || !card || hole.par == null) return fail('Draw a card for this hole first.');
-      if (action.outcome !== undefined) {
-        const choices = outcomeChoices(card);
-        if (choices.length > 0 && !choices.includes(action.outcome)) return fail("That result doesn't fit this card.");
-      }
-      // A changed claim starts a fresh vote.
-      if (entry.strokes !== strokes || (action.outcome !== undefined && action.outcome !== entry.outcome)) delete entry.votes;
-      entry.strokes = strokes;
-      entry.done = true;
-      // Store the result the strokes settle too, so it survives a later par correction.
-      // "Didn't happen" on a situational card stands even if the strokes would rule it out.
-      const requested = action.outcome ?? entry.outcome;
-      const auto = judgeFromStrokes(card, hole.par, strokes);
-      const outcome = card.situational && requested === 'na' ? 'na' : (auto ?? requested);
-      if (outcome) entry.outcome = outcome;
-      else delete entry.outcome;
+      break;
+    }
+
+    case 'requestFix': {
+      if (!g.code) return fail('Just fix it: everyone is on this phone.');
+      const player = findPlayer(action.playerId);
+      const entry = getEntry(g, action.playerId, action.hole);
+      if (!player || entry?.strokes == null) return fail('There is no score to change yet.');
+      if (scoreAccess(g, ctx.deviceId, action.playerId, action.hole) !== 'request') return fail('You can change this score yourself.');
+      if (g.fixes?.some((f) => f.id === action.id)) return unchanged;
+      const asker = g.players.find((p) => p.deviceId === ctx.deviceId);
+      const fix: FixRequest = {
+        id: action.id,
+        playerId: action.playerId,
+        hole: action.hole,
+        strokes: action.strokes,
+        ...(action.outcome ? { outcome: action.outcome } : {}),
+        by: ctx.deviceId,
+        byName: asker?.name ?? 'Someone',
+      };
+      // One open request per score: a new one replaces the old.
+      g.fixes = [...(g.fixes ?? []).filter((f) => !(f.playerId === fix.playerId && f.hole === fix.hole)), fix];
+      break;
+    }
+
+    case 'answerFix': {
+      const fix = g.fixes?.find((f) => f.id === action.id);
+      if (!fix) return unchanged;
+      const withdraw = fix.by === ctx.deviceId && !action.accept;
+      if (!withdraw && !canApproveFix(g, ctx.deviceId, fix)) return fail("It's not yours to approve.");
+      g.fixes = g.fixes!.filter((f) => f.id !== fix.id);
+      if (!g.fixes.length) delete g.fixes;
+      if (!action.accept) break;
+      const before = getEntry(g, fix.playerId, fix.hole);
+      const from = before?.strokes != null ? { strokes: before.strokes, outcome: before.outcome } : null;
+      const err = writeScore(g, fix.playerId, fix.hole, fix.strokes, fix.outcome);
+      if (err) return fail(err);
+      const approver = isHost ? 'the host' : (g.players.find((p) => p.deviceId === ctx.deviceId)?.name ?? 'the player');
+      if (from) logEdit(g, fix.playerId, fix.hole, from, `${fix.byName} asked · approved by ${approver}`, ctx.now);
       break;
     }
 

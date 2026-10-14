@@ -9,6 +9,7 @@ import {
   createGame,
   eligibleCards,
   entryKey,
+  getEntry,
   getCard,
   holeResult,
   holeStatus,
@@ -619,5 +620,72 @@ describe('player pictures', () => {
   it("only lets a guest change their own picture", () => {
     const r = applyAction(base(), { type: 'setLook', playerId: 'p1aaaa', emoji: '⛳', color: 1 }, { deviceId: 'dother', now: 1, rng: Math.random });
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('who can change a score (online)', () => {
+  // Sam is the host; Alex is on their own phone.
+  function online(): Game {
+    let g = newGame();
+    g = { ...g, code: 'ABCDE', players: g.players.map((p, i) => (i === 1 ? { ...p, deviceId: OTHER } : p)) };
+    g = run(g, { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = giveCard(g, 'player01', 0, 'S02');
+    return g;
+  }
+  const alex = ctx(OTHER);
+
+  it('lets you enter and fix your own score until the group moves on', () => {
+    let g = run(online(), { type: 'score', playerId: 'player01', hole: 0, strokes: 5, outcome: 'made' }, alex);
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 4, outcome: 'made' }, alex);
+    expect(getEntry(g, 'player01', 0)?.strokes).toBe(4);
+    expect(g.edits).toBeUndefined();
+  });
+
+  it("doesn't let a guest enter or change someone else's score", () => {
+    let g = online();
+    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 3, outcome: 'made' }, alex).ok).toBe(false);
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 9, outcome: 'missed' }, alex).ok).toBe(false);
+  });
+
+  it('locks a hole once the group moves on: your own fix becomes a request the host approves', () => {
+    let g = run(online(), { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'missed' }, alex);
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(applyAction(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 5, outcome: 'missed' }, alex).ok).toBe(false);
+
+    g = run(g, { type: 'requestFix', id: 'fix001', playerId: 'player01', hole: 0, strokes: 5, outcome: 'missed' }, alex);
+    expect(getEntry(g, 'player01', 0)?.strokes).toBe(6);
+    // Alex can't approve their own request; the host can.
+    expect(applyAction(g, { type: 'answerFix', id: 'fix001', accept: true }, alex).ok).toBe(false);
+    g = run(g, { type: 'answerFix', id: 'fix001', accept: true });
+    expect(getEntry(g, 'player01', 0)?.strokes).toBe(5);
+    expect(g.fixes).toBeUndefined();
+    expect(g.edits).toEqual([expect.objectContaining({ playerId: 'player01', hole: 0, from: expect.objectContaining({ strokes: 6 }), to: expect.objectContaining({ strokes: 5 }) })]);
+  });
+
+  it("asks the player to approve a change to their score, and a no leaves it alone", () => {
+    let g = run(online(), { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'missed' }, alex);
+    g = run(g, { type: 'nextHole', from: 0 });
+    g = run(g, { type: 'requestFix', id: 'fix002', playerId: 'player00', hole: 0, strokes: 6, outcome: 'made' }, alex);
+    // The host owns Sam, so the host answers. No = nothing changes.
+    g = run(g, { type: 'answerFix', id: 'fix002', accept: false });
+    expect(getEntry(g, 'player00', 0)?.strokes).toBe(5);
+    expect(g.edits).toBeUndefined();
+  });
+
+  it('lets the host fix anything, and shows the change to everyone', () => {
+    let g = run(online(), { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'missed' }, alex);
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 7, outcome: 'missed' });
+    expect(g.edits?.[0]).toMatchObject({ playerId: 'player01', how: 'Host', from: { strokes: 6 }, to: { strokes: 7 } });
+  });
+
+  it('turns away fix requests in a one-phone game', () => {
+    let g = run(newGame(), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    expect(applyAction(g, { type: 'requestFix', id: 'fix003', playerId: 'player00', hole: 0, strokes: 4 }, ctx()).ok).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { CARDS, getCard, type CardDef } from './cards';
 import { adjustmentFor } from './tiers';
-import type { Entry, Game, Outcome, Par, Settings, Tier } from './types';
+import type { Entry, FixRequest, Game, Outcome, Par, Settings, Tier } from './types';
 
 /** The last few holes of a round count double, so whoever's behind still has a shot. */
 export const DOUBLE_STAKES_HOLES = 3;
@@ -185,4 +185,42 @@ export function anyPicked(game: Game, hole: number): boolean {
 export function canAddPlayers(game: Game): boolean {
   if (game.status === 'lobby') return true;
   return game.status === 'playing' && game.current === 0 && !holeComplete(game, 0);
+}
+
+// ── Who can change a score ──────────────────────────────────────────────────
+
+/** This device runs that player: it claimed them, or they're a guest on the host's phone. */
+export function ownsPlayer(game: Game, deviceId: string, playerId: string): boolean {
+  const p = game.players.find((x) => x.id === playerId);
+  if (!p) return false;
+  return p.deviceId === deviceId || (p.deviceId === null && deviceId === game.hostDeviceId);
+}
+
+/** A hole is locked in once the group has moved past it, or the round is over. */
+export function isLocked(game: Game, hole: number): boolean {
+  return hole < game.current || game.status === 'finished';
+}
+
+/**
+ * direct: save it now. request: ask the player (or host) to approve. none: not yours to touch.
+ * One-phone games and the host are always direct. Online, you can enter and fix your own
+ * score until the group moves on; after that, or for anyone else's score, you ask.
+ */
+export function scoreAccess(game: Game, deviceId: string, playerId: string, hole: number): 'direct' | 'request' | 'none' {
+  if (!game.code || deviceId === game.hostDeviceId) return 'direct';
+  const mine = ownsPlayer(game, deviceId, playerId);
+  if (mine && !isLocked(game, hole)) return 'direct';
+  return getEntry(game, playerId, hole)?.strokes != null ? 'request' : 'none';
+}
+
+/** The player whose score it is approves; if they asked themselves, the host does. The host can always. */
+export function canApproveFix(game: Game, deviceId: string, fix: FixRequest): boolean {
+  if (deviceId === game.hostDeviceId) return true;
+  if (fix.by === deviceId) return false;
+  return ownsPlayer(game, deviceId, fix.playerId);
+}
+
+/** Requests waiting on this phone's answer. */
+export function fixesToAnswer(game: Game, deviceId: string): FixRequest[] {
+  return (game.fixes ?? []).filter((f) => f.by !== deviceId && canApproveFix(game, deviceId, f));
 }

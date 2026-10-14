@@ -38,7 +38,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **No Bunker Visit** stays in the deck. If the hole has no bunker in play, the player can swap it once for a card that doesn't need one.
 - **Cards the strokes decide** are judged by the app: Bogey Buffer, No Triple Bogey, Par Hunter and Birdie Time. Cards with a strokes condition plus something else (like The Clean Birdie) are marked missed automatically when the strokes rule them out; otherwise the player taps Completed or Failed.
 - **Decks:** one shuffled pile per level for the whole round, so cards don't repeat until the pile runs out.
-- **Who can do what online:** anyone can enter or fix any score (it's a game between friends). Only the host can start, end early, change options, add guests, remove players, or change a par once cards are out.
+- **Who can do what online:** you enter your own score (and any guests' on your phone). See "Changing scores" below. Only the host can start, end early, change options, add guests, remove players, or change a par once cards are out.
 - **Joining late:** new players can join until the first hole is finished. Anyone can claim a name the host typed in at any time.
 - **Ending early:** only holes everyone finished count towards totals.
 - **Join codes:** 5 consonants, so a code can never spell a word. Online games are deleted 14 days after their last change.
@@ -109,3 +109,15 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - Picked on the name screen ("Pick a picture" or tap the avatar), or later by tapping your own row in the lobby. The host can set one for guests on their phone. The phone remembers your pick for the next game.
 - Colours stay unique within a game: a colour someone else has is greyed out. Emojis can repeat.
 - The server only accepts emojis from the list (`isAvatarEmoji`). No photo uploads for now.
+
+## Changing scores (Oct 2026)
+
+Replaces "anyone can enter or fix any score". The product owner wanted real games protected but still fixable.
+
+- **Entering:** online, you enter scores for your own players only (yourself, plus guests on your phone). The host can also enter for anyone, for a dead phone ("Enter for them" is host-only).
+- **Typo window:** you can fix your own score freely until the group moves on to the next hole.
+- **Locked in:** once the group moves on (or the round ends), a fix becomes a request. The player whose score it is approves it; if you're asking about your own, the host approves. The asker can cancel. One open request per score; a new one replaces it.
+- **Host:** can fix any score directly, as referee.
+- **Shown to everyone:** every change to a locked-in score (or to someone else's) is recorded and listed under "Score changes" on the scorecard and final results, and the cell gets a ✎ mark.
+- **One-phone games:** unchanged; everyone's on one phone, so fixes are direct and unrecorded.
+- Enforced on the server (`scoreAccess()` in `rules.ts`), not just hidden in the app.

@@ -104,6 +104,21 @@ export function parseAction(input: unknown): Action | null {
       return a.outcome === undefined
         ? { type: 'score', playerId: a.playerId, hole: a.hole, strokes: a.strokes }
         : { type: 'score', playerId: a.playerId, hole: a.hole, strokes: a.strokes, outcome: a.outcome };
+    case 'requestFix':
+      if (!isStr(a.id, 24) || !/^[a-z0-9]{6,24}$/.test(a.id) || !isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
+      if (!isInt(a.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) return null;
+      if (a.outcome !== undefined && !isOutcome(a.outcome)) return null;
+      return {
+        type: 'requestFix',
+        id: a.id,
+        playerId: a.playerId,
+        hole: a.hole,
+        strokes: a.strokes,
+        ...(a.outcome !== undefined ? { outcome: a.outcome } : {}),
+      };
+    case 'answerFix':
+      if (!isStr(a.id, 24) || !/^[a-z0-9]{6,24}$/.test(a.id) || typeof a.accept !== 'boolean') return null;
+      return { type: 'answerFix', id: a.id, accept: a.accept };
     case 'nextHole':
       if (!isInt(a.from, 0, maxHole)) return null;
       return { type: 'nextHole', from: a.from };

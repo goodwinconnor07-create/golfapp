@@ -14,6 +14,7 @@ import { PlayHole } from './PlayHole';
 import { Reveal } from './Reveal';
 import { ResultsReveal } from './ResultsReveal';
 import { ScoreRoom } from './ScoreRoom';
+import { FixPrompt } from './FixPrompt';
 import { VotePrompt } from './VotePrompt';
 import { ScoreEntry } from './ScoreEntry';
 import { WaitPicks } from './Waiting';
@@ -45,7 +46,12 @@ export function GameScreen() {
   return (
     <div className="screen">
       <GameTopBar game={game} online={online} conn={conn} />
-      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
+      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && (
+        <>
+          <FixPrompt game={game} />
+          <VotePrompt game={game} />
+        </>
+      )}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
   );

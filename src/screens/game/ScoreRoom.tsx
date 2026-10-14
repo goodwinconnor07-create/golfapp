@@ -24,6 +24,8 @@ export function ScoreRoom({ game }: { game: Game }) {
   const stillPlaying = game.players.filter((p) => status.get(p.id) === 'playing');
   const notScored = game.players.filter((p) => status.get(p.id) !== 'scored');
   const myNext = mine.find((p) => status.get(p.id) !== 'scored');
+  // Entering someone else's score (a dead phone) is the host's job.
+  const host = deviceId === game.hostDeviceId;
 
   const title =
     stillPlaying.length > 0
@@ -53,7 +55,7 @@ export function ScoreRoom({ game }: { game: Game }) {
                   <button type="button" className="btn btn-sm btn-blue btn-auto" onClick={() => enterScoreFor(p.id)}>
                     Enter score
                   </button>
-                ) : s !== 'scored' && !mineIds.has(p.id) && s === 'done' ? (
+                ) : s !== 'scored' && !mineIds.has(p.id) && s === 'done' && host ? (
                   <span className="room-tags">
                     <span key={s} className={`tag room-tag pop ${look.className}`}>
                       {look.label}

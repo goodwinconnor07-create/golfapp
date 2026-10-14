@@ -6,6 +6,7 @@ import { colourWipe, confetti, CONFETTI } from '../../ui/effects';
 import { joinNames, plural } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
 import { resultsImage } from '../../ui/resultsImage';
+import { EditList } from './EditList';
 
 function names(game: Game, ids: string[]): string {
   return joinNames(ids.map((id) => game.players.find((p) => p.id === id)?.name ?? '?'));
@@ -168,6 +169,7 @@ export function Final({ game }: { game: Game }) {
             ))}
           </>
         )}
+        <EditList game={game} />
       </div>
 
       <div className="screen-foot">

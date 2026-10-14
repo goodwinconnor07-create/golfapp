@@ -242,3 +242,53 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   }
   await shot(host, '33-vote-result');
 });
+
+test('a locked-in score: the guest asks, the host approves, and everyone sees the change', async ({ browser }) => {
+  const host = await phone(browser);
+  const guest = await phone(browser);
+  await host.goto('/');
+  await newGame(host, ['Hana']);
+  const tiles = host.locator('.invite-panel .code-tiles');
+  await expect(tiles).toBeVisible();
+  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  await guest.goto(`/j/${code}`);
+  await guest.getByLabel('Your name').fill('Gus');
+  await guest.getByRole('button', { name: 'Join as Gus' }).click();
+  await expect(host.locator('.player-row', { hasText: 'Gus' }).getByText('Joined')).toBeVisible();
+  await host.getByRole('button', { name: "Let's go!" }).click();
+  await host.getByRole('button', { name: /PAR\s*4/ }).click();
+  await pickAndReveal(host, 'Safe');
+  await pickAndReveal(guest, 'Safe');
+  await passGroupReveal(guest);
+  await passGroupReveal(host);
+  await holeDoneAndScore(guest, 6, false);
+  await holeDoneAndScore(host, 5, true);
+  await passResultsReveal(guest);
+  await passResultsReveal(host);
+  await host.getByRole('button', { name: /Next hole/ }).click();
+  await expect(guest.locator('.hole-tag b')).toHaveText('Hole 2');
+
+  // Hole 1 is locked in: Gus can't change his own score directly, only ask.
+  await guest.getByRole('button', { name: 'Menu' }).click();
+  await guest.getByRole('button', { name: 'Scorecard & fixes' }).click();
+  await guest.getByRole('button', { name: 'Gus, hole 1' }).click();
+  const ask = guest.getByRole('button', { name: 'Ask to change' });
+  await expect(ask).toBeDisabled();
+  await guest.getByRole('button', { name: /^Fewer/ }).click();
+  await ask.click();
+  await expect(guest.getByText(/Waiting for the host to approve/)).toBeVisible();
+
+  // The host gets asked, and approves.
+  const prompt = host.locator('.fix-card');
+  await expect(prompt).toContainText('Gus wants to fix hole 1');
+  await expect(prompt).toContainText('6 → 5 strokes');
+  await shot(host, '42-fix-request');
+  await prompt.getByRole('button', { name: 'Approve' }).click();
+  await expect(prompt).toBeHidden();
+
+  // Both scorecards show the new score and the record of the change.
+  await expect(guest.locator('.edit-row')).toContainText('6 → 5 strokes');
+  await expect(guest.locator('.edit-row')).toContainText('Gus asked · approved by the host');
+  await shot(guest, '43-score-changes');
+  await expect(guest.getByRole('button', { name: 'Gus, hole 1' })).toHaveClass(/edited/);
+});

@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { cardStakes, getCard, stakeFor, isDoubleHole, getEntry, judgeFromStrokes, outcomeChoices, type Outcome } from '../../game';
-import { closeSheet, submitScore, toast, useApp } from '../../state/store';
+import { cardStakes, getCard, stakeFor, isDoubleHole, getEntry, judgeFromStrokes, newId, outcomeChoices, ownsPlayer, scoreAccess, type Outcome } from '../../game';
+import { closeSheet, dispatch, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Breakdown, Sheet, StrokePicker } from '../../ui/components';
 
-/** Fix a score after the fact. Totals recalculate from the corrected strokes and result. */
+/**
+ * Fix a score after the fact. Totals recalculate from the corrected strokes and result.
+ * Online, a locked-in score (or someone else's) can't be changed directly: you send a request instead.
+ */
 export function EditSheet({ playerId, hole }: { playerId: string; hole: number }) {
   const game = useApp((s) => s.game);
+  const deviceId = useApp((s) => s.deviceId);
   const entry = game ? getEntry(game, playerId, hole) : undefined;
   const par = game?.holes[hole]?.par ?? null;
   const [strokes, setStrokes] = useState(entry?.strokes ?? par ?? 4);
@@ -21,7 +25,20 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const adjustment = effective ? stakeFor(game, hole, entry.tier, effective, entry.freePass) : null;
   const showChoices = choices.length > 0 && auto === null;
 
+  const access = scoreAccess(game, deviceId, playerId, hole);
+  const pending = game.fixes?.find((f) => f.playerId === playerId && f.hole === hole);
+  const approver = ownsPlayer(game, deviceId, playerId) ? 'the host' : player.name;
+  const unchanged = strokes === entry.strokes && effective === entry.outcome;
+
   const save = () => {
+    if (access === 'request') {
+      const sent = dispatch({ type: 'requestFix', id: newId(10), playerId, hole, strokes, ...(outcome ? { outcome } : {}) });
+      if (sent) {
+        closeSheet();
+        toast(`Sent. Waiting for ${approver} to approve.`, 'success');
+      }
+      return;
+    }
     if (submitScore(playerId, hole, strokes, outcome, false)) {
       closeSheet();
       toast('Score updated', 'success');
@@ -72,9 +89,26 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
         <p className="h2 center num" style={{ margin: '4px 0' }}>
           {adjustment != null ? <Breakdown strokes={strokes} par={par} adjustment={adjustment} outcome={effective!} doubled={isDoubleHole(game, hole)} freePass={entry.freePass} total big /> : 'Completed or failed?'}
         </p>
-        <button type="button" className="btn btn-xl btn-dark" disabled={!effective} onClick={save}>
-          Save
+        {access === 'request' && (
+          <p className="note" style={{ margin: 0 }}>
+            {pending
+              ? `${pending.byName} has asked to change this to ${pending.strokes}. Sending again replaces that request.`
+              : `This hole is locked in. ${approver === 'the host' ? 'The host' : approver} gets asked to approve the change.`}
+          </p>
+        )}
+        <button
+          type="button"
+          className="btn btn-xl btn-dark"
+          disabled={!effective || (access === 'request' && unchanged)}
+          onClick={save}
+        >
+          {access === 'request' ? 'Ask to change' : 'Save'}
         </button>
+        {pending && pending.by === deviceId && (
+          <button type="button" className="btn btn-ghost" onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}>
+            Cancel my request
+          </button>
+        )}
       </div>
     </Sheet>
   );

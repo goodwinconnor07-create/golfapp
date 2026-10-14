@@ -79,6 +79,33 @@ export interface Game {
   decks?: Partial<Record<Tier, string[]>>;
   /** Bumped on every applied action. */
   seq: number;
+  /** Open requests to change a score that's already locked in (online). */
+  fixes?: FixRequest[];
+  /** Score changes made after a hole was locked in, shown to everyone (online). */
+  edits?: ScoreEdit[];
+}
+
+/** "Change Sam's hole 3 to 6 strokes": waits for the player (or the host) to approve. */
+export interface FixRequest {
+  id: string;
+  playerId: string;
+  hole: number;
+  strokes: number;
+  outcome?: Outcome;
+  /** Device that asked. */
+  by: string;
+  /** Name shown with the request: the asker's player on that device, or "The host". */
+  byName: string;
+}
+
+export interface ScoreEdit {
+  playerId: string;
+  hole: number;
+  from: { strokes: number; outcome?: Outcome };
+  to: { strokes: number; outcome?: Outcome };
+  /** Who changed it: "Host", or "Approved by Sam". */
+  how: string;
+  at: number;
 }
 
 export type Action =
@@ -102,6 +129,10 @@ export type Action =
   | { type: 'vote'; playerId: string; hole: number; voterId: string; fair: boolean }
   | { type: 'swap'; playerId: string; hole: number; cardId?: string }
   | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome }
+  /** Ask to change a locked-in score. The player whose score it is approves (the host, if you're asking about your own). */
+  | { type: 'requestFix'; id: string; playerId: string; hole: number; strokes: number; outcome?: Outcome }
+  /** Approve or turn down a fix request. The asker can withdraw theirs the same way. */
+  | { type: 'answerFix'; id: string; accept: boolean }
   | { type: 'nextHole'; from: number }
   | { type: 'finish' };
 
