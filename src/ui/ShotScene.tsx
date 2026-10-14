@@ -109,6 +109,19 @@ function Defs({ id }: { id: (n: string) => string }) {
         <stop offset="0" stopColor="#2a6a2c" />
         <stop offset="1" stopColor="#3b8a39" />
       </linearGradient>
+      <linearGradient id={id('sky')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#9fd6f5" />
+        <stop offset="1" stopColor="#e4f5fc" />
+      </linearGradient>
+      <linearGradient id={id('ground')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#7fb873" />
+        <stop offset="0.35" stopColor="#4b9443" />
+        <stop offset="1" stopColor="#2c752e" />
+      </linearGradient>
+      <linearGradient id={id('haze')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#eef8f2" stopOpacity="0.55" />
+        <stop offset="1" stopColor="#eef8f2" stopOpacity="0" />
+      </linearGradient>
       <linearGradient id={id('fairway')} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor="#5fae4c" />
         <stop offset="1" stopColor="#74c45c" />
@@ -180,14 +193,34 @@ function Defs({ id }: { id: (n: string) => string }) {
   );
 }
 
-function Ball({ c, r = 6.5 }: { c: Ctx; r?: number }) {
+/** spin: the dimples turn (the light stays put), easing out like the ball does. Negative = backspin. */
+function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string; dur: number; turns: number } }) {
   const k = r / 7;
   return (
     <g transform={`scale(${k})`}>
       <circle r="7" fill={`url(#${c.id('ball')})`} />
-      <circle cx="-1.6" cy="1.4" r="0.7" fill="#9aa3ad" opacity="0.45" />
-      <circle cx="1.8" cy="2.6" r="0.6" fill="#9aa3ad" opacity="0.4" />
-      <circle cx="3.2" cy="-0.6" r="0.6" fill="#9aa3ad" opacity="0.35" />
+      <g>
+        {spin && (
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0"
+            to={spin.turns * 360}
+            calcMode="spline"
+            keyTimes="0;1"
+            keySplines="0.2 0.6 0.35 1"
+            begin={spin.begin}
+            dur={`${spin.dur}s`}
+            fill="freeze"
+          />
+        )}
+        <circle cx="-1.6" cy="1.4" r="0.8" fill="#9aa3ad" opacity="0.5" />
+        <circle cx="1.8" cy="2.6" r="0.7" fill="#9aa3ad" opacity="0.45" />
+        <circle cx="3.2" cy="-0.6" r="0.7" fill="#9aa3ad" opacity="0.4" />
+        <circle cx="0.6" cy="-3.6" r="0.7" fill="#9aa3ad" opacity="0.4" />
+        <circle cx="-3.6" cy="-0.4" r="0.6" fill="#9aa3ad" opacity="0.35" />
+        <path d="M-5 2.6 A 5.6 5.6 0 0 0 4.6 3.4" fill="none" stroke="#9aa3ad" strokeOpacity="0.35" strokeWidth="0.8" />
+      </g>
       <circle cx="-2.6" cy="-2.4" r="1.6" fill="#ffffff" opacity="0.9" />
     </g>
   );
@@ -297,6 +330,7 @@ function Flight({
   scale,
   r = 6.5,
   sinkAt,
+  turns = 3,
 }: {
   c: Ctx;
   air: string;
@@ -307,8 +341,10 @@ function Flight({
   rollFor: number;
   scale: [number, number, number];
   r?: number;
-  /** Drop into a cup at this moment (relative to the scene start). */
+  /** Hand over to the cup drop at this moment (relative to the scene start). */
   sinkAt?: number;
+  /** Turns of the ball over the flight and roll; negative for backspin. */
+  turns?: number;
 }) {
   if (c.still) return null;
   const total = c.delay + start + fly;
@@ -324,21 +360,8 @@ function Flight({
     keyTimes: '0;1',
     keySplines: '0.2 0.6 0.35 1',
   };
-  const sink = sinkAt != null && (
-    <>
-      <animateTransform
-        attributeName="transform"
-        type="translate"
-        from="0 0"
-        to="0 4"
-        begin={at(c, sinkAt)}
-        dur="0.14s"
-        fill="freeze"
-        additive="sum"
-      />
-      <animate attributeName="opacity" from="1" to="0" begin={at(c, sinkAt + 0.06)} dur="0.1s" fill="freeze" />
-    </>
-  );
+  // At the cup the dropping ball (CupDrop) takes over, so this one just goes.
+  const sink = sinkAt != null && <animate attributeName="opacity" to="0" begin={at(c, sinkAt)} dur="0.01s" fill="freeze" />;
   return (
     <g>
       <g>
@@ -374,7 +397,7 @@ function Flight({
                 keyTimes={`0;${a};${mid};1`}
                 {...sc}
               />
-              <Ball c={c} r={r} />
+              <Ball c={c} r={r} spin={{ begin: at(c, start), dur: fly + rollFor, turns }} />
             </g>
           </g>
         </g>
@@ -396,18 +419,44 @@ function RestingBall({ c, x, y, r = 6.5, s }: { c: Ctx; x: number; y: number; r?
   );
 }
 
-/** The ball resting in a cup after it drops: only its top shows. */
-function BallInCup({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
+/**
+ * The ball dropping into the hole. The clip is everything above the cup's middle plus the inside of
+ * its front half, so the front lip hides the ball as it falls instead of the ball sliding across it.
+ * It comes to rest with just its top showing.
+ */
+function CupDrop({ c, x, y, s, r = 5 }: { c: Ctx; x: number; y: number; s: number; r?: number }) {
+  const rx = 9;
+  const ry = 4;
   return (
-    <FadeIn c={c} s={s} dur={0.12}>
+    <g>
       <clipPath id={c.id('in-cup')}>
-        <ellipse cx={x} cy={y} rx="9" ry="4" />
+        <path d={`M${x - rx} 0 H ${x + rx} V ${y} A ${rx} ${ry} 0 0 1 ${x - rx} ${y} Z`} />
       </clipPath>
-      <g clipPath={`url(#${c.id('in-cup')})`}>
-        <circle cx={x} cy={y + 2.2} r="4.8" fill={`url(#${c.id('ball')})`} />
-        <circle cx={x - 1.8} cy={y} r="1.1" fill="#ffffff" opacity="0.9" />
+      <g clipPath={`url(#${c.id('in-cup')})`} opacity={c.still ? 1 : 0}>
+        {!c.still && <animate attributeName="opacity" to="1" begin={at(c, s)} dur="0.01s" fill="freeze" />}
+        <g transform={c.still ? `translate(0 ${r * 0.9})` : undefined}>
+          {!c.still && (
+            <>
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                values={`0 -1;0.6 ${r * 0.4};0 ${r * 0.9}`}
+                keyTimes="0;0.5;1"
+                calcMode="spline"
+                keySplines="0.5 0 1 1;0.2 0 0.4 1"
+                begin={at(c, s)}
+                dur="0.24s"
+                fill="freeze"
+              />
+            </>
+          )}
+          <circle cx={x} cy={y} r={r} fill={`url(#${c.id('ball')})`} />
+          <circle cx={x - r * 0.35} cy={y - r * 0.35} r={r * 0.22} fill="#ffffff" opacity="0.9" />
+        </g>
       </g>
-    </FadeIn>
+      {/* Front lip, drawn over the ball. */}
+      <path d={`M${x - rx} ${y} A ${rx} ${ry} 0 0 0 ${x + rx} ${y}`} fill="none" stroke="#7fcf6c" strokeWidth="1.2" />
+    </g>
   );
 }
 
@@ -424,49 +473,102 @@ function Ripple({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
 
 // ── Terrain: down the fairway from the tee ───────────────────────────────────
 
-const FAIRWAY = 'M112 150 C 146 100, 176 52, 196 -2 L 238 -2 C 234 52, 238 100, 256 150 Z';
+// Looking down the hole from the tee: sky and a hazy tree line at the horizon, a fairway that
+// narrows hard into the distance with mowing stripes that tighten as they go, smaller trees further
+// back and big ones framing the near corners.
+const HORIZON = 34;
+const FAIRWAY = `M96 150 C 150 110, 192 64, 206 ${HORIZON} L 230 ${HORIZON} C 236 64, 246 110, 276 150 Z`;
+
+/** A point on the left edge of the fairway, t = 0 at the tee and 1 at the horizon. */
+function leftEdge(t: number): [number, number] {
+  const u = 1 - t;
+  const x = u ** 3 * 96 + 3 * u * u * t * 150 + 3 * u * t * t * 192 + t ** 3 * 206;
+  const y = u ** 3 * 150 + 3 * u * u * t * 110 + 3 * u * t * t * 64 + t ** 3 * HORIZON;
+  return [x, y];
+}
 
 function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
   const stakes = hazard === 'stakes' || hazard === 'both';
   const water = hazard === 'water' || hazard === 'both';
+  // Mowing stripes: bands that get thinner toward the horizon.
+  const bands = Array.from({ length: 10 }, (_, k) => {
+    const y0 = HORIZON + 116 * (k / 10) ** 1.9;
+    const y1 = HORIZON + 116 * ((k + 1) / 10) ** 1.9;
+    return { y0, y1, on: k % 2 === 0 };
+  });
   return (
     <g>
-      <rect width="340" height="144" fill={`url(#${c.id('rough')})`} />
-      <rect width="340" height="144" fill="#000" filter={`url(#${c.id('grain')})`} />
-      {/* Haze toward the horizon. */}
-      <rect width="340" height="40" fill="#e9f7e3" opacity="0.18" />
+      {/* Sky. */}
+      <rect width="340" height={HORIZON + 2} fill={`url(#${c.id('sky')})`} />
+      {/* Distant hills and a tree line, softened by haze. */}
+      <path
+        d={`M0 ${HORIZON} C 40 20, 84 24, 124 29 C 168 18, 222 16, 262 26 C 292 20, 322 22, 340 28 L 340 ${HORIZON + 2} L 0 ${HORIZON + 2} Z`}
+        fill="#8dbf9d"
+        opacity="0.75"
+      />
+      {Array.from({ length: 34 }, (_, i) => (
+        <ellipse
+          key={i}
+          cx={i * 10.4 + ((i * 7) % 5)}
+          cy={HORIZON - 2 - ((i * 13) % 4)}
+          rx={6 + ((i * 5) % 4)}
+          ry={4 + ((i * 3) % 3)}
+          fill="#4f8a57"
+          opacity="0.85"
+        />
+      ))}
+      {/* Ground: hazy at the horizon, rich up close. */}
+      <rect y={HORIZON} width="340" height={144 - HORIZON} fill={`url(#${c.id('ground')})`} />
+      <rect y={HORIZON} width="340" height={144 - HORIZON} fill="#000" filter={`url(#${c.id('grain')})`} />
+      {/* Fairway with stripes. */}
       <path d={FAIRWAY} fill={`url(#${c.id('fairway')})`} />
-      <path d={FAIRWAY} fill={`url(#${c.id('bands')})`} />
-      <path d={FAIRWAY} fill="#000" filter={`url(#${c.id('grain')})`} />
+      <clipPath id={c.id('fw')}>
+        <path d={FAIRWAY} />
+      </clipPath>
+      <g clipPath={`url(#${c.id('fw')})`}>
+        {bands.map((b, k) => b.on && <rect key={k} y={b.y0} width="340" height={b.y1 - b.y0} fill="#ffffff" opacity="0.09" />)}
+        <path d={FAIRWAY} fill="#000" filter={`url(#${c.id('grain')})`} />
+      </g>
+      {/* The green at the end, with its flag. */}
+      <ellipse cx="218" cy={HORIZON + 1.5} rx="15" ry="3.4" fill="#8ede76" />
+      <rect x="220.2" y={HORIZON - 8} width="0.9" height="9" fill="#ffffff" />
+      <path d={`M221.1 ${HORIZON - 8} l 5 1.4 l -5 1.4 Z`} fill="#e11d48" />
+      {/* Trees: small and pale far away, big and dark up close. */}
       <Trees
         c={c}
         spots={[
-          [36, 30, 22],
-          [80, 12, 15],
-          [300, 26, 22],
-          [262, 8, 13],
-          [20, 100, 26],
+          [150, 44, 6],
+          [127, 58, 9],
+          [92, 82, 14],
+          [266, 44, 6],
+          [292, 60, 10],
+          [326, 86, 15],
         ]}
       />
-      {/* The green far down the fairway, with its flag. */}
-      <ellipse cx="217" cy="14" rx="17" ry="4.5" fill="#86d86f" />
-      <rect x="219.4" y="3" width="0.9" height="10" fill="#ffffff" />
-      <path d="M220.3 3 l 6 1.6 l -6 1.6 Z" fill="#e11d48" />
+      {/* Haze over the distance. */}
+      <rect y={HORIZON} width="340" height="60" fill={`url(#${c.id('haze')})`} />
+      <Trees
+        c={c}
+        spots={[
+          [-4, 126, 40],
+          [348, 122, 38],
+        ]}
+      />
       {water && (
         <g>
           <path
-            d="M268 66 C 300 56, 346 66, 346 96 L 346 134 C 312 138, 280 122, 268 102 C 258 88, 258 74, 268 66 Z"
+            d="M262 74 C 280 64, 334 64, 346 76 L 346 98 C 320 104, 280 100, 262 88 C 254 84, 254 78, 262 74 Z"
             fill={`url(#${c.id('water')})`}
           />
-          <path d="M268 66 C 300 56, 346 66, 346 96" fill="none" stroke="#c9eeff" strokeOpacity="0.6" strokeWidth="1.5" />
+          <path d="M262 74 C 280 64, 334 64, 346 76" fill="none" stroke="#c9eeff" strokeOpacity="0.6" strokeWidth="1.2" />
           {[0, 1, 2].map((i) => (
             <path
               key={i}
-              d={`M${284 + i * 14} ${86 + i * 12} q 8 -3 16 0`}
+              d={`M${278 + i * 18} ${80 + i * 5} q 7 -2 14 0`}
               fill="none"
               stroke="#ffffff"
               strokeOpacity="0.5"
-              strokeWidth="1.2"
+              strokeWidth="1"
               strokeLinecap="round"
             >
               {!c.still && (
@@ -482,23 +584,23 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
         </g>
       )}
       {stakes &&
-        [0, 1, 2, 3, 4, 5].map((i) => {
-          // Out-of-bounds stakes down the left, smaller with distance.
-          const t = i / 5;
-          const x = 100 + t * 84;
-          const y = 140 - t * 116;
-          const h = 16 - t * 10;
+        [0.04, 0.2, 0.36, 0.52, 0.68, 0.84].map((t, i) => {
+          // White stakes down the left, shrinking with distance.
+          const [ex, ey] = leftEdge(t);
+          const x = ex - 12 * (1 - t) - 2;
+          const h = 20 * (1 - t) ** 1.3 + 3;
+          const w = 3.4 * (1 - t) + 1;
           return (
             <g key={i}>
-              <ellipse cx={x + 3} cy={y} rx={2.5 - t} ry="1" fill="#0d2a10" opacity="0.4" />
-              <rect x={x - (1.6 - t * 0.7)} y={y - h} width={3.2 - t * 1.4} height={h} rx="0.8" fill="#ffffff" />
+              <ellipse cx={x + w} cy={ey} rx={w * 1.2} ry={w * 0.35} fill="#0d2a10" opacity="0.35" />
+              <rect x={x - w / 2} y={ey - h} width={w} height={h} rx={w * 0.3} fill="#ffffff" />
             </g>
           );
         })}
-      {/* Tee box with its markers. */}
-      <path d="M146 126 L 214 126 L 220 144 L 140 144 Z" fill="#86d06d" opacity="0.6" />
-      <circle cx="152" cy="132" r="3.2" fill="#e11d48" />
-      <circle cx="208" cy="132" r="3.2" fill="#e11d48" />
+      {/* Tee box and markers. */}
+      <path d="M150 128 L 222 128 L 230 146 L 142 146 Z" fill="#8ad472" opacity="0.65" />
+      <circle cx="156" cy="133" r="3.4" fill="#e11d48" />
+      <circle cx="216" cy="133" r="3.4" fill="#e11d48" />
     </g>
   );
 }
@@ -582,21 +684,21 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     draw: (c) => (
       <>
         <TeeView c={c} />
-        {art.metres && <Pill ctx={c} x={258} y={34} text={`${art.metres} m`} at={1.6} anchor="middle" />}
+        {art.metres && <Pill ctx={c} x={262} y={48} text={`${art.metres} m`} at={1.6} anchor="middle" />}
         <Flight
           c={c}
-          air="M180 134 Q 170 -30 212 46"
-          ground="M180 134 L 212 46"
-          roll="M0 0 L 3 -9"
+          air="M186 136 Q 174 -40 216 64"
+          ground="M186 136 L 216 64"
+          roll="M0 0 L 2 -7"
           start={0}
           fly={1.5}
           rollFor={0.6}
-          scale={[1, 1.15, 0.45]}
+          scale={[1.05, 1.15, 0.4]}
         />
-        <RestingBall c={c} x={215} y={37} r={6.5 * 0.45} s={0} />
+        <RestingBall c={c} x={218} y={57} r={6.5 * 0.4} s={0} />
         {c.still && (
           <path
-            d="M180 134 Q 170 -30 212 46"
+            d="M186 136 Q 174 -40 216 64"
             fill="none"
             stroke="#ffffff"
             strokeOpacity="0.7"
@@ -623,18 +725,18 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
         <TeeView c={c} hazard={art.hazard} />
         <Flight
           c={c}
-          air="M180 134 Q 182 -20 214 50"
-          ground="M180 134 L 214 50"
-          roll="M0 0 L 2 -8"
+          air="M186 136 Q 192 -30 218 66"
+          ground="M186 136 L 218 66"
+          roll="M0 0 L 1 -7"
           start={0}
           fly={1.5}
           rollFor={0.6}
-          scale={[1, 1.15, 0.48]}
+          scale={[1.05, 1.15, 0.42]}
         />
-        <RestingBall c={c} x={216} y={42} r={6.5 * 0.48} s={0} />
+        <RestingBall c={c} x={219} y={59} r={6.5 * 0.42} s={0} />
         {c.still && (
           <path
-            d="M180 134 Q 182 -20 214 50"
+            d="M186 136 Q 192 -30 218 66"
             fill="none"
             stroke="#ffffff"
             strokeOpacity="0.7"
@@ -652,7 +754,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     const stop = art.feet ? { x: CUP.x - 4 - art.feet * 0.35, y: CUP.y + 3 } : { x: 226, y: 70 };
     return {
       label: art.feet ? `an approach finishing within ${art.feet} feet of the hole` : 'an approach landing on the green',
-      duration: 2,
+      duration: 2.2,
       landAt: 1.3,
       draw: (c) => (
         <>
@@ -663,11 +765,13 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
             c={c}
             air={`M20 160 Q 110 -40 ${stop.x - 14} ${stop.y + 6}`}
             ground={`M20 160 L ${stop.x - 14} ${stop.y + 6}`}
-            roll="M0 0 L 14 -6"
+            // Backspin: it lands, skips on past the target, then checks back.
+            roll="M0 0 L 24 -10 L 14 -6"
             start={0}
             fly={1.3}
-            rollFor={0.6}
+            rollFor={0.8}
             scale={[1.4, 1.6, 0.75]}
+            turns={-2}
           />
           <RestingBall c={c} x={stop.x} y={stop.y} r={6.5 * 0.75} s={0} />
         </>
@@ -754,11 +858,12 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
               rollFor={art.holeOut ? 1.3 : 1.0}
               scale={[1, 1.15, 0.8]}
               sinkAt={art.holeOut ? 2.0 : undefined}
+              turns={5}
             />
           )}
           {art.holeOut && (
             <>
-              <BallInCup c={c} x={CUP.x} y={CUP.y} s={2.08} />
+              <CupDrop c={c} x={CUP.x} y={CUP.y} s={2.0} r={5.2} />
               <Ripple c={c} x={CUP.x} y={CUP.y} s={2.0} />
             </>
           )}

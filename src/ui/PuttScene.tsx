@@ -176,15 +176,34 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         />
         <path d="M300 78 L 330 96 L 314 99 Z" fill="#0d3a15" fillOpacity="0.2" filter={`url(#${id('soft')})`} />
 
-        {/* Cup, and the ball resting in it once it drops (just its top shows above the lip). */}
+        {/* Cup. */}
         <ellipse cx="262" cy="66" rx="12.5" ry="5.6" fill={`url(#${id('cup')})`} />
+        {/* The drop: the ball falls into the hole and the front lip hides it as it goes, so it
+            never slides across the lip. It comes to rest with just its top showing. */}
         <clipPath id={id('in-cup')}>
-          <ellipse cx="262" cy="66" rx="12.5" ry="5.6" />
+          <path d="M249.5 0 H 274.5 V 66 A 12.5 5.6 0 0 1 249.5 66 Z" />
         </clipPath>
         <g clipPath={`url(#${id('in-cup')})`} opacity={still ? 1 : 0}>
-          <circle cx="262" cy="68.5" r="6.4" fill={`url(#${id('ball')})`} />
-          <circle cx="259.6" cy="65.4" r="1.4" fill="#ffffff" opacity="0.9" />
-          {!still && <animate attributeName="opacity" to="1" begin={begin(roll + 0.1)} dur="0.12s" fill="freeze" />}
+          {!still && <animate attributeName="opacity" to="1" begin={sunk} dur="0.01s" fill="freeze" />}
+          <g transform={still ? 'translate(0 6.5)' : undefined}>
+            {!still && (
+              <>
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  values="0 -1;0.8 3;0 6.5"
+                  keyTimes="0;0.5;1"
+                  calcMode="spline"
+                  keySplines="0.5 0 1 1;0.2 0 0.4 1"
+                  begin={sunk}
+                  dur="0.26s"
+                  fill="freeze"
+                />
+              </>
+            )}
+            <circle cx="262" cy="66" r="6.4" fill={`url(#${id('ball')})`} />
+            <circle cx="259.8" cy="63.8" r="1.4" fill="#ffffff" opacity="0.9" />
+          </g>
         </g>
         <ellipse cx="262" cy="64.6" rx="12.5" ry="4.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
 
@@ -193,10 +212,9 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
           {still ? null : (
             <g>
               <animateMotion path={line} begin="0s" dur={`${total}s`} fill="freeze" calcMode="spline" {...held} />
-              {/* Drop into the cup: sink a touch and vanish behind the lip. */}
+              {/* At the hole the dropping ball (above) takes over. */}
               <g>
-                <animateTransform attributeName="transform" type="translate" from="0 0" to="0 6" begin={sunk} dur="0.16s" fill="freeze" />
-                <animate attributeName="opacity" from="1" to="0" begin={begin(roll + 0.08)} dur="0.1s" fill="freeze" />
+                <animate attributeName="opacity" to="0" begin={sunk} dur="0.01s" fill="freeze" />
                 <g>
                   {/* A touch smaller as it rolls away from us. */}
                   <animateTransform
@@ -208,7 +226,7 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
                     dur={`${total}s`}
                     fill="freeze"
                   />
-                  <Ball id={id} />
+                  <Ball id={id} spin={{ dur: total, at: t(0), turns: two ? 5 : 4 }} />
                 </g>
               </g>
             </g>
@@ -273,15 +291,33 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
   );
 }
 
-function Ball({ id }: { id: (n: string) => string }) {
+/** spin: the dimples turn as it rolls (the light stays put), slowing with the ball. */
+function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; at: string; turns: number } }) {
   return (
     <>
       <ellipse cx="2.4" cy="5.2" rx="7.6" ry="2.6" fill="#0d3a15" fillOpacity="0.4" filter={`url(#${id('soft')})`} />
       <circle r="7.5" fill={`url(#${id('ball')})`} />
-      {/* A hint of dimples. */}
-      <circle cx="-1.6" cy="1.4" r="0.7" fill="#9aa3ad" opacity="0.45" />
-      <circle cx="1.8" cy="2.6" r="0.6" fill="#9aa3ad" opacity="0.4" />
-      <circle cx="3.2" cy="-0.6" r="0.6" fill="#9aa3ad" opacity="0.35" />
+      <g>
+        {spin && (
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            values={`0;0;${spin.turns * 360}`}
+            keyTimes={`0;${spin.at};1`}
+            calcMode="spline"
+            keySplines="0 0 1 1;0.18 0.55 0.32 1"
+            begin="0s"
+            dur={`${spin.dur}s`}
+            fill="freeze"
+          />
+        )}
+        <circle cx="-1.6" cy="1.4" r="0.8" fill="#9aa3ad" opacity="0.5" />
+        <circle cx="1.8" cy="2.6" r="0.7" fill="#9aa3ad" opacity="0.45" />
+        <circle cx="3.2" cy="-0.6" r="0.7" fill="#9aa3ad" opacity="0.4" />
+        <circle cx="0.6" cy="-3.6" r="0.7" fill="#9aa3ad" opacity="0.4" />
+        <circle cx="-3.6" cy="-0.4" r="0.6" fill="#9aa3ad" opacity="0.35" />
+        <path d="M-5 2.6 A 5.6 5.6 0 0 0 4.6 3.4" fill="none" stroke="#9aa3ad" strokeOpacity="0.35" strokeWidth="0.8" />
+      </g>
       <circle cx="-2.6" cy="-2.4" r="1.6" fill="#ffffff" opacity="0.9" />
     </>
   );
