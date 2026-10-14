@@ -1,18 +1,8 @@
 import { useState } from 'react';
-import {
-  cardStakes,
-  getCard,
-  getEntry,
-  judgeFromStrokes,
-  mulliganAllowance,
-  mulligansLeft,
-  outcomeChoices,
-  type Game,
-  type Outcome,
-} from '../../game';
-import { submitScore } from '../../state/store';
+import { cardStakes, getCard, getEntry, judgeFromStrokes, outcomeChoices, type Game, type Outcome } from '../../game';
+import { dispatch, submitScore } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { Avatar, StrokePicker, Toggle } from '../../ui/components';
+import { Avatar, StrokePicker } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
 export function ScoreEntry({ game, playerId }: { game: Game; playerId: string }) {
@@ -22,7 +12,6 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
   const card = getCard(entry?.cardId);
   const player = game.players.find((p) => p.id === playerId);
   const [strokes, setStrokes] = useState(entry?.strokes ?? par);
-  const [mulligan, setMulligan] = useState(Boolean(entry?.mulligan));
 
   if (!player || !card || !entry?.tier) return null;
 
@@ -30,10 +19,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
   const choices = outcomeChoices(card);
   // The strokes settle it either way (e.g. par on "Par Hunter" can only be completed), so there's nothing to tap.
   const settled = auto !== null;
-  const allowance = mulliganAllowance(game);
-  // Left besides this hole's, so switching it on here shows what you'd have after.
-  const left = mulligansLeft(game, playerId) + (entry?.mulligan ? 1 : 0);
-  const send = (outcome?: Outcome) => submitScore(playerId, h, strokes, outcome, true, allowance > 0 ? mulligan : undefined);
+  const send = (outcome?: Outcome) => submitScore(playerId, h, strokes, outcome);
 
   return (
     <>
@@ -49,20 +35,14 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
           <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label="Strokes taken" />
         </div>
 
-        {allowance > 0 && (
-          <Toggle
-            on={mulligan}
-            disabled={!mulligan && left <= 0}
-            title="Used a mulligan"
-            detail={
-              mulligan
-                ? `Don't count the re-hit in your strokes. ${left - 1} left after this.`
-                : left > 0
-                  ? `${left} of ${allowance} left. Re-hit one bad shot and leave it out of your strokes.`
-                  : `All ${allowance} used.`
-            }
-            onChange={setMulligan}
-          />
+        {entry.mulligan && (
+          // Taken on the Go play! screen; here it's just a reminder.
+          <div className="mulligan-bar taken mulligan-note">
+            <span className="mulligan-text">🔁 Mulligan used: don't count the re-hit in your strokes.</span>
+            <button type="button" className="btn-link-small" onClick={() => dispatch({ type: 'mulligan', playerId, hole: h, on: false })}>
+              Remove
+            </button>
+          </div>
         )}
 
         <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, h, entry.tier, entry.freePass)} />

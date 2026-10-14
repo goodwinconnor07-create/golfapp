@@ -110,6 +110,9 @@ export function parseAction(input: unknown): Action | null {
         ...(a.outcome !== undefined ? { outcome: a.outcome } : {}),
         ...(a.mulligan !== undefined ? { mulligan: a.mulligan } : {}),
       };
+    case 'mulligan':
+      if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole) || typeof a.on !== 'boolean') return null;
+      return { type: 'mulligan', playerId: a.playerId, hole: a.hole, on: a.on };
     case 'requestFix':
       if (!isStr(a.id, 24) || !/^[a-z0-9]{6,24}$/.test(a.id) || !isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (!isInt(a.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) return null;

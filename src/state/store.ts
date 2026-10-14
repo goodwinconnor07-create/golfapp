@@ -10,6 +10,7 @@ import {
   drawCard,
   getCard,
   getEntry,
+  ownsPlayer,
   cryptoRng,
   holeResult,
   standings,
@@ -323,11 +324,22 @@ function onServerMessage(msg: ServerMessage): void {
   if (!s || s.mode !== 'online') return;
   if (msg.t === 'state') {
     const pending = msg.ack ? s.pending.filter((p) => p.id !== msg.ack) : s.pending;
+    announceMulligans(s.game, msg.game);
     setSession({ ...s, game: msg.game, pending });
   } else if (msg.t === 'reject') {
     setSession({ ...s, pending: s.pending.filter((p) => p.id !== msg.id) });
     toast(msg.error, 'error');
     haptic('error');
+  }
+}
+
+/** Online: a quick note when someone on another phone takes a mulligan on this hole. */
+function announceMulligans(before: Game | null, after: Game): void {
+  if (!before || before.id !== after.id || before.current !== after.current || after.status !== 'playing') return;
+  for (const p of after.players) {
+    if (ownsPlayer(after, state.deviceId, p.id)) continue;
+    const was = getEntry(before, p.id, after.current)?.mulligan;
+    if (getEntry(after, p.id, after.current)?.mulligan && !was) toast(`${p.name} took a mulligan 🔁`, 'info');
   }
 }
 

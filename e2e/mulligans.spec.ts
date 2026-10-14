@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { enterScore, newGame, pickAndReveal, shot } from './helpers';
 
-test('mulligans: on by default, 2 for 9 holes, used from the score screen', async ({ page }) => {
+test('mulligans: on by default, 2 for 9 holes, taken on the Go play! screen', async ({ page }) => {
   await page.goto('/');
   await newGame(page, ['Sam', 'Alex']);
 
@@ -17,14 +17,21 @@ test('mulligans: on by default, 2 for 9 holes, used from the score screen', asyn
   await pickAndReveal(page, 'Safe');
   await pickAndReveal(page, 'Safe');
   await page.getByRole('button', { name: 'Go play!' }).click();
-  await page.getByRole('button', { name: /Hole done/ }).click();
 
-  // Sam uses one: 2 left before, 1 after.
-  const used = page.getByRole('switch', { name: /Used a mulligan/ });
-  await expect(used).toContainText('2 of 2 left');
-  await used.click();
-  await expect(used).toContainText('1 left after this');
-  await shot(page, '45-mulligan-score');
+  // Taken during the hole, on the Go play! screen: a token is spent, and it can be undone.
+  const take = page.getByRole('button', { name: /Take a mulligan/ });
+  await expect(take).toHaveCount(2);
+  await take.first().click();
+  await expect(page.getByText('🔁 Mulligan taken')).toBeVisible();
+  await expect(page.getByLabel('1 of 2 mulligans left')).toBeVisible();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByLabel('2 of 2 mulligans left').first()).toBeVisible();
+  await take.first().click();
+  await shot(page, '45-mulligan-play');
+
+  // The score screen just reminds you.
+  await page.getByRole('button', { name: /Hole done/ }).click();
+  await expect(page.getByText(/Mulligan used: don't count the re-hit/)).toBeVisible();
   await enterScore(page, 5, true);
   await enterScore(page, 5, true);
 

@@ -127,6 +127,8 @@ export type Action =
   | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean }
   /** Swap this hole's card for another from the same tier. Once per player per round. */
   | { type: 'redraw'; playerId: string; hole: number; cardId?: string }
+  /** Take (or undo) a mulligan on the hole being played. */
+  | { type: 'mulligan'; playerId: string; hole: number; on: boolean }
   /** The player has finished playing the hole and is ready to score it. */
   | { type: 'holeDone'; playerId: string; hole: number }
   /** voterId calls playerId's honour-system claim on this hole fair (or not). */

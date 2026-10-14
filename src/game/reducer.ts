@@ -346,6 +346,19 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       break;
     }
 
+    case 'mulligan': {
+      if (g.status !== 'playing' || action.hole !== g.current) return fail("That hole isn't being played.");
+      if (!findPlayer(action.playerId)) return fail('Player not found.');
+      if (g.code && !isHost && !ownsPlayer(g, ctx.deviceId, action.playerId)) return fail('You can only take your own mulligans.');
+      const entry = g.entries[entryKey(action.playerId, action.hole)];
+      if (!entry?.tier) return fail('Draw a card for this hole first.');
+      if (Boolean(entry.mulligan) === action.on) return unchanged;
+      if (action.on && mulligansLeft(g, action.playerId) <= 0) return fail('No mulligans left.');
+      if (action.on) entry.mulligan = true;
+      else delete entry.mulligan;
+      break;
+    }
+
     case 'holeDone': {
       if (g.status !== 'playing' || action.hole !== g.current) return fail("That hole isn't being played.");
       const entry = g.entries[entryKey(action.playerId, action.hole)];

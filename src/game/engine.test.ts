@@ -743,7 +743,9 @@ describe('mulligans', () => {
     g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 5, outcome: 'made', mulligan: true });
     g = run(g, { type: 'nextHole', from: 1 });
     expect(mulligansLeft(g, 'player00')).toBe(0);
-    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 2, strokes: 5, outcome: 'made', mulligan: true }, ctx()).ok).toBe(false);
+    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 2, strokes: 5, outcome: 'made', mulligan: true }, ctx()).ok).toBe(
+      false,
+    );
     // Taking one back gives it back.
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made', mulligan: false });
     expect(mulligansLeft(g, 'player00')).toBe(1);
@@ -753,5 +755,27 @@ describe('mulligans', () => {
     const g = round(9);
     expect(applyAction(g, { type: 'setSettings', settings: { mulligans: false } }, ctx()).ok).toBe(false);
     expect(parseAction({ type: 'score', playerId: 'player00', hole: 0, strokes: 4, mulligan: 'yes' })).toBeNull();
+  });
+});
+
+describe('taking a mulligan during the hole', () => {
+  function online(): Game {
+    let g = newGame();
+    g = { ...g, code: 'ABCDE', players: g.players.map((p, i) => (i === 1 ? { ...p, deviceId: OTHER } : p)) };
+    g = run(g, { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = giveCard(g, 'player01', 0, 'S02');
+    return g;
+  }
+
+  it('takes one, undoes it, and keeps to your own players online', () => {
+    let g = run(online(), { type: 'mulligan', playerId: 'player01', hole: 0, on: true }, ctx(OTHER));
+    expect(getEntry(g, 'player01', 0)?.mulligan).toBe(true);
+    expect(mulligansLeft(g, 'player01')).toBe(1);
+    expect(applyAction(g, { type: 'mulligan', playerId: 'player00', hole: 0, on: true }, ctx(OTHER)).ok).toBe(false);
+    g = run(g, { type: 'mulligan', playerId: 'player01', hole: 0, on: false }, ctx(OTHER));
+    expect(mulligansLeft(g, 'player01')).toBe(2);
+    // Only on the hole being played.
+    expect(applyAction(g, { type: 'mulligan', playerId: 'player01', hole: 1, on: true }, ctx(OTHER)).ok).toBe(false);
   });
 });
