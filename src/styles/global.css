@@ -2,7 +2,7 @@
    Every colour, size, radius and shadow comes from the tokens below. */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui, sans-serif;
 
@@ -112,8 +112,11 @@
 
 /* Dark mode, designed rather than inverted: deep blue-black surfaces, the same saturated
    buttons (white text still passes), and tinted backgrounds as low-opacity washes. */
+/* Dark mode is switched off for now (product owner's call): these values only apply with
+   data-theme="dark" on <html>, which nothing sets. To turn it back on, drop that condition here
+   and in screens.css, set color-scheme to "light dark", and add back the dark theme-color tag. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root[data-theme='dark'] {
     --ink: #f4f4f8;
     --ink-2: #d0d0da;
     --ink-3: #a3a3b2;

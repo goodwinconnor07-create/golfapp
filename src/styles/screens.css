@@ -2051,12 +2051,12 @@
 
 /* Dark mode: a hairline ring keeps dark avatars and swatches visible against the page. */
 @media (prefers-color-scheme: dark) {
-  .avatar,
-  .look-color {
+  :root[data-theme='dark'] .avatar,
+  :root[data-theme='dark'] .look-color {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
 
-  .look-color.on {
+  :root[data-theme='dark'] .look-color.on {
     box-shadow:
       0 0 0 3px var(--bg),
       0 0 0 6px var(--ink);
