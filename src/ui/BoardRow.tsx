@@ -55,8 +55,12 @@ export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?
     <PlayerRow
       player={row.player}
       rank={row.tied ? `=${row.rank}` : String(row.rank)}
-      className={`board-row ${row.rank === 1 ? 'first' : ''} ${delay != null ? 'rise' : ''}`}
-      style={delay != null ? { animationDelay: `${delay}ms` } : undefined}
+      // Rows that changed place slide from where they were (move places away) into their new spot.
+      className={`board-row ${row.rank === 1 ? 'first' : ''} ${move !== 0 ? `reorder ${move > 0 ? 'climbed' : 'dropped'}` : delay != null ? 'rise' : ''}`}
+      style={{
+        ...(delay != null ? { animationDelay: `${delay}ms` } : {}),
+        ...(move !== 0 ? ({ '--from': move } as React.CSSProperties) : {}),
+      }}
       detail={
         (sub || move !== 0) && (
           <>

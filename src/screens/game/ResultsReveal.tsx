@@ -5,6 +5,7 @@ import { BoardRow, PlayerRow } from '../../ui/BoardRow';
 import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { VoteTag } from './HoleResults';
+import { Moment } from './Moment';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
 const GAP_MS = 520;
@@ -104,6 +105,7 @@ export function ResultsReveal({ game }: { game: Game }) {
 
         {done && (
           <>
+            <Moment game={game} />
             {leader && (
               <div className="lead-banner pop" role="status">
                 👑 {leader.name} takes the lead!

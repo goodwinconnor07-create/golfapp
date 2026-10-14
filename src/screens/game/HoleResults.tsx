@@ -5,6 +5,7 @@ import { BoardRow } from '../../ui/BoardRow';
 import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
+import { Moment } from './Moment';
 
 export function HoleResults({ game }: { game: Game }) {
   const h = game.current;
@@ -60,6 +61,7 @@ export function HoleResults({ game }: { game: Game }) {
             );
           })}
         </div>
+        <Moment game={game} />
         <p className="note">Your golf score plus your card = the big number. Lowest wins.</p>
       </div>
       <div className="screen-foot">

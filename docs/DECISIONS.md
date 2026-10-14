@@ -135,3 +135,8 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - Each player gets 2 for a round of 9 holes or fewer, 4 for longer rounds. One per hole.
 - Host setting in Game options, on by default, set before the round and locked once it starts.
 - Taken during the hole: a "Take a mulligan" button under each card on the Go play! screen, with tokens for what's left, and Undo until the hole locks. Online, other phones get a note ("Sam took a mulligan 🔁"); you can only take your own (the host can for anyone). The score screen just reminds you not to count the re-hit, with Remove. It shows as a "Mulligan" tag on the hole results and an "M" on the scorecard. The host can also change it in Fix a score; fix requests don't change it.
+
+## Standings drama (Oct 2026)
+
+- Every hole: standings rows slide from their old place to the new one, with a green glow for a climb and red for a drop; scores count up.
+- Big moments only, once per hole, after the standings settle: a new leader (crown and confetti), a tie for the lead, halfway in an 18-hole round, and the double-stakes holes coming up. It fades on its own after about 2.5 seconds and never blocks taps (Next hole works straight through). No extra screen per hole.
