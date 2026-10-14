@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent, type ReactNode, type SVGProps } from 'react';
 import { AVATAR_EMOJIS, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
-import { haptic } from './effects';
+import { haptic, reducedMotion } from './effects';
+import { BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
 
@@ -31,9 +32,9 @@ export function TierIcon({ tier, size = 24 }: { tier: Tier; size?: number }) {
 export function TierChip({ tier, stakes = false, big = false }: { tier: Tier; stakes?: boolean; big?: boolean }) {
   const t = TIERS[tier];
   return (
-    <span className={`chip tier-chip tier-${tier}`} style={big ? { fontSize: 19, padding: '8px 14px' } : undefined}>
+    <span className={`chip tier-chip tier-${tier}${big ? ' chip-big' : ''}`} aria-label={t.label}>
       <TierIcon tier={tier} size={big ? 20 : 17} />
-      {t.label}
+      <span className="chip-label">{t.label}</span>
       {stakes && (
         <span style={{ opacity: 0.9, fontWeight: 800 }}>
           {' '}
@@ -46,10 +47,8 @@ export function TierChip({ tier, stakes = false, big = false }: { tier: Tier; st
 
 // ── Players ─────────────────────────────────────────────────────────────────
 
-export const PLAYER_COLORS = [
-  // Kept away from the tier colours (teal, orange, violet) and from pass/fail green and red.
-  '#2563eb', '#9d174d', '#475569', '#92400e', '#1e3a8a', '#0284c7', '#18181b', '#a16207',
-];
+export { PLAYER_COLORS } from './theme';
+
 
 export function playerColor(index: number): string {
   return PLAYER_COLORS[index % PLAYER_COLORS.length];
@@ -399,7 +398,7 @@ export function Toasts() {
 }
 
 /** Soft colour blobs behind a screen. */
-export function Blobs({ colors = ['#14b8a6', '#f97316', '#8b5cf6'] }: { colors?: string[] }) {
+export function Blobs({ colors = BLOB_COLORS }: { colors?: string[] }) {
   const spots = [
     { left: '-18%', top: '-8%', size: 300 },
     { right: '-22%', top: '30%', size: 280 },
@@ -488,4 +487,33 @@ export function Breakdown({
       </span>
     </span>
   );
+}
+
+/**
+ * A number that ticks to its value instead of jumping: from `from` on first show, then from
+ * wherever it was when the value changes. ~450ms, ease-out. Reduced motion shows it straight away.
+ */
+export function CountUp({ value, from = 0, format = String }: { value: number; from?: number; format?: (n: number) => string }) {
+  const [shown, setShown] = useState(reducedMotion() ? value : from);
+  const current = useRef(shown);
+  useEffect(() => {
+    const start = current.current;
+    if (start === value || reducedMotion()) {
+      current.current = value;
+      setShown(value);
+      return;
+    }
+    const t0 = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / 450);
+      const n = Math.round(start + (value - start) * (1 - (1 - p) ** 3));
+      current.current = n;
+      setShown(n);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{format(shown)}</>;
 }

@@ -14,10 +14,15 @@ export default defineConfig({
   use: {
     baseURL: external ?? `http://localhost:${PORT}`,
     browserName: 'chromium',
-    viewport: { width: 390, height: 844 },
+    // SMALL=1 checks a small phone (360×740) instead of a typical one.
+    viewport: process.env.SMALL ? { width: 360, height: 740 } : { width: 390, height: 844 },
     deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
+    // DARK=1 runs everything in dark mode (for screenshots and QA).
+    colorScheme: process.env.DARK ? 'dark' : 'light',
+    // REDUCED=1 runs with Reduce Motion on.
+    contextOptions: { reducedMotion: process.env.REDUCED ? 'reduce' : 'no-preference' },
     launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
     trace: 'retain-on-failure',
   },

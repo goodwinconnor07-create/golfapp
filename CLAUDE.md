@@ -30,4 +30,6 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 
 ## UI style
 
-White background, big bold system font (SF Pro on iPhone), large colourful buttons, minimal text per screen, instant feedback (press scale, ripple, haptics, confetti, card flips) that never blocks play. Respect `prefers-reduced-motion`. The product owner prefers plain writing: no buzzwords, contractions are fine.
+White background (a designed dark mode follows the phone's setting), big bold system font (SF Pro on iPhone), large colourful buttons, minimal text per screen, instant feedback (press scale, ripple, haptics, confetti, card flips) that never blocks play. Respect `prefers-reduced-motion`. The product owner prefers plain writing: no buzzwords, contractions are fine.
+
+Every colour, font size, radius and shadow is a token in `:root` in `src/styles/global.css` (dark values in the `prefers-color-scheme: dark` block below it). Colours needed from code live in `src/ui/theme.ts`. Don't hard-code new values: spacing is on a 4px grid. `DARK=1`, `SMALL=1` and `REDUCED=1` run the e2e tests in dark mode, on a 360px phone, or with Reduce Motion.

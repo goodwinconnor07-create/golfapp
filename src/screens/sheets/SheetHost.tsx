@@ -87,24 +87,24 @@ function MenuSheet() {
 
   const items: Item[] = [];
   if (started) {
-    items.push({ label: 'Leaderboard', Icon: TrophyIcon, color: '#f59e0b', onClick: () => navigate({ name: 'leaderboard' }) });
-    items.push({ label: 'Scorecard & fixes', Icon: ListIcon, color: '#2563eb', onClick: () => navigate({ name: 'scorecard' }) });
+    items.push({ label: 'Leaderboard', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => navigate({ name: 'leaderboard' }) });
+    items.push({ label: 'Scorecard & fixes', Icon: ListIcon, color: 'var(--blue)', onClick: () => navigate({ name: 'scorecard' }) });
   }
   if (host || online)
     items.push({
       label: online ? 'Invite code' : 'Invite friends',
       Icon: UsersIcon,
-      color: '#16a34a',
+      color: 'var(--green)',
       onClick: () => openSheet({ name: 'invite' }),
     });
-  items.push({ label: 'Game options', Icon: GearIcon, color: '#64748b', onClick: () => openSheet({ name: 'options' }) });
-  items.push({ label: 'How to play', Icon: HelpIcon, color: '#7c3aed', onClick: () => navigate({ name: 'howto' }) });
-  items.push({ label: 'Home', Icon: HomeIcon, color: '#0891b2', onClick: () => resetTo() });
+  items.push({ label: 'Game options', Icon: GearIcon, color: 'var(--slate-hi)', onClick: () => openSheet({ name: 'options' }) });
+  items.push({ label: 'How to play', Icon: HelpIcon, color: 'var(--insane)', onClick: () => navigate({ name: 'howto' }) });
+  items.push({ label: 'Home', Icon: HomeIcon, color: 'var(--safe)', onClick: () => resetTo() });
   if (host && game.status === 'playing') {
     items.push({
       label: 'End round now',
       Icon: FlagIcon,
-      color: '#e11d48',
+      color: 'var(--red)',
       danger: true,
       onClick: () =>
         confirm({
@@ -120,7 +120,7 @@ function MenuSheet() {
     items.push({
       label: 'Leave game',
       Icon: ExitIcon,
-      color: '#e11d48',
+      color: 'var(--red)',
       danger: true,
       onClick: () =>
         confirm({

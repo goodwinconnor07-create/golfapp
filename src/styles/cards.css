@@ -3,6 +3,7 @@
 .ccard {
   --tier: var(--safe);
   --tier-lo: var(--safe-lo);
+  --tier-ink: var(--safe-ink);
   --tier-bg: var(--safe-bg);
   perspective: 1400px;
   width: 100%;
@@ -11,12 +12,14 @@
 .ccard-bold {
   --tier: var(--bold);
   --tier-lo: var(--bold-lo);
+  --tier-ink: var(--bold-ink);
   --tier-bg: var(--bold-bg);
 }
 
 .ccard-insane {
   --tier: var(--insane);
   --tier-lo: var(--insane-lo);
+  --tier-ink: var(--insane-ink);
   --tier-bg: var(--insane-bg);
 }
 
@@ -33,7 +36,7 @@
 
 .ccard-face {
   grid-area: 1 / 1;
-  border-radius: 28px;
+  border-radius: var(--r-lg);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   overflow: hidden;
@@ -43,7 +46,7 @@
   min-height: 340px;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-color);
   background:
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09) 0 14px, transparent 14px 28px),
     linear-gradient(150deg, var(--tier), var(--tier-lo));
@@ -54,7 +57,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
 }
 
@@ -67,7 +70,7 @@
 }
 
 .ccard-drawing {
-  font-size: 18px;
+  font-size: var(--fs-lead);
   font-weight: 800;
   opacity: 0.9;
   animation: pulse 1s ease-in-out infinite;
@@ -75,7 +78,7 @@
 
 .ccard-front {
   transform: rotateY(180deg);
-  background: #fff;
+  background: var(--surface);
   box-shadow:
     inset 0 0 0 4px var(--tier),
     0 22px 40px -24px var(--tier-lo);
@@ -88,8 +91,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 18px;
-  color: #fff;
+  padding: 16px 20px;
+  color: var(--on-color);
   background: linear-gradient(120deg, var(--tier), var(--tier-lo));
   font-weight: 900;
   text-transform: uppercase;
@@ -97,17 +100,17 @@
 }
 
 .ccard-tier {
-  font-size: 21px;
+  font-size: var(--fs-h3);
 }
 
 .ccard-stake {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 4px 9px;
-  border-radius: 999px;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.22);
-  font-size: 18px;
+  font-size: var(--fs-lead);
   font-variant-numeric: tabular-nums;
 }
 
@@ -116,7 +119,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 22px 22px 24px;
+  padding: 24px 24px 24px;
 }
 
 .ccard-title {
@@ -125,12 +128,12 @@
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.02;
-  color: var(--tier-lo);
+  color: var(--tier-ink);
 }
 
 .ccard-pass {
   margin: 0;
-  font-size: 29px;
+  font-size: var(--fs-h1);
   font-weight: 800;
   line-height: 1.22;
   color: var(--ink);
@@ -138,17 +141,17 @@
 
 .ccard-hint {
   margin: auto 0 0;
-  padding: 10px 14px;
-  border-radius: 14px;
+  padding: 12px 16px;
+  border-radius: var(--r-sm);
   background: var(--tier-bg);
   color: var(--ink-2);
-  font-size: 17px;
+  font-size: var(--fs-body);
   font-weight: 800;
 }
 
 .ccard-tag {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-small);
   font-weight: 700;
   color: var(--ink-3);
 }
@@ -158,7 +161,7 @@
 .ccard-compact .ccard-face,
 .ccard-compact .ccard-back {
   min-height: 0;
-  border-radius: 22px;
+  border-radius: var(--r-lg);
 }
 
 .ccard-compact .ccard-front {
@@ -166,43 +169,43 @@
 }
 
 .ccard-compact .ccard-back {
-  padding: 22px 0;
+  padding: 24px 0;
 }
 
 .ccard-compact .ccard-band {
-  padding: 10px 14px;
+  padding: 12px 16px;
 }
 
 .ccard-compact .ccard-tier {
-  font-size: 17px;
+  font-size: var(--fs-body);
 }
 
 .ccard-compact .ccard-stake {
-  font-size: 15px;
-  padding: 3px 7px;
+  font-size: var(--fs-small);
+  padding: 4px 8px;
 }
 
 .ccard-compact .ccard-body {
-  padding: 14px 16px 16px;
-  gap: 6px;
+  padding: 16px 16px 16px;
+  gap: 8px;
 }
 
 .ccard-compact .ccard-title {
-  font-size: 24px;
+  font-size: var(--fs-h2);
 }
 
 .ccard-compact .ccard-pass {
-  font-size: 19px;
+  font-size: var(--fs-lead);
 }
 
 .ccard-compact .ccard-hint {
-  font-size: 15px;
-  padding: 7px 11px;
+  font-size: var(--fs-small);
+  padding: 8px 12px;
   margin-top: 4px;
 }
 
 .ccard-compact .ccard-back-label {
-  font-size: 26px;
+  font-size: var(--fs-h2);
 }
 
 /* Tier wind-up before the flip: Bold flips with more bounce, Insane shakes and glows first. */
@@ -260,39 +263,39 @@
 
 .stamp-card {
   position: relative;
-  margin: 0 auto 6px;
+  margin: 0 auto 8px;
   max-width: 320px;
-  border-radius: 20px;
+  border-radius: var(--r-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   text-align: left;
   box-shadow: inset 0 0 0 4px var(--tier);
 }
 
 .stamp-card .ccard-band {
-  padding: 8px 14px;
-  font-size: 15px;
+  padding: 8px 16px;
+  font-size: var(--fs-small);
 }
 
 .stamp-card-title {
   margin: 0;
-  padding: 12px 16px 18px;
-  font-size: 24px;
+  padding: 12px 16px 20px;
+  font-size: var(--fs-h2);
   font-weight: 900;
   line-height: 1.05;
-  color: var(--tier-lo);
+  color: var(--tier-ink);
 }
 
 .stamp {
   position: absolute;
   top: 50%;
   left: 50%;
-  padding: 4px 14px;
+  padding: 4px 16px;
   border: 5px solid currentColor;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: rgba(255, 255, 255, 0.88);
-  font-size: 28px;
+  font-size: var(--fs-h1);
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.02em;

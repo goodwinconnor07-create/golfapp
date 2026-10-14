@@ -95,14 +95,9 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
           <div className="hole-tag">
             <b>Hole {hole.number}</b>
             {hole.par && <span className="par-chip">PAR {hole.par}</span>}
-            {/* On the double-stakes holes the 2× badge takes the place of the hole count. */}
-            {isDoubleHole(game, game.current) ? (
+            {isDoubleHole(game, game.current) && (
               <span className="tag tag-double" aria-label="Double stakes">
                 2×
-              </span>
-            ) : (
-              <span className="muted small num">
-                {game.current + 1}/{game.holes.length}
               </span>
             )}
           </div>
@@ -131,6 +126,17 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
       <button type="button" className="icon-btn press" aria-label="Menu" onClick={() => openSheet({ name: 'menu' })}>
         <MenuIcon />
       </button>
+      {game.status === 'playing' && (
+        // How far through the round: a thin line that fills hole by hole, with the count.
+        <div className="hole-progress" role="progressbar" aria-label="Round progress" aria-valuemin={1} aria-valuemax={game.holes.length} aria-valuenow={game.current + 1}>
+          <span className="hole-progress-track">
+            <i style={{ width: `${((game.current + 1) / game.holes.length) * 100}%` }} />
+          </span>
+          <span className="hole-progress-count num">
+            {game.current + 1}/{game.holes.length}
+          </span>
+        </div>
+      )}
       {online && conn !== 'open' && (
         // Its own line under the header, so it never squashes the hole and par.
         <span className="conn-pill" role="status">

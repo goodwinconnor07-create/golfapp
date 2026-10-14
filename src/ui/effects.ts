@@ -1,3 +1,4 @@
+import { CONFETTI_COLORS } from './theme';
 // Instant feedback: haptics, tap ripples and confetti. All of it is skipped
 // when the phone asks for reduced motion, and none of it blocks the game.
 
@@ -60,10 +61,7 @@ interface Piece {
 }
 
 export const CONFETTI = {
-  party: ['#f97316', '#ec4899', '#8b5cf6', '#14b8a6', '#facc15', '#3b82f6'],
-  safe: ['#14b8a6', '#0d9488', '#5eead4', '#facc15'],
-  bold: ['#fb923c', '#ea580c', '#fdba74', '#facc15'],
-  insane: ['#a855f7', '#7c3aed', '#d946ef', '#f0abfc', '#facc15'],
+  ...CONFETTI_COLORS,
 };
 
 /** Short confetti burst from a point (defaults to the middle of the screen). */
@@ -144,8 +142,11 @@ function solidColour(look: CSSStyleDeclaration): string {
  * null puts the normal white back.
  */
 function tintBrowser(colour: string | null): void {
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  meta?.setAttribute('content', colour ?? '#ffffff');
+  // One tag per colour scheme; set both so whichever is active follows.
+  for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+    const dark = meta.media.includes('dark');
+    meta.setAttribute('content', colour ?? (dark ? '#0e0f14' : '#ffffff'));
+  }
 }
 const WIPE_FADE_MS = 280;
 

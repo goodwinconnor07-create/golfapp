@@ -32,6 +32,7 @@ export function SetupCourse() {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<CourseSummary[]>([]);
   const [searching, setSearching] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const recent = useRef(loadRecent()).current;
@@ -52,16 +53,16 @@ export function SetupCourse() {
         const found = await searchCourses(query);
         if (lastQuery.current === query) {
           setResults(found);
-          setError(found.length ? '' : 'No courses found. Try a shorter name or the town.');
+          setError(found.length ? '' : 'none');
         }
       } catch (e) {
-        if (lastQuery.current === query) setError(e instanceof Error ? e.message : 'Search failed.');
+        if (lastQuery.current === query) setError(e instanceof Error ? e.message : "Couldn't search right now.");
       } finally {
         if (lastQuery.current === query) setSearching(false);
       }
     }, 350);
     return () => clearTimeout(timer);
-  }, [q]);
+  }, [q, retry]);
 
   const choose = async (id: string, known?: CourseDetail) => {
     setLoadingId(id);
@@ -101,8 +102,38 @@ export function SetupCourse() {
           onChange={(e) => setQ(e.target.value)}
         />
         {server === 'down' && <p className="note">Course search needs a connection. You can skip and enter pars on each tee.</p>}
-        {searching && <p className="note">Searching…</p>}
-        {error && !searching && <p className="note">{error}</p>}
+        {searching && results.length === 0 && (
+          // Placeholder rows while results load, shaped like the real ones.
+          <div className="stack" aria-label="Searching" role="status">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="player-row course-row skeleton-row" style={{ animationDelay: `${i * 120}ms` }}>
+                <span className="skeleton skeleton-icon" />
+                <span className="course-text">
+                  <span className="skeleton skeleton-line" />
+                  <span className="skeleton skeleton-line short" />
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {error === 'none' && !searching && (
+          <div className="empty-state">
+            <span className="empty-emoji" aria-hidden>
+              ⛳
+            </span>
+            <b>No courses by that name</b>
+            <span>Try a shorter name or the town. Or skip it and enter the par on each tee.</span>
+          </div>
+        )}
+        {error && error !== 'none' && !searching && (
+          <div className="empty-state">
+            <b>{error}</b>
+            <span>Check your signal and try again, or skip it and enter the par on each tee.</span>
+            <button type="button" className="btn btn-sm btn-blue btn-auto" onClick={() => setRetry((n) => n + 1)}>
+              Try again
+            </button>
+          </div>
+        )}
 
         {showRecent && <p className="section-title">Recent</p>}
         <div className="stack">

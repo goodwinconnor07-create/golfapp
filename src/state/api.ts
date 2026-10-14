@@ -45,7 +45,7 @@ export async function createOnlineGame(deviceId: string, game: Game): Promise<st
   } catch {
     throw new Error("Couldn't reach the server. Check your signal and try again.");
   }
-  if (!res.ok) throw new Error(await errorText(res, "Couldn't start online play."));
+  if (!res.ok) throw new Error(await errorText(res, "Couldn't get a join code. Check your signal and try again."));
   const body = (await res.json()) as CreateGameResponse;
   return body.code;
 }

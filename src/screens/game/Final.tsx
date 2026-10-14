@@ -130,7 +130,12 @@ export function Final({ game }: { game: Game }) {
               delay={i * 70}
               sub={
                 <>
-                  {row.totals.made}/{row.totals.holes} cards · {row.totals.real} strokes
+                  <span className="board-detail">
+                    <span>
+                      {row.totals.made}/{row.totals.holes} cards
+                    </span>{' '}
+                    · <span>{row.totals.real} strokes</span>
+                  </span>
                 </>
               }
             />

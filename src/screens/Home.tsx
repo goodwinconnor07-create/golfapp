@@ -1,9 +1,17 @@
+import { useEffect, useState } from 'react';
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
 import { colourWipe } from '../ui/effects';
 import { ArrowIcon, BallIcon, ClockIcon } from '../ui/Icons';
 
+/** The intro plays once per visit, not every time you come back Home. */
+let introPlayed = false;
+
 export function Home() {
+  const [intro] = useState(() => !introPlayed);
+  useEffect(() => {
+    introPlayed = true;
+  }, []);
   const game = useApp((s) => s.game);
   const online = useApp((s) => s.session?.mode === 'online');
   const joining = useApp((s) => s.session?.mode === 'online' && !s.session.game);
@@ -30,7 +38,7 @@ export function Home() {
         </button>
       )}
       <div className="screen-body">
-        <div className={`home-hero center${active ? ' with-strip' : ''}`}>
+        <div className={`home-hero center${active ? ' with-strip' : ''}${intro ? ' intro' : ''}`}>
           <div className="home-icon" aria-hidden>
             <div className="row" style={{ gap: 4 }}>
               <span className="lines">

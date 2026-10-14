@@ -3,19 +3,19 @@ import { BackBar, TierChip } from '../ui/components';
 
 const STEPS = [
   {
-    color: '#2563eb',
+    color: 'var(--blue)',
     title: 'Pick your risk',
     text: 'Everyone joins on their own phone with the game code. Before each hole, choose Safe, Bold or Insane.',
   },
-  { color: '#db2777', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
-  { color: '#15803d', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
+  { color: 'var(--brand-2)', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
+  { color: 'var(--green)', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
   {
-    color: '#c2410c',
+    color: 'var(--bold)',
     title: 'Score it',
     text: "Enter the strokes you took. If they don't settle the card, tap Completed or Failed. Results show when everyone's in.",
   },
   {
-    color: '#7c3aed',
+    color: 'var(--insane)',
     title: 'Lowest score wins',
     text: 'Each hole: take your strokes, minus strokes if you complete your challenge, plus strokes if you fail it. That is scored over or under par, like golf. Lowest total wins.',
   },

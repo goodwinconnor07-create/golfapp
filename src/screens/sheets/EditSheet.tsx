@@ -3,6 +3,7 @@ import { cardStakes, getCard, stakeFor, isDoubleHole, getEntry, judgeFromStrokes
 import { closeSheet, dispatch, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Breakdown, Sheet, StrokePicker } from '../../ui/components';
+import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
 /**
  * Fix a score after the fact. Totals recalculate from the corrected strokes and result.
@@ -82,8 +83,11 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
             )}
           </>
         ) : (
-          <div className={`auto-result ${auto}`}>
-            {auto === 'made' ? 'Completed (your strokes prove it)' : 'Failed (not possible with that many strokes)'}
+          // Same look as the score screen.
+          <div className={`auto-result ${auto} pop`} key={auto}>
+            {auto === 'made' ? <CheckIcon width={28} height={28} /> : <CrossIcon width={28} height={28} />}
+            {auto === 'made' ? 'Completed' : 'Failed'}
+            <small>{auto === 'made' ? '· your strokes prove it' : '· not possible with that many strokes'}</small>
           </div>
         )}
         <p className="h2 center num" style={{ margin: '4px 0' }}>
@@ -102,7 +106,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
           disabled={!effective || (access === 'request' && unchanged)}
           onClick={save}
         >
-          {access === 'request' ? 'Ask to change' : 'Save'}
+          {access === 'request' ? 'Ask to change' : 'Save score'}
         </button>
         {pending && pending.by === deviceId && (
           <button type="button" className="btn btn-ghost" onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}>

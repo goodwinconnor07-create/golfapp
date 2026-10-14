@@ -463,7 +463,7 @@ export async function goOnline(quiet = false): Promise<boolean> {
     connect(code);
     return true;
   } catch (e) {
-    if (!quiet) toast(e instanceof Error ? e.message : "Couldn't start online play.", 'error');
+    if (!quiet) toast(e instanceof Error ? e.message : "Couldn't get a join code. Check your signal and try again.", 'error');
     return false;
   } finally {
     set({ busy: null });

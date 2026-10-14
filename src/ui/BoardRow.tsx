@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { formatToPar, type StandingRow } from '../game';
-import { Avatar } from './components';
+import { Avatar, CountUp } from './components';
 
 /** One leaderboard line: rank, player, big score (lowest wins). Ties show as "=2". */
 /** move: places gained (+) or lost (−) since the hole before. */
@@ -25,7 +25,9 @@ export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?
         {sub && <span className="board-sub">{sub}</span>}
       </div>
       <div className="board-total">
-        <b>{formatToPar(row.totals.toPar)}</b>
+        <b aria-label={formatToPar(row.totals.toPar)}>
+          <CountUp value={row.totals.toPar} format={formatToPar} />
+        </b>
         <span>To par</span>
       </div>
     </div>

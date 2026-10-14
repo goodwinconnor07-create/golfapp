@@ -3,8 +3,8 @@ import { goOnline, toast, useApp } from '../../state/store';
 import { Sheet, Spinner } from '../../ui/components';
 import { CopyIcon, ShareIcon } from '../../ui/Icons';
 import { QRCode } from '../../ui/QRCode';
+import { TILE_COLORS } from '../../ui/theme';
 
-const TILE_COLORS = ['#f97316', '#ec4899', '#8b5cf6', '#2563eb', '#14b8a6'];
 
 async function copy(text: string) {
   try {

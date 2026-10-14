@@ -83,7 +83,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.getByRole('button', { name: 'Sam, hole 1' }).click();
   await shot(page, '15-edit');
   await page.getByRole('button', { name: 'More strokes' }).click();
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('button', { name: 'Save score' }).click();
   await expect(page.locator('.note', { hasText: 'Strokes taken:' })).toContainText('Sam 6');
   await page.getByRole('button', { name: 'Back' }).click();
 
