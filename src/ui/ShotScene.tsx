@@ -758,7 +758,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
         <>
           <GreenView c={c} />
           {art.feet && <Ring c={c} feet={art.feet} />}
-          <Flag c={c} x={CUP.x} y={CUP.y} />
+          <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Flight
             c={c}
             air={`M20 160 Q 110 -40 ${stop.x - 14} ${stop.y + 6}`}
@@ -786,7 +786,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
         draw: (c) => (
           <>
             <GreenView c={c} />
-            <Flag c={c} x={CUP.x} y={CUP.y} />
+            <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
             <Flight
               c={c}
               air="M60 160 Q 130 -30 214 72"
@@ -809,7 +809,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
       draw: (c) => (
         <>
           <GreenView c={c} />
-          <Flag c={c} x={CUP.x} y={CUP.y} />
+          <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Spray c={c} x={154} y={96} s={0} />
           {/* Sits in the sand until the splash, then flies. */}
           {c.still ? (
@@ -840,7 +840,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
       return (
         <>
           <GreenView c={c} bunker={false} />
-          <Flag c={c} x={CUP.x} y={CUP.y} />
+          <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           {c.still ? (
             art.holeOut ? null : (
               <RestingBall c={c} x={end.x} y={end.y} r={5} s={0} />

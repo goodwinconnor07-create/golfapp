@@ -181,6 +181,22 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         <ellipse cx="262" cy="64.6" rx="12.5" ry="4.6" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
         <path d="M249.5 66 A 12.5 5.6 0 0 0 274.5 66" fill="none" stroke="#7fcf6c" strokeWidth="1.6" />
 
+        {/* Pin and flag, standing at the back of the cup and drawn behind the ball, so the ball
+            passes in front of the pole instead of through it. */}
+        <rect x="261" y="6" width="2.4" height="56.5" rx="1.2" fill={`url(#${id('pin')})`} />
+        <circle cx="262.2" cy="6" r="2" fill="#ffffff" />
+        <path d="M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z" fill={`url(#${id('flag')})`}>
+          {!still && (
+            <animate
+              attributeName="d"
+              dur="1.6s"
+              repeatDur={`${(total + 1.2).toFixed(2)}s`}
+              values="M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z;M263.4 8 C 275 5, 287 11, 298 11 C 288 17, 275 20, 263.4 26 Z;M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z"
+            />
+          )}
+        </path>
+        <path d="M263.4 8 C 276 10, 286 7, 298 13" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
+
         {/* Ball and its shadow, rolling on the line. */}
         <g>
           {still ? null : (
@@ -246,21 +262,6 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
             <animate attributeName="ry" values="5;14" begin={sunk} dur="0.7s" fill="freeze" />
           </ellipse>
         )}
-
-        {/* Pin and flag. */}
-        <rect x="261" y="6" width="2.4" height="60" rx="1.2" fill={`url(#${id('pin')})`} />
-        <circle cx="262.2" cy="6" r="2" fill="#ffffff" />
-        <path d="M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z" fill={`url(#${id('flag')})`}>
-          {!still && (
-            <animate
-              attributeName="d"
-              dur="1.6s"
-              repeatDur={`${(total + 1.2).toFixed(2)}s`}
-              values="M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z;M263.4 8 C 275 5, 287 11, 298 11 C 288 17, 275 20, 263.4 26 Z;M263.4 8 C 276 10, 286 7, 298 13 C 287 19, 276 18, 263.4 26 Z"
-            />
-          )}
-        </path>
-        <path d="M263.4 8 C 276 10, 286 7, 298 13" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
 
         {/* The card's extra condition, by the flag once the ball is in. */}
         {tag && (
