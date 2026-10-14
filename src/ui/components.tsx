@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent, type ReactNode, type SVGProps } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type SVGProps,
+} from 'react';
 import { AVATAR_EMOJIS, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic, reducedMotion } from './effects';
 import { BLOB_COLORS, PLAYER_COLORS } from './theme';
@@ -48,7 +56,6 @@ export function TierChip({ tier, stakes = false, big = false }: { tier: Tier; st
 // ── Players ─────────────────────────────────────────────────────────────────
 
 export { PLAYER_COLORS } from './theme';
-
 
 export function playerColor(index: number): string {
   return PLAYER_COLORS[index % PLAYER_COLORS.length];

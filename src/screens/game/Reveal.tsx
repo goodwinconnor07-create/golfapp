@@ -37,6 +37,7 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
           cardId={entry?.cardId}
           flip
           stakes={cardStakes(game, game.current, tier, entry?.freePass)}
+          par={game.holes[game.current]?.par ?? undefined}
         />
         {card && !redrawUsed(game, playerId) && (
           <button type="button" className="btn btn-outline" onClick={() => redrawCard(playerId)}>

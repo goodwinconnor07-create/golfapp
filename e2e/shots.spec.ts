@@ -1,13 +1,21 @@
 import { expect, test } from '@playwright/test';
 
-// Trial: putting cards show a short putt animation on the card. The deck is stacked so the draw is known.
-for (const card of ['B12', 'S04'])
-  test(`putting card ${card} shows the putt animation`, async ({ page }) => {
+// Cards show a short shot animation (see src/ui/shotArt.ts). The deck is stacked so the draw is known.
+const LABELS: Record<string, RegExp> = {
+  B12: /8 foot putt/,
+  S04: /lag putt and a tap-in, 2 putts max/,
+  B03: /170 metre drive/,
+  B02: /within 15 feet/,
+  I01: /scorecard marked birdie, birdie or better/,
+};
+
+for (const card of Object.keys(LABELS)) {
+  test(`card ${card} shows its shot animation`, async ({ page }) => {
     await page.goto('/');
     const dev = await page.evaluate(() => JSON.parse(localStorage.getItem('sendit.device') ?? '""'));
-    const g = {
+    const game = {
       v: 1,
-      id: 'putt0000' + card,
+      id: `shot0000${card}`,
       code: null,
       hostDeviceId: dev,
       createdAt: 1,
@@ -18,23 +26,24 @@ for (const card of ['B12', 'S04'])
       current: 0,
       players: [{ id: 'sam0000001', name: 'Sam', color: 0, deviceId: dev }],
       entries: {},
-      settings: { distanceCards: true, situationCards: false, tiebreakOnStrokes: false },
-      decks: { bold: ['B12', 'B12'], safe: ['S04', 'S04'] },
+      settings: { distanceCards: true, situationCards: true, tiebreakOnStrokes: false },
+      decks: { bold: [card, card], safe: [card, card], insane: [card, card] },
       seq: 1,
     };
     await page.evaluate(
       (g) => localStorage.setItem('sendit.session', JSON.stringify({ mode: 'local', code: null, game: g, pending: [] })),
-      g,
+      game,
     );
     await page.reload();
-    const tier = card === 'S04' ? 'Safe' : 'Bold';
+    const tier = card.startsWith('S') ? 'Safe' : card.startsWith('I') ? 'Insane' : 'Bold';
     await page.getByRole('radio', { name: new RegExp(tier) }).click();
     await page.getByRole('button', { name: `Draw my ${tier} card` }).click();
     const scene = page.locator('.putt-scene');
     await expect(scene).toBeVisible();
-    await expect(scene).toHaveAttribute('aria-label', card === 'S04' ? /lag putt and a tap-in, 2 putts max/ : /8 foot putt/);
+    await expect(scene).toHaveAttribute('aria-label', LABELS[card]);
     if (process.env.SHOTS_DIR) {
-      await page.waitForTimeout(2500);
-      await page.screenshot({ path: `${process.env.SHOTS_DIR}/44-putt-${card}.png` });
+      await page.waitForTimeout(3500);
+      await page.screenshot({ path: `${process.env.SHOTS_DIR}/44-shot-${card}.png` });
     }
   });
+}

@@ -2,12 +2,8 @@ import { useEffect, useState } from 'react';
 import { formatDelta, getCard, TIERS, type Tier } from '../game';
 import { haptic, reducedMotion } from './effects';
 import { CheckIcon, CrossIcon } from './Icons';
-import { PuttScene } from './PuttScene';
-
-/** Putting cards get a short putt animation (trial: putting only for now). */
-const PUTT_CARDS = new Set(['S04', 'B04', 'B12', 'I03', 'I11']);
-/** The extra bit each putting card asks for, shown on the flag once the ball drops. */
-const PUTT_TAGS: Record<string, string> = { S04: '2 putts max', I11: 'for par' };
+import { SHOT_ART } from './shotArt';
+import { ShotScene } from './ShotScene';
 import { TierIcon, TIER_LOOK, Pips } from './components';
 
 interface Props {
@@ -19,6 +15,8 @@ interface Props {
   compact?: boolean;
   /** What completing / failing is worth on this hole (doubled holes, free shot). Defaults to the tier's values. */
   stakes?: { made: number; missed: number };
+  /** The hole's par, for scenes that show a score. */
+  par?: number;
 }
 
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
@@ -31,7 +29,7 @@ export function flipDelay(tier: Tier): number {
 export const FLIP_MS = 420;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
-export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes }: Props) {
+export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par }: Props) {
   const card = getCard(cardId);
   const [shown, setShown] = useState(!flip && Boolean(card));
 
@@ -79,14 +77,9 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
               <CrossIcon width={18} height={18} /> {formatDelta(stakes?.missed ?? t.missed)}
             </span>
           </div>
-          {card && !compact && shown && PUTT_CARDS.has(card.id) && (
+          {card && !compact && shown && SHOT_ART[card.id] && (
             // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
-            <PuttScene
-              two={card.id === 'S04'}
-              feet={Number(card.pass.match(/(\d+) feet/)?.[1]) || undefined}
-              tag={PUTT_TAGS[card.id]}
-              delay={flip ? (FLIP_MS + 320) / 1000 : 0.3}
-            />
+            <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 320) / 1000 : 0.3} />
           )}
           {card && (
             <div className="ccard-body">
