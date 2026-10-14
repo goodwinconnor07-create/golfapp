@@ -11,7 +11,7 @@ const SEEN_KEY = 'sendit.moment';
  * halfway through 18, or the double-stakes holes coming up. Once per hole, after the standings
  * have slid into place. It never blocks: taps go straight through, and it fades on its own.
  */
-export function Moment({ game, delay = 1100 }: { game: Game; delay?: number }) {
+export function Moment({ game, delay = 800 }: { game: Game; delay?: number }) {
   const h = game.current;
   const key = `${game.id}:${h}`;
   const [show, setShow] = useState(false);

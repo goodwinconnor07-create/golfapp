@@ -65,12 +65,8 @@ export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?
         (sub || move !== 0) && (
           <>
             {sub}
-            {move !== 0 && (
-              <span className={`rank-move ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
-                {move > 0 ? '▲' : '▼'}
-                {Math.abs(move)}
-              </span>
-            )}
+            {/* Movement shows as the row sliding and its green/red glow. */}
+            {move !== 0 && <span className="sr-only">{move > 0 ? `up ${move}` : `down ${-move}`}</span>}
           </>
         )
       }

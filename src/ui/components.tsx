@@ -546,7 +546,6 @@ export function Working({
 }) {
   // Golfers just say "a double": shorter names keep the pill on one line in a narrow row.
   const golf = breakdownParts(strokes, par, adjustment).golf.replace(/^(Double|Triple) bogey/, '$1');
-  const mark = outcome === 'made' ? '✓' : outcome === 'missed' ? '✗' : '–';
   const label = `${golf}, ${TIERS[tier].label} card ${outcome === 'made' ? 'completed' : outcome === 'missed' ? 'failed' : 'no change'} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
   return (
     <span className="working" aria-label={label}>
@@ -555,7 +554,8 @@ export function Working({
         <span className={`working-tier tier-ink-${tier}`}>
           <TierIcon tier={tier} size={14} />
         </span>
-        {mark} {formatDelta(adjustment)}
+        {/* Colour says completed or failed; the label says it for screen readers. */}
+        {formatDelta(adjustment)}
         {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
       </span>
     </span>

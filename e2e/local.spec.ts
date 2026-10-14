@@ -244,8 +244,8 @@ test('late in the round: 2× stakes, the gap to the leader, free shot and redraw
   // The leaderboard shows who moved after the last hole.
   await page.reload();
   await page.getByRole('button', { name: 'Leaderboard' }).click();
-  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.rank-move.up')).toHaveText('▲1');
-  await expect(page.locator('.board-row', { hasText: 'Alex' }).locator('.rank-move.down')).toHaveText('▼1');
+  await expect(page.locator('.board-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
+  await expect(page.locator('.board-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
   await shot(page, '34-leaderboard-moves');
   await page.getByRole('button', { name: 'Back' }).click();
 
