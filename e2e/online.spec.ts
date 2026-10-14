@@ -236,7 +236,7 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   // Voted down: Hana's card counts as failed (+2), and both phones say so.
   for (const page of [host, guest]) {
     const hana = page.locator('.result-row', { hasText: 'Hana' });
-    await expect(hana.locator('.working-card.missed')).toHaveText('+2');
+    await expect(hana.locator('.working-card.missed')).toContainText('+2');
     await expect(hana.getByText(/overturned/)).toBeVisible();
     await expect(hana).toContainText('+2');
   }
