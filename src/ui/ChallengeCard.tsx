@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { formatDelta, getCard, TIERS, type Tier } from '../game';
 import { haptic, reducedMotion } from './effects';
 import { CheckIcon, CrossIcon } from './Icons';
+import { PuttScene } from './PuttScene';
+
+/** Putting cards get a short putt animation (trial: putting only for now). */
+const PUTT_CARDS = new Set(['S04', 'B04', 'B12', 'I03', 'I11']);
 import { TierIcon, TIER_LOOK, Pips } from './components';
 
 interface Props {
@@ -73,6 +77,9 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
               <CrossIcon width={18} height={18} /> {formatDelta(stakes?.missed ?? t.missed)}
             </span>
           </div>
+          {card && !compact && shown && PUTT_CARDS.has(card.id) && (
+            <PuttScene two={card.id === 'S04'} feet={Number(card.pass.match(/(\d+) feet/)?.[1]) || undefined} delay={flip ? 0.45 : 0.2} />
+          )}
           {card && (
             <div className="ccard-body">
               <h3 className="ccard-title">{card.title}</h3>
