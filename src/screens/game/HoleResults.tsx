@@ -50,12 +50,12 @@ export function HoleResults({ game }: { game: Game }) {
                         tier={r.tier}
                         doubled={r.doubled}
                       />
+                      <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
                       <VoteTag game={game} playerId={row.player.id} hole={h} />
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
                 }
-                meta={r && <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />}
               />
             );
           })}

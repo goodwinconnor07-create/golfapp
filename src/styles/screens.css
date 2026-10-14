@@ -2293,3 +2293,122 @@
 .vote-note.meta-bad {
   color: var(--red-ink);
 }
+
+/* ── Player rows (standings and hole results) ────────────────────────────────
+   One grid: [avatar + rank badge] [name / detail line] [big score]. Neutral rows,
+   gold for the leader; colour lives only in the working pill. */
+.prow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 72px;
+  padding: 12px 16px 12px 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: none;
+}
+
+.prow.first,
+.prow.top {
+  background: linear-gradient(120deg, var(--gold-bg), var(--gold-bg-2));
+  box-shadow: 0 0 0 3px var(--gold-line);
+}
+
+.prow-avatar {
+  position: relative;
+  display: inline-flex;
+}
+
+/* The rank sits on the avatar's corner, like a notification badge. */
+.prow-rank {
+  position: absolute;
+  left: -10px;
+  bottom: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 0 2.5px var(--bg-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.prow.first .prow-rank {
+  background: var(--gold);
+  color: var(--gold-ink-2);
+  box-shadow: 0 0 0 2px var(--gold-bg);
+}
+
+.prow-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.prow-name {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prow-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.prow-detail:empty {
+  display: none;
+}
+
+.prow-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.prow-score b {
+  font-size: var(--fs-title);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.prow-score small {
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.prow .rank-move {
+  position: static;
+  transform: none;
+}
+
+.prow .hole-meta {
+  flex: initial;
+}
+
+/* Reveal rows: neutral like the rest; the flip stays. */
+.prow.reveal-row {
+  min-height: 72px;
+}

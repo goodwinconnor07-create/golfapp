@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatToPar, getCard, holeResult, newLeader, rankMoves, standings, type Game } from '../../game';
 import { markResultsRevealed, navigate, nextHole, resultsRevealSeen } from '../../state/store';
-import { BoardRow } from '../../ui/BoardRow';
-import { Avatar, HoleMeta, Working } from '../../ui/components';
+import { BoardRow, PlayerRow } from '../../ui/BoardRow';
+import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { VoteTag } from './HoleResults';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
@@ -67,46 +67,37 @@ export function ResultsReveal({ game }: { game: Game }) {
             const open = i < shown;
             const top = open && done && r.toPar === best.r.toPar;
             return (
-              <div
+              <PlayerRow
                 key={player.id}
-                className={`reveal-row result-row ${open ? `open reveal-${r.tier}` : ''} ${top ? 'top' : ''}`}
-                aria-hidden={!open}
-              >
-                <Avatar player={player} size={44} />
-                <span className="reveal-name">
-                  <span className="reveal-name-line">
-                    <span className="board-name-text">
-                      {top && '👑 '}
-                      {player.name}
-                    </span>
-                    {open && <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />}
-                  </span>
-                  {open && <span className="sr-only">{getCard(r.cardId)?.title}</span>}
-                </span>
-                {open ? (
-                  <span className="result-right">
-                    <b className="result-topar">{formatToPar(r.toPar)}</b>
-                  </span>
-                ) : (
-                  <span className="reveal-hidden" aria-hidden>
-                    ?
-                  </span>
-                )}
-                {open && (
-                  // Its own line, so the working never squeezes the name.
-                  <span className="result-sum">
-                    <Working
-                      strokes={r.strokes}
-                      par={r.par}
-                      adjustment={r.adjustment}
-                      outcome={r.outcome}
-                      tier={r.tier}
-                      doubled={r.doubled}
-                    />
-                    <VoteTag game={game} playerId={player.id} hole={h} />
-                  </span>
-                )}
-              </div>
+                player={player}
+                className={`reveal-row result-row ${open ? 'open' : ''} ${top ? 'top' : ''}`}
+                hidden={!open}
+                name={
+                  <>
+                    {top && '👑 '}
+                    {player.name}
+                  </>
+                }
+                detail={
+                  open && (
+                    <>
+                      <Working
+                        strokes={r.strokes}
+                        par={r.par}
+                        adjustment={r.adjustment}
+                        outcome={r.outcome}
+                        tier={r.tier}
+                        doubled={r.doubled}
+                      />
+                      <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
+                      <VoteTag game={game} playerId={player.id} hole={h} />
+                      <span className="sr-only">{getCard(r.cardId)?.title}</span>
+                    </>
+                  )
+                }
+                score={open ? formatToPar(r.toPar) : <span className="reveal-hidden">?</span>}
+                scoreLabel={open ? 'To par' : null}
+              />
             );
           })}
         </div>

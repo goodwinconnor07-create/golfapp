@@ -1,52 +1,80 @@
 import type { ReactNode } from 'react';
-import { formatToPar, type StandingRow } from '../game';
+import { formatToPar, type Player, type StandingRow } from '../game';
 import { Avatar, CountUp } from './components';
 
-/** One leaderboard line: rank, player, big score (lowest wins). Ties show as "=2". */
-/** move: places gained (+) or lost (−) since the hole before. */
-export function BoardRow({
-  row,
-  sub,
-  meta,
-  delay,
-  move = 0,
+/**
+ * The one row layout for standings and hole results, on a three-column grid:
+ *   [avatar with a rank badge] [name, then one detail line] [big score]
+ * The name gets the full middle width; everything else (the working, mulligans, votes,
+ * movement) sits on the detail line underneath, so nothing squeezes the name.
+ */
+export function PlayerRow({
+  player,
+  rank,
+  name,
+  detail,
+  score,
+  scoreLabel = 'To par',
+  className = '',
+  style,
+  hidden,
 }: {
-  row: StandingRow;
-  sub?: ReactNode;
-  /** Small notes after the name (mulligan, free shot, vote). */
-  meta?: ReactNode;
-  delay?: number;
-  move?: number;
+  player: Player;
+  /** "1", "=2"… shown as a badge on the avatar. */
+  rank?: string;
+  /** What to show as the name (defaults to the player's name), e.g. with a 👑. */
+  name?: ReactNode;
+  detail?: ReactNode;
+  score: ReactNode;
+  scoreLabel?: string | null;
+  className?: string;
+  style?: React.CSSProperties;
+  hidden?: boolean;
 }) {
   return (
-    <div
+    <div className={`prow ${className}`} style={style} aria-hidden={hidden}>
+      <span className="prow-avatar">
+        <Avatar player={player} size={44} />
+        {rank && <span className="prow-rank">{rank}</span>}
+      </span>
+      <span className="prow-main">
+        <span className="prow-name">{name ?? player.name}</span>
+        {detail && <span className="prow-detail">{detail}</span>}
+      </span>
+      <span className="prow-score">
+        <b>{score}</b>
+        {scoreLabel && <small>{scoreLabel}</small>}
+      </span>
+    </div>
+  );
+}
+
+/** One standings line. move: places gained (+) or lost (−) since the hole before. Ties show as "=2". */
+export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?: ReactNode; delay?: number; move?: number }) {
+  return (
+    <PlayerRow
+      player={row.player}
+      rank={row.tied ? `=${row.rank}` : String(row.rank)}
       className={`board-row ${row.rank === 1 ? 'first' : ''} ${delay != null ? 'rise' : ''}`}
       style={delay != null ? { animationDelay: `${delay}ms` } : undefined}
-    >
-      <span className="rank">
-        {row.tied ? `=${row.rank}` : row.rank}
-        {move !== 0 && (
-          <span className={`rank-move ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
-            {move > 0 ? '▲' : '▼'}
-            {Math.abs(move)}
-          </span>
-        )}
-      </span>
-      <Avatar player={row.player} size={44} />
-      <div className="board-main">
-        <span className="board-name">
-          <span className="board-name-text">{row.player.name}</span>
-          {meta}
-        </span>
-      </div>
-      <div className="board-total">
-        <b aria-label={formatToPar(row.totals.toPar)}>
+      detail={
+        (sub || move !== 0) && (
+          <>
+            {sub}
+            {move !== 0 && (
+              <span className={`rank-move ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
+                {move > 0 ? '▲' : '▼'}
+                {Math.abs(move)}
+              </span>
+            )}
+          </>
+        )
+      }
+      score={
+        <span aria-label={formatToPar(row.totals.toPar)}>
           <CountUp value={row.totals.toPar} format={formatToPar} />
-        </b>
-        <span>To par</span>
-      </div>
-      {/* The working gets its own line under the name, so the big score never squeezes it. */}
-      {sub && <span className="board-sub board-sub-line">{sub}</span>}
-    </div>
+        </span>
+      }
+    />
   );
 }
