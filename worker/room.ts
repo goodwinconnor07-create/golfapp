@@ -58,7 +58,7 @@ export class GameRoom extends DurableObject<Env> {
       holes: game.holes.length,
       current: game.current,
       hostName: host?.name ?? '',
-      players: game.players.map((p) => ({ id: p.id, name: p.name, color: p.color, claimed: p.deviceId !== null })),
+      players: game.players.map((p) => ({ id: p.id, name: p.name, color: p.color, emoji: p.emoji, claimed: p.deviceId !== null })),
       canJoinAsNew: canAddPlayers(game) && game.players.length < LIMITS.maxPlayers,
     };
   }
