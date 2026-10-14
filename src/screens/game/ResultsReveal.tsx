@@ -81,7 +81,7 @@ export function ResultsReveal({ game }: { game: Game }) {
                     </span>
                     {open && <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />}
                   </span>
-                  {open && <small className="result-card">{getCard(r.cardId)?.title}</small>}
+                  {open && <span className="sr-only">{getCard(r.cardId)?.title}</span>}
                 </span>
                 {open ? (
                   <span className="result-right">
