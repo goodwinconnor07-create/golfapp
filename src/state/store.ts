@@ -61,6 +61,7 @@ export type Sheet =
   | { name: 'menu' }
   | { name: 'pars' }
   | { name: 'look' }
+  | { name: 'notifications' }
   | { name: 'player'; playerId: string }
   | { name: 'edit'; playerId: string; hole: number }
   | { name: 'confirm'; title: string; body?: string; confirm: string; danger?: boolean; onConfirm: () => void };

@@ -3,7 +3,7 @@ import type { ConnStatus } from '../../state/connection';
 import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
 import { gameView, myPlayers, type GameView } from '../../state/view';
 import { BackBar, Spinner } from '../../ui/components';
-import { MenuIcon, TrophyIcon } from '../../ui/Icons';
+import { BellIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
@@ -14,7 +14,7 @@ import { PlayHole } from './PlayHole';
 import { Reveal } from './Reveal';
 import { ResultsReveal } from './ResultsReveal';
 import { ScoreRoom } from './ScoreRoom';
-import { FixPrompt } from './FixPrompt';
+import { useFixCount } from './FixPrompt';
 import { VotePrompt } from './VotePrompt';
 import { ScoreEntry } from './ScoreEntry';
 import { WaitPicks } from './Waiting';
@@ -46,12 +46,7 @@ export function GameScreen() {
   return (
     <div className="screen">
       <GameTopBar game={game} online={online} conn={conn} />
-      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && (
-        <>
-          <FixPrompt game={game} />
-          <VotePrompt game={game} />
-        </>
-      )}
+      {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
   );
@@ -90,6 +85,7 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
   // Changes made with no signal, saved on this phone until they reach the server.
   const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
   const hole = game.holes[game.current];
+  const asks = useFixCount(game);
   return (
     <div className="topbar">
       <div className="topbar-title">
@@ -115,6 +111,21 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
       {game.status === 'playing' && (
         <button type="button" className="icon-btn press" aria-label="Leaderboard" onClick={() => navigate({ name: 'leaderboard' })}>
           <TrophyIcon />
+        </button>
+      )}
+      {online && game.status !== 'lobby' && (
+        <button
+          type="button"
+          className="icon-btn press bell-btn"
+          aria-label={asks ? `Notifications, ${asks} new` : 'Notifications'}
+          onClick={() => openSheet({ name: 'notifications' })}
+        >
+          <BellIcon />
+          {asks > 0 && (
+            <span key={asks} className="badge pop" aria-hidden>
+              {asks > 9 ? '9+' : asks}
+            </span>
+          )}
         </button>
       )}
       <button type="button" className="icon-btn press" aria-label="Menu" onClick={() => openSheet({ name: 'menu' })}>

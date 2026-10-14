@@ -1840,3 +1840,69 @@
   color: var(--ink-3);
   font-size: 13px;
 }
+
+/* Notifications bell with an iOS-style red count. */
+.bell-btn {
+  position: relative;
+  /* The badge sits over the corner, like iOS. */
+  overflow: visible !important;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 0 32px;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.notif-empty b {
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.notif-empty span {
+  font-size: 15px;
+}
+
+/* With the bell there are three buttons: keep them a touch smaller, and let the
+   hole badges drop under "Hole 18" on narrow phones rather than squash. */
+.topbar:has(.bell-btn) {
+  gap: 8px;
+}
+
+.topbar:has(.bell-btn) .icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+
+.topbar:has(.bell-btn) .hole-tag {
+  flex-wrap: wrap;
+  row-gap: 2px;
+  column-gap: 8px;
+}
+
+.topbar:has(.bell-btn) .hole-tag b {
+  font-size: 30px;
+}

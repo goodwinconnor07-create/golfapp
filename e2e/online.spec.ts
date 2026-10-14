@@ -267,6 +267,9 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await passResultsReveal(host);
   await host.getByRole('button', { name: /Next hole/ }).click();
   await expect(guest.locator('.hole-tag b')).toHaveText('Hole 2');
+  await guest.getByRole('button', { name: 'Notifications' }).click();
+  await expect(guest.getByText('No new notifications')).toBeVisible();
+  await guest.getByRole('button', { name: 'Close' }).click();
 
   // Hole 1 is locked in: Gus can't change his own score directly, only ask.
   await guest.getByRole('button', { name: 'Menu' }).click();
@@ -278,13 +281,20 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await ask.click();
   await expect(guest.getByText(/Waiting for the host to approve/)).toBeVisible();
 
-  // The host gets asked, and approves.
+  // The host's bell shows a red 1; the request is inside.
+  const bell = host.getByRole('button', { name: /^Notifications/ });
+  await expect(bell.locator('.badge')).toHaveText('1');
+  await shot(host, '41b-bell-badge');
+  await bell.click();
   const prompt = host.locator('.fix-card');
   await expect(prompt).toContainText('Gus wants to fix hole 1');
   await expect(prompt).toContainText('6 → 5 strokes');
   await shot(host, '42-fix-request');
   await prompt.getByRole('button', { name: 'Approve' }).click();
   await expect(prompt).toBeHidden();
+  await expect(host.getByText('No new notifications')).toBeVisible();
+  await host.getByRole('button', { name: 'Close' }).click();
+  await expect(bell.locator('.badge')).toHaveCount(0);
 
   // Both scorecards show the new score and the record of the change.
   await expect(guest.locator('.edit-row')).toContainText('6 → 5 strokes');

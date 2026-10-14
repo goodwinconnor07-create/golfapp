@@ -18,6 +18,7 @@ import { EditSheet } from './EditSheet';
 import { InviteSheet } from './InviteSheet';
 import { OptionsSheet, ParsSheet } from './OptionsSheet';
 import { LookSheet } from './LookSheet';
+import { NotificationsSheet } from './NotificationsSheet';
 import { PlayerSheet } from './PlayerSheet';
 
 export function SheetHost({ sheet }: { sheet: SheetSpec }) {
@@ -30,6 +31,8 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
       return <ParsSheet />;
     case 'menu':
       return <MenuSheet />;
+    case 'notifications':
+      return <NotificationsSheet />;
     case 'look':
       return <LookSheet />;
     case 'player':

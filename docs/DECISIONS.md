@@ -118,6 +118,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - **Typo window:** you can fix your own score freely until the group moves on to the next hole.
 - **Locked in:** once the group moves on (or the round ends), a fix becomes a request. The player whose score it is approves it; if you're asking about your own, the host approves. The asker can cancel. One open request per score; a new one replaces it.
 - **Host:** can fix any score directly, as referee.
+- **Where requests show:** a bell next to the trophy (online games). A red iOS-style count shows how many wait on you; tapping it opens Notifications with Approve (green) and Deny (red), or "No new notifications".
 - **Shown to everyone:** every change to a locked-in score (or to someone else's) is recorded and listed under "Score changes" on the scorecard and final results, and the cell gets a ✎ mark.
 - **One-phone games:** unchanged; everyone's on one phone, so fixes are direct and unrecorded.
 - Enforced on the server (`scoreAccess()` in `rules.ts`), not just hidden in the app.

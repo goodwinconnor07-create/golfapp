@@ -48,6 +48,13 @@ export const TrophyIcon = (p: P) => (
   </svg>
 );
 
+export const BellIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </svg>
+);
+
 export const MenuIcon = (p: P) => (
   <svg {...stroke(p)}>
     <path d="M4 7h16M4 12h16M4 17h16" />
