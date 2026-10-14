@@ -128,3 +128,10 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - No confetti when a card is drawn: drawing isn't a win yet, and the card face should have the screen to itself. Confetti stays for completions and wins. The flip, the Insane wind-up and the haptic stay.
 - Trial: putting cards show a short putt scene on the card. It starts after the flip has landed, plays once (tap to replay), gives a light tap on the phone as the ball drops, and settles on a still that explains the card: ball in the cup, the distance, and the card's extra condition ("for par", "2 putts max"). Reduce Motion shows that still straight away.
 - Every card now has a scene (product owner approved after the putting trial): drive, trouble (stakes and water), approach (a ring sized to the card's distance), bunker, chip and score (a pencilled scorecard using the hole's par). Scenes and tags live in `src/ui/shotArt.ts`; tags sum a card up at a glance, the approved pass text is unchanged. A unit test fails if a card in play has no scene.
+
+## Mulligans (Oct 2026)
+
+- A mulligan is a re-hit of one bad shot that doesn't count. The player enters their real strokes without the re-hit; the app records that a mulligan was used on that hole. It doesn't change the card result or the stroke modifiers.
+- Each player gets 2 for a round of 9 holes or fewer, 4 for longer rounds. One per hole.
+- Host setting in Game options, on by default, set before the round and locked once it starts.
+- Used with a "Used a mulligan" switch on the score screen (showing how many are left). No vote. It shows as a "Mulligan" tag on the hole results and an "M" on the scorecard. The host can change it in Fix a score; fix requests don't change it.

@@ -10,6 +10,8 @@ import {
   eligibleCards,
   entryKey,
   getEntry,
+  mulliganAllowance,
+  mulligansLeft,
   getCard,
   holeResult,
   holeStatus,
@@ -86,7 +88,7 @@ describe('catalogue', () => {
   it('always has at least two cards for every tier, par and option combination', () => {
     for (const distanceCards of [true, false]) {
       for (const situationCards of [true, false]) {
-        const settings: Settings = { distanceCards, situationCards, tiebreakOnStrokes: false };
+        const settings: Settings = { distanceCards, situationCards, tiebreakOnStrokes: false, mulligans: true };
         for (const tier of TIER_ORDER) {
           for (const par of [3, 4, 5] as Par[]) {
             expect(eligibleCards(tier, par, settings).length, `${tier} par ${par}`).toBeGreaterThanOrEqual(2);
@@ -593,7 +595,13 @@ describe('hole done', () => {
 
 describe('player pictures', () => {
   const base = () =>
-    createGame({ id: 'g1', hostDeviceId: 'dhost', now: 0, players: [{ id: 'p1aaaa', name: 'Sam', emoji: '🦈', color: 3 }], holes: [{ number: 1, par: 4 }] });
+    createGame({
+      id: 'g1',
+      hostDeviceId: 'dhost',
+      now: 0,
+      players: [{ id: 'p1aaaa', name: 'Sam', emoji: '🦈', color: 3 }],
+      holes: [{ number: 1, par: 4 }],
+    });
   const host = { deviceId: 'dhost', now: 1, rng: Math.random };
 
   it('keeps a picked emoji and colour, and gives a later player a free colour', () => {
@@ -614,11 +622,20 @@ describe('player pictures', () => {
     if (!two.ok) throw new Error(two.error);
     expect(applyAction(two.game, { type: 'setLook', playerId: 'p2bbbb', emoji: '⛳', color: 3 }, host).ok).toBe(false);
     expect(parseAction({ type: 'setLook', playerId: 'p1aaaa', emoji: '💩', color: 1 })).toBeNull();
-    expect(parseAction({ type: 'addPlayer', id: 'p2bbbb', name: 'Alex', emoji: '<b>' })).toEqual({ type: 'addPlayer', id: 'p2bbbb', name: 'Alex', claim: false });
+    expect(parseAction({ type: 'addPlayer', id: 'p2bbbb', name: 'Alex', emoji: '<b>' })).toEqual({
+      type: 'addPlayer',
+      id: 'p2bbbb',
+      name: 'Alex',
+      claim: false,
+    });
   });
 
-  it("only lets a guest change their own picture", () => {
-    const r = applyAction(base(), { type: 'setLook', playerId: 'p1aaaa', emoji: '⛳', color: 1 }, { deviceId: 'dother', now: 1, rng: Math.random });
+  it('only lets a guest change their own picture', () => {
+    const r = applyAction(
+      base(),
+      { type: 'setLook', playerId: 'p1aaaa', emoji: '⛳', color: 1 },
+      { deviceId: 'dother', now: 1, rng: Math.random },
+    );
     expect(r.ok).toBe(false);
   });
 });
@@ -662,10 +679,17 @@ describe('who can change a score (online)', () => {
     g = run(g, { type: 'answerFix', id: 'fix001', accept: true });
     expect(getEntry(g, 'player01', 0)?.strokes).toBe(5);
     expect(g.fixes).toBeUndefined();
-    expect(g.edits).toEqual([expect.objectContaining({ playerId: 'player01', hole: 0, from: expect.objectContaining({ strokes: 6 }), to: expect.objectContaining({ strokes: 5 }) })]);
+    expect(g.edits).toEqual([
+      expect.objectContaining({
+        playerId: 'player01',
+        hole: 0,
+        from: expect.objectContaining({ strokes: 6 }),
+        to: expect.objectContaining({ strokes: 5 }),
+      }),
+    ]);
   });
 
-  it("asks the player to approve a change to their score, and a no leaves it alone", () => {
+  it('asks the player to approve a change to their score, and a no leaves it alone', () => {
     let g = run(online(), { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
     g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'missed' }, alex);
     g = run(g, { type: 'nextHole', from: 0 });
@@ -687,5 +711,47 @@ describe('who can change a score (online)', () => {
     g = giveCard(g, 'player00', 0, 'S02');
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
     expect(applyAction(g, { type: 'requestFix', id: 'fix003', playerId: 'player00', hole: 0, strokes: 4 }, ctx()).ok).toBe(false);
+  });
+});
+
+describe('mulligans', () => {
+  function round(holes: number): Game {
+    let g = newGame(['Sam'], Array(holes).fill(4) as Par[]);
+    g = run(g, { type: 'start' });
+    for (let h = 0; h < holes; h++) g = giveCard(g, 'player00', h, 'S02');
+    return g;
+  }
+
+  it('gives 2 for 9 holes or fewer, 4 for longer rounds, none when switched off', () => {
+    expect(mulliganAllowance(round(9))).toBe(2);
+    expect(mulliganAllowance(round(6))).toBe(2);
+    expect(mulliganAllowance(round(12))).toBe(4);
+    expect(mulliganAllowance(round(18))).toBe(4);
+    const off = run(newGame(), { type: 'setSettings', settings: { mulligans: false } });
+    expect(mulliganAllowance(off)).toBe(0);
+  });
+
+  it('counts them down, one per hole, and turns one away when none are left', () => {
+    let g = round(9);
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made', mulligan: true });
+    expect(mulligansLeft(g, 'player00')).toBe(1);
+    // Re-saving the same hole doesn't use another.
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 4, outcome: 'made', mulligan: true });
+    expect(mulligansLeft(g, 'player00')).toBe(1);
+    expect(holeResult(g, 'player00', 0)).toMatchObject({ strokes: 4, mulligan: true });
+    g = run(g, { type: 'nextHole', from: 0 });
+    g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 5, outcome: 'made', mulligan: true });
+    g = run(g, { type: 'nextHole', from: 1 });
+    expect(mulligansLeft(g, 'player00')).toBe(0);
+    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 2, strokes: 5, outcome: 'made', mulligan: true }, ctx()).ok).toBe(false);
+    // Taking one back gives it back.
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made', mulligan: false });
+    expect(mulligansLeft(g, 'player00')).toBe(1);
+  });
+
+  it('is set before the round and locked once it starts', () => {
+    const g = round(9);
+    expect(applyAction(g, { type: 'setSettings', settings: { mulligans: false } }, ctx()).ok).toBe(false);
+    expect(parseAction({ type: 'score', playerId: 'player00', hole: 0, strokes: 4, mulligan: 'yes' })).toBeNull();
   });
 });

@@ -66,6 +66,17 @@ export function OptionsSheet() {
           detail="Off: equal scores share the place."
           onChange={(v) => set({ tiebreakOnStrokes: v })}
         />
+        <Toggle
+          on={game.settings.mulligans}
+          disabled={!host || game.status !== 'lobby'}
+          title="Mulligans"
+          detail={
+            game.status === 'lobby'
+              ? `Each player can re-hit ${game.holes.length <= 9 ? '2' : '4'} bad shots this round without counting them.`
+              : `Set before the round: ${game.settings.mulligans ? `${game.holes.length <= 9 ? '2' : '4'} each` : 'off'}.`
+          }
+          onChange={(v) => set({ mulligans: v })}
+        />
       </div>
       <div className="stack" style={{ marginTop: 12 }}>
         <button type="button" className="btn btn-ghost" onClick={() => openSheet({ name: 'pars' })}>

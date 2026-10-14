@@ -2083,3 +2083,29 @@
     font-size: var(--fs-h2);
   }
 }
+
+/* Mulligans: a tag on results, and a small "M" on the scorecard cell. */
+.tag-mulligan {
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+}
+
+.result-sum .tag-mulligan {
+  margin-left: 8px;
+  font-size: var(--fs-caption);
+}
+
+.sc-cell.mulligan::before {
+  content: 'M';
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--blue-ink);
+  opacity: 0.8;
+}
+
+.sc-cell.mulligan {
+  position: relative;
+}

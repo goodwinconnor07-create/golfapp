@@ -47,12 +47,19 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
           </>
         )}
         <p className="flash-calc">
-          <Breakdown strokes={flash.strokes} par={flash.par as Par} adjustment={flash.delta} outcome={flash.outcome} doubled={flash.doubled} freePass={flash.freePass} total big />
+          <Breakdown
+            strokes={flash.strokes}
+            par={flash.par as Par}
+            adjustment={flash.delta}
+            outcome={flash.outcome}
+            doubled={flash.doubled}
+            freePass={flash.freePass}
+            total
+            big
+          />
         </p>
         <p className="flash-name">{flash.name}</p>
-        <p className="flash-sub">
-          {flash.strokes} strokes taken
-        </p>
+        <p className="flash-sub">{flash.strokes} strokes taken</p>
       </div>
     </div>
   );

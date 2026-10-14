@@ -93,7 +93,15 @@ export function ResultsReveal({ game }: { game: Game }) {
                 {open && (
                   // Its own line, so the working never squeezes the name.
                   <span className="result-sum">
-                    <Breakdown strokes={r.strokes} par={r.par} adjustment={r.adjustment} outcome={r.outcome} doubled={r.doubled} freePass={r.freePass} />
+                    <Breakdown
+                      strokes={r.strokes}
+                      par={r.par}
+                      adjustment={r.adjustment}
+                      outcome={r.outcome}
+                      doubled={r.doubled}
+                      freePass={r.freePass}
+                    />
+                    {r.mulligan && <span className="tag tag-mulligan">Mulligan</span>}
                   </span>
                 )}
                 {open && (

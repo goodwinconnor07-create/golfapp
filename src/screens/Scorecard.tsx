@@ -72,10 +72,13 @@ export function Scorecard() {
                     const entry = getEntry(game, p.id, i);
                     const r = holeResult(game, p.id, i);
                     const editable =
-                      i <= lastPlayed && Boolean(entry?.cardId) && game.status !== 'lobby' && scoreAccess(game, deviceId, p.id, i) !== 'none';
+                      i <= lastPlayed &&
+                      Boolean(entry?.cardId) &&
+                      game.status !== 'lobby' &&
+                      scoreAccess(game, deviceId, p.id, i) !== 'none';
                     const edited = game.edits?.some((e) => e.playerId === p.id && e.hole === i);
                     const value = r ? formatToPar(r.toPar) : '·';
-                    const cls = `${r ? r.outcome : 'empty'}${edited ? ' edited' : ''}`;
+                    const cls = `${r ? r.outcome : 'empty'}${edited ? ' edited' : ''}${r?.mulligan ? ' mulligan' : ''}`;
                     const inner = (
                       <>
                         {r && <span className="dot" style={{ background: TIER_LOOK[r.tier].color }} />}
@@ -119,7 +122,10 @@ export function Scorecard() {
             </tbody>
           </table>
         </div>
-        <p className="note">Green = challenge completed, red = failed. The dot shows the level. Lowest score wins.</p>
+        <p className="note">
+          Green = challenge completed, red = failed. The dot shows the level.{game.settings.mulligans ? ' M = mulligan used.' : ''} Lowest
+          score wins.
+        </p>
         <EditList game={game} />
         <p className="note">
           <b>Strokes taken:</b> {game.players.map((p, j) => `${p.name} ${totals[j].real}`).join(' · ')}

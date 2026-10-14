@@ -128,7 +128,14 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
       </button>
       {game.status === 'playing' && (
         // How far through the round: a thin line that fills hole by hole, with the count.
-        <div className="hole-progress" role="progressbar" aria-label="Round progress" aria-valuemin={1} aria-valuemax={game.holes.length} aria-valuenow={game.current + 1}>
+        <div
+          className="hole-progress"
+          role="progressbar"
+          aria-label="Round progress"
+          aria-valuemin={1}
+          aria-valuemax={game.holes.length}
+          aria-valuenow={game.current + 1}
+        >
           <span className="hole-progress-track">
             <i style={{ width: `${((game.current + 1) / game.holes.length) * 100}%` }} />
           </span>

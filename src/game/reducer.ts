@@ -1,14 +1,42 @@
 import { getCard } from './cards';
 import { drawCard, returnCard, takeCard } from './deck';
-import { anyPicked, canAddPlayers, canApproveFix, entryKey, getEntry, holeComplete, isLocked, isVoteable, judgeFromStrokes, outcomeChoices, ownsPlayer, redrawUsed, scoreAccess } from './rules';
+import {
+  anyPicked,
+  canAddPlayers,
+  mulligansLeft,
+  canApproveFix,
+  entryKey,
+  getEntry,
+  holeComplete,
+  isLocked,
+  isVoteable,
+  judgeFromStrokes,
+  outcomeChoices,
+  ownsPlayer,
+  redrawUsed,
+  scoreAccess,
+} from './rules';
 import { freePassAvailable } from './selectors';
 import { isTier } from './tiers';
-import { LIMITS, type Action, type ActionContext, type Entry, type FixRequest, type Game, type Hole, type Outcome, type Player, type ScoreEdit, type Settings } from './types';
+import {
+  LIMITS,
+  type Action,
+  type ActionContext,
+  type Entry,
+  type FixRequest,
+  type Game,
+  type Hole,
+  type Outcome,
+  type Player,
+  type ScoreEdit,
+  type Settings,
+} from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   distanceCards: true,
   situationCards: false,
   tiebreakOnStrokes: false,
+  mulligans: true,
 };
 
 export const PLAYER_COLORS = 8;
@@ -80,7 +108,14 @@ export function createGame(input: NewGameInput): Game {
 }
 
 /** Saves strokes (and the tapped result) for a played hole. Returns an error, or null. Mutates g. */
-function writeScore(g: Game, playerId: string, holeIdx: number, strokesIn: number, tapped: Outcome | undefined): string | null {
+function writeScore(
+  g: Game,
+  playerId: string,
+  holeIdx: number,
+  strokesIn: number,
+  tapped: Outcome | undefined,
+  mulligan?: boolean,
+): string | null {
   const hole = g.holes[holeIdx];
   if (!hole || holeIdx > g.current) return "That hole hasn't been played yet.";
   const strokes = strokesIn;
@@ -95,10 +130,13 @@ function writeScore(g: Game, playerId: string, holeIdx: number, strokesIn: numbe
     const choices = outcomeChoices(card);
     if (choices.length > 0 && !choices.includes(tapped)) return "That result doesn't fit this card.";
   }
+  if (mulligan === true && !entry.mulligan && mulligansLeft(g, playerId) <= 0) return 'No mulligans left.';
   // A changed claim starts a fresh vote.
   if (entry.strokes !== strokes || (tapped !== undefined && tapped !== entry.outcome)) delete entry.votes;
   entry.strokes = strokes;
   entry.done = true;
+  if (mulligan === true) entry.mulligan = true;
+  else if (mulligan === false) delete entry.mulligan;
   // Store the result the strokes settle too, so it survives a later par correction.
   // "Didn't happen" on a situational card stands even if the strokes would rule it out.
   const requested = tapped ?? entry.outcome;
@@ -218,9 +256,13 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
 
     case 'setSettings': {
       if (!isHost) return fail('Only the host can change game options.');
-      for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes'] as const) {
+      for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
         const value = action.settings[key];
-        if (typeof value === 'boolean') g.settings[key] = value;
+        if (typeof value !== 'boolean') continue;
+        // Mulligans are set before the round and stay fixed once it starts.
+        if (key === 'mulligans' && g.status !== 'lobby' && value !== g.settings.mulligans)
+          return fail('Mulligans are set before the round starts.');
+        g.settings[key] = value;
       }
       break;
     }
@@ -333,7 +375,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (access === 'request') return fail('That hole is locked in. Ask to change it instead.');
       const before = getEntry(g, action.playerId, action.hole);
       const from = before?.strokes != null ? { strokes: before.strokes, outcome: before.outcome } : null;
-      const err = writeScore(g, action.playerId, action.hole, action.strokes, action.outcome);
+      const err = writeScore(g, action.playerId, action.hole, action.strokes, action.outcome, action.mulligan);
       if (err) return fail(err);
       // Online, a change to a score after the hole is locked in (or to someone else's) is shown to everyone.
       if (from && g.code && (isLocked(g, action.hole) || !ownsPlayer(g, ctx.deviceId, action.playerId))) {

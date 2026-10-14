@@ -137,6 +137,8 @@ export interface HoleResult {
   doubled: boolean;
   /** Played with the free shot. */
   freePass: boolean;
+  /** Used a mulligan on this hole. */
+  mulligan: boolean;
 }
 
 /** Full result for one player on one hole, or null if it isn't finished yet. */
@@ -157,6 +159,7 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
     toPar: entry.strokes + adjustment - par!,
     doubled: isDoubleHole(game, hole),
     freePass: Boolean(entry.freePass),
+    mulligan: Boolean(entry.mulligan),
   };
 }
 
@@ -223,4 +226,20 @@ export function canApproveFix(game: Game, deviceId: string, fix: FixRequest): bo
 /** Requests waiting on this phone's answer. */
 export function fixesToAnswer(game: Game, deviceId: string): FixRequest[] {
   return (game.fixes ?? []).filter((f) => f.by !== deviceId && canApproveFix(game, deviceId, f));
+}
+
+// ── Mulligans ────────────────────────────────────────────────────────────────
+
+/** Mulligans each player gets: 2 for 9 holes or fewer, 4 for longer rounds, none when switched off. */
+export function mulliganAllowance(game: Pick<Game, 'holes' | 'settings'>): number {
+  if (!game.settings.mulligans) return 0;
+  return game.holes.length <= 9 ? 2 : 4;
+}
+
+export function mulligansUsed(game: Game, playerId: string): number {
+  return game.holes.filter((_, i) => getEntry(game, playerId, i)?.mulligan).length;
+}
+
+export function mulligansLeft(game: Game, playerId: string): number {
+  return Math.max(0, mulliganAllowance(game) - mulligansUsed(game, playerId));
 }

@@ -683,8 +683,16 @@ export function stepIn(playerId: string): void {
   set({ ui: { ...state.ui, extraPick: [...state.ui.extraPick, playerId] } });
 }
 
-export function submitScore(playerId: string, hole: number, strokes: number, outcome?: Outcome, splash = true): boolean {
-  if (!dispatch({ type: 'score', playerId, hole, strokes, outcome })) return false;
+/** mulligan: true/false sets it for this hole; undefined leaves it as it is. */
+export function submitScore(
+  playerId: string,
+  hole: number,
+  strokes: number,
+  outcome?: Outcome,
+  splash = true,
+  mulligan?: boolean,
+): boolean {
+  if (!dispatch({ type: 'score', playerId, hole, strokes, outcome, ...(mulligan !== undefined ? { mulligan } : {}) })) return false;
   const g = state.game;
   // Next of this phone's players to score, or back to the waiting room.
   if (state.ui.scoreFor === playerId) {

@@ -1,8 +1,22 @@
 import { useState } from 'react';
-import { cardStakes, getCard, stakeFor, isDoubleHole, getEntry, judgeFromStrokes, newId, outcomeChoices, ownsPlayer, scoreAccess, type Outcome } from '../../game';
+import {
+  cardStakes,
+  getCard,
+  stakeFor,
+  isDoubleHole,
+  getEntry,
+  judgeFromStrokes,
+  mulliganAllowance,
+  mulligansLeft,
+  newId,
+  outcomeChoices,
+  ownsPlayer,
+  scoreAccess,
+  type Outcome,
+} from '../../game';
 import { closeSheet, dispatch, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { Breakdown, Sheet, StrokePicker } from '../../ui/components';
+import { Breakdown, Sheet, StrokePicker, Toggle } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
 /**
@@ -16,6 +30,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const par = game?.holes[hole]?.par ?? null;
   const [strokes, setStrokes] = useState(entry?.strokes ?? par ?? 4);
   const [outcome, setOutcome] = useState<Outcome | undefined>(entry?.outcome);
+  const [mulligan, setMulligan] = useState(Boolean(entry?.mulligan));
   const card = getCard(entry?.cardId);
   const player = game?.players.find((p) => p.id === playerId);
   if (!game || !entry?.tier || !card || !player || par == null) return null;
@@ -29,7 +44,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const access = scoreAccess(game, deviceId, playerId, hole);
   const pending = game.fixes?.find((f) => f.playerId === playerId && f.hole === hole);
   const approver = ownsPlayer(game, deviceId, playerId) ? 'the host' : player.name;
-  const unchanged = strokes === entry.strokes && effective === entry.outcome;
+  const unchanged = strokes === entry.strokes && effective === entry.outcome && mulligan === Boolean(entry.mulligan);
 
   const save = () => {
     if (access === 'request') {
@@ -40,7 +55,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
       }
       return;
     }
-    if (submitScore(playerId, hole, strokes, outcome, false)) {
+    if (submitScore(playerId, hole, strokes, outcome, false, mulliganAllowance(game) > 0 ? mulligan : undefined)) {
       closeSheet();
       toast('Score updated', 'success');
     }
@@ -91,8 +106,30 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
           </div>
         )}
         <p className="h2 center num" style={{ margin: '4px 0' }}>
-          {adjustment != null ? <Breakdown strokes={strokes} par={par} adjustment={adjustment} outcome={effective!} doubled={isDoubleHole(game, hole)} freePass={entry.freePass} total big /> : 'Completed or failed?'}
+          {adjustment != null ? (
+            <Breakdown
+              strokes={strokes}
+              par={par}
+              adjustment={adjustment}
+              outcome={effective!}
+              doubled={isDoubleHole(game, hole)}
+              freePass={entry.freePass}
+              total
+              big
+            />
+          ) : (
+            'Completed or failed?'
+          )}
         </p>
+        {access === 'direct' && mulliganAllowance(game) > 0 && (
+          <Toggle
+            on={mulligan}
+            disabled={!mulligan && mulligansLeft(game, playerId) + (entry.mulligan ? 1 : 0) <= 0}
+            title="Used a mulligan"
+            detail={`${mulligansLeft(game, playerId) + (entry.mulligan ? 1 : 0)} of ${mulliganAllowance(game)} left before this hole.`}
+            onChange={setMulligan}
+          />
+        )}
         {access === 'request' && (
           <p className="note" style={{ margin: 0 }}>
             {pending
@@ -100,16 +137,15 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
               : `This hole is locked in. ${approver === 'the host' ? 'The host' : approver} gets asked to approve the change.`}
           </p>
         )}
-        <button
-          type="button"
-          className="btn btn-xl btn-dark"
-          disabled={!effective || (access === 'request' && unchanged)}
-          onClick={save}
-        >
+        <button type="button" className="btn btn-xl btn-dark" disabled={!effective || (access === 'request' && unchanged)} onClick={save}>
           {access === 'request' ? 'Ask to change' : 'Save score'}
         </button>
         {pending && pending.by === deviceId && (
-          <button type="button" className="btn btn-ghost" onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}
+          >
             Cancel my request
           </button>
         )}

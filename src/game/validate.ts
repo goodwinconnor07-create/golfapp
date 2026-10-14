@@ -56,7 +56,7 @@ export function parseAction(input: unknown): Action | null {
     case 'setSettings': {
       if (!isObj(a.settings)) return null;
       const settings: Partial<Settings> = {};
-      for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes'] as const) {
+      for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
         const v = a.settings[key];
         if (v === undefined) continue;
         if (typeof v !== 'boolean') return null;
@@ -101,9 +101,15 @@ export function parseAction(input: unknown): Action | null {
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (!isInt(a.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) return null;
       if (a.outcome !== undefined && !isOutcome(a.outcome)) return null;
-      return a.outcome === undefined
-        ? { type: 'score', playerId: a.playerId, hole: a.hole, strokes: a.strokes }
-        : { type: 'score', playerId: a.playerId, hole: a.hole, strokes: a.strokes, outcome: a.outcome };
+      if (a.mulligan !== undefined && typeof a.mulligan !== 'boolean') return null;
+      return {
+        type: 'score',
+        playerId: a.playerId,
+        hole: a.hole,
+        strokes: a.strokes,
+        ...(a.outcome !== undefined ? { outcome: a.outcome } : {}),
+        ...(a.mulligan !== undefined ? { mulligan: a.mulligan } : {}),
+      };
     case 'requestFix':
       if (!isStr(a.id, 24) || !/^[a-z0-9]{6,24}$/.test(a.id) || !isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (!isInt(a.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) return null;
@@ -176,7 +182,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
 
   const settings: Settings = { ...DEFAULT_SETTINGS };
   if (isObj(input.settings)) {
-    for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes'] as const) {
+    for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
       if (typeof input.settings[key] === 'boolean') settings[key] = input.settings[key] as boolean;
     }
   }
@@ -195,6 +201,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       if (isInt(raw.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) entry.strokes = raw.strokes;
       if (isOutcome(raw.outcome) && (raw.outcome !== 'na' || card.situational)) entry.outcome = raw.outcome;
       if (raw.freePass === true) entry.freePass = true;
+      if (raw.mulligan === true) entry.mulligan = true;
       if (raw.redrawn === true) entry.redrawn = true;
       if (raw.done === true) entry.done = true;
       if (isObj(raw.votes)) {

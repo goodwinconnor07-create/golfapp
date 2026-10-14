@@ -8,7 +8,11 @@ const STEPS = [
     text: 'Everyone joins on their own phone with the game code. Before each hole, choose Safe, Bold or Insane.',
   },
   { color: 'var(--brand-2)', title: 'Get a card', text: 'You get a random challenge for that level. Everyone gets a different one.' },
-  { color: 'var(--green)', title: 'Play the hole', text: 'Play normal golf. No extra shots, nothing unsafe, and keep up with the group.' },
+  {
+    color: 'var(--green)',
+    title: 'Play the hole',
+    text: "Play normal golf, nothing unsafe, and keep up with the group. With mulligans on, you get a few re-hits a round that don't count.",
+  },
   {
     color: 'var(--bold)',
     title: 'Score it',

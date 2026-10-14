@@ -45,6 +45,8 @@ export interface Entry {
   freePass?: boolean;
   /** This card replaced one the player redrew (one redraw per player per round). */
   redrawn?: boolean;
+  /** The player used a mulligan on this hole (one per hole). The re-hit isn't in strokes. */
+  mulligan?: boolean;
   /** Group vote on an honour-system claim: voter's player id → true if they call it fair. */
   votes?: Record<string, boolean>;
 }
@@ -56,6 +58,8 @@ export interface Settings {
   situationCards: boolean;
   /** Break game-score ties on real strokes. Off = ties stay ties. */
   tiebreakOnStrokes: boolean;
+  /** Mulligans: re-hit a bad shot and don't count it. 2 each for 9 holes or fewer, 4 for longer rounds. */
+  mulligans: boolean;
 }
 
 export interface Game {
@@ -128,7 +132,7 @@ export type Action =
   /** voterId calls playerId's honour-system claim on this hole fair (or not). */
   | { type: 'vote'; playerId: string; hole: number; voterId: string; fair: boolean }
   | { type: 'swap'; playerId: string; hole: number; cardId?: string }
-  | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome }
+  | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome; mulligan?: boolean }
   /** Ask to change a locked-in score. The player whose score it is approves (the host, if you're asking about your own). */
   | { type: 'requestFix'; id: string; playerId: string; hole: number; strokes: number; outcome?: Outcome }
   /** Approve or turn down a fix request. The asker can withdraw theirs the same way. */
