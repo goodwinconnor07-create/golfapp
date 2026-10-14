@@ -4,7 +4,7 @@
 import { CARDS, getCard } from './cards';
 import { shuffle } from './deck';
 import { isDeviceId } from './ids';
-import { cleanCourse, cleanName, DEFAULT_SETTINGS, PLAYER_COLORS } from './reducer';
+import { cleanCourse, cleanName, DEFAULT_SETTINGS, isAvatarEmoji, PLAYER_COLORS } from './reducer';
 import { isTier, TIER_ORDER } from './tiers';
 import { LIMITS, type Action, type Entry, type Game, type Hole, type Outcome, type Par, type Player, type Settings } from './types';
 
@@ -28,7 +28,17 @@ export function parseAction(input: unknown): Action | null {
     case 'addPlayer':
       if (!isPlayerId(a.id) || !isStr(a.name, 60)) return null;
       if (a.claim !== undefined && typeof a.claim !== 'boolean') return null;
-      return { type: 'addPlayer', id: a.id, name: a.name, claim: a.claim === true };
+      return {
+        type: 'addPlayer',
+        id: a.id,
+        name: a.name,
+        claim: a.claim === true,
+        ...(isAvatarEmoji(a.emoji) ? { emoji: a.emoji } : {}),
+        ...(isInt(a.color, 0, PLAYER_COLORS - 1) ? { color: a.color } : {}),
+      };
+    case 'setLook':
+      if (!isPlayerId(a.playerId) || !(a.emoji === null || isAvatarEmoji(a.emoji)) || !isInt(a.color, 0, PLAYER_COLORS - 1)) return null;
+      return { type: 'setLook', playerId: a.playerId, emoji: a.emoji, color: a.color };
     case 'renamePlayer':
       if (!isPlayerId(a.playerId) || !isStr(a.name, 60)) return null;
       return { type: 'renamePlayer', playerId: a.playerId, name: a.name };
@@ -141,6 +151,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       id: p.id,
       name,
       color: isInt(p.color, 0, PLAYER_COLORS - 1) ? p.color : players.length % PLAYER_COLORS,
+      ...(isAvatarEmoji(p.emoji) ? { emoji: p.emoji } : {}),
       deviceId: isDeviceId(p.deviceId) ? p.deviceId : null,
     });
   }

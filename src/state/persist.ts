@@ -1,10 +1,11 @@
 // Everything the app keeps on the phone between visits.
 
-import { isDeviceId, newId, type Action, type Game } from '../game';
+import { isAvatarEmoji, isDeviceId, newId, PLAYER_COLORS, type Action, type Game } from '../game';
 
 const KEYS = {
   device: 'sendit.device',
   name: 'sendit.name',
+  look: 'sendit.look',
   session: 'sendit.session',
   history: 'sendit.history',
 } as const;
@@ -58,6 +59,24 @@ export function loadName(): string {
 
 export function saveName(name: string): void {
   write(KEYS.name, name);
+}
+
+/** The picture this phone's player last picked: an emoji (or null for their letter) and a colour. */
+export interface Look {
+  emoji: string | null;
+  color: number;
+}
+
+export function loadLook(): Look {
+  const l = read<Look>(KEYS.look);
+  return {
+    emoji: isAvatarEmoji(l?.emoji) ? l.emoji : null,
+    color: typeof l?.color === 'number' && Number.isInteger(l.color) && l.color >= 0 && l.color < PLAYER_COLORS ? l.color : 0,
+  };
+}
+
+export function saveLook(look: Look): void {
+  write(KEYS.look, look);
 }
 
 export function loadSession(): Session | null {

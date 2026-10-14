@@ -589,3 +589,35 @@ describe('hole done', () => {
     expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0 })).toEqual({ type: 'holeDone', playerId: 'player00', hole: 0 });
   });
 });
+
+describe('player pictures', () => {
+  const base = () =>
+    createGame({ id: 'g1', hostDeviceId: 'dhost', now: 0, players: [{ id: 'p1aaaa', name: 'Sam', emoji: '🦈', color: 3 }], holes: [{ number: 1, par: 4 }] });
+  const host = { deviceId: 'dhost', now: 1, rng: Math.random };
+
+  it('keeps a picked emoji and colour, and gives a later player a free colour', () => {
+    const g = base();
+    expect(g.players[0]).toMatchObject({ emoji: '🦈', color: 3 });
+    const r = applyAction(g, { type: 'addPlayer', id: 'p2bbbb', name: 'Alex', color: 3, emoji: '🐐' }, host);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.game.players[1].color).not.toBe(3);
+    expect(r.game.players[1].emoji).toBe('🐐');
+  });
+
+  it('changes a picture, refuses a taken colour, and drops emojis not on the list', () => {
+    const g = base();
+    const ok = applyAction(g, { type: 'setLook', playerId: 'p1aaaa', emoji: null, color: 5 }, host);
+    expect(ok.ok && ok.game.players[0]).toMatchObject({ color: 5 });
+    expect(ok.ok && ok.game.players[0].emoji).toBeUndefined();
+    const two = applyAction(g, { type: 'addPlayer', id: 'p2bbbb', name: 'Alex' }, host);
+    if (!two.ok) throw new Error(two.error);
+    expect(applyAction(two.game, { type: 'setLook', playerId: 'p2bbbb', emoji: '⛳', color: 3 }, host).ok).toBe(false);
+    expect(parseAction({ type: 'setLook', playerId: 'p1aaaa', emoji: '💩', color: 1 })).toBeNull();
+    expect(parseAction({ type: 'addPlayer', id: 'p2bbbb', name: 'Alex', emoji: '<b>' })).toEqual({ type: 'addPlayer', id: 'p2bbbb', name: 'Alex', claim: false });
+  });
+
+  it("only lets a guest change their own picture", () => {
+    const r = applyAction(base(), { type: 'setLook', playerId: 'p1aaaa', emoji: '⛳', color: 1 }, { deviceId: 'dother', now: 1, rng: Math.random });
+    expect(r.ok).toBe(false);
+  });
+});

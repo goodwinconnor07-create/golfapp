@@ -50,6 +50,10 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   }
   await expect(value).toHaveText(String(strokes));
   const save = page.getByRole('button', { name: 'Save score' });
+  // Cards drawn at random can be settled by strokes alone ("The Clean Par" fails on a bogey
+  // whatever you tap). Then the splash must match what the score screen said, not what we wanted.
+  const settled = page.locator('.auto-result');
+  if (await settled.isVisible()) made = (await settled.getAttribute('class'))?.includes('made') ?? made;
   if (await save.isVisible()) await save.click();
   else await page.getByRole('button', { name: made ? /Completed/ : /Failed/ }).click();
   // Online with friends there's no splash: the shared reveal shows results instead.

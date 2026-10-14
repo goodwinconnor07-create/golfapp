@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
-import { formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
+import { AVATAR_EMOJIS, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic } from './effects';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
@@ -55,16 +55,76 @@ export function playerColor(index: number): string {
   return PLAYER_COLORS[index % PLAYER_COLORS.length];
 }
 
-export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'color'>; size?: number }) {
+export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'color' | 'emoji'>; size?: number }) {
   const initial = [...player.name.trim()][0] ?? '?';
   return (
     <span
-      className="avatar"
-      style={{ width: size, height: size, fontSize: size * 0.46, background: playerColor(player.color) }}
+      className={`avatar${player.emoji ? ' avatar-emoji' : ''}`}
+      style={{ width: size, height: size, fontSize: size * (player.emoji ? 0.56 : 0.46), background: playerColor(player.color) }}
       aria-hidden
     >
-      {initial}
+      {player.emoji ?? initial}
     </span>
+  );
+}
+
+/** Pick a picture: an emoji (or your letter) and a background colour. Colours others have are greyed out. */
+export function LookPicker({
+  name,
+  emoji,
+  color,
+  taken = [],
+  onChange,
+}: {
+  name: string;
+  emoji: string | null;
+  color: number;
+  taken?: number[];
+  onChange: (look: { emoji: string | null; color: number }) => void;
+}) {
+  const initial = [...name.trim()][0]?.toUpperCase() ?? 'A';
+  return (
+    <div className="look-picker">
+      <div className="look-grid" role="radiogroup" aria-label="Picture">
+        {[null, ...AVATAR_EMOJIS].map((e) => (
+          <button
+            key={e ?? 'letter'}
+            type="button"
+            role="radio"
+            aria-checked={emoji === e}
+            aria-label={e ?? 'Your letter'}
+            className={`look-option press${emoji === e ? ' on' : ''}`}
+            onClick={() => {
+              haptic('light');
+              onChange({ emoji: e, color });
+            }}
+          >
+            {e ?? <span className="look-letter">{initial}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="look-colors" role="radiogroup" aria-label="Colour">
+        {PLAYER_COLORS.map((c, i) => {
+          const isTaken = taken.includes(i) && i !== color;
+          return (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={color === i}
+              aria-label={`Colour ${i + 1}${isTaken ? ', taken' : ''}`}
+              disabled={isTaken}
+              className={`look-color press${color === i ? ' on' : ''}`}
+              style={{ background: c }}
+              onClick={() => {
+                haptic('light');
+                onChange({ emoji, color: i });
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

@@ -101,14 +101,14 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     ctx.textAlign = 'center';
     ctx.fillText(`${r.tied ? '=' : ''}${r.rank}`, 120, top + 66);
 
-    // Avatar circle with the initial.
+    // Avatar circle with their emoji or initial.
     ctx.fillStyle = playerColor(r.player.color);
     ctx.beginPath();
     ctx.arc(205, top + rowH / 2, 34, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = font(34);
-    ctx.fillText([...r.player.name.trim()][0]?.toUpperCase() ?? '?', 205, top + rowH / 2 + 12);
+    ctx.font = r.player.emoji ? '38px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' : font(34);
+    ctx.fillText(r.player.emoji ?? [...r.player.name.trim()][0]?.toUpperCase() ?? '?', 205, top + rowH / 2 + 13);
 
     ctx.textAlign = 'left';
     ctx.fillStyle = INK;

@@ -278,3 +278,31 @@ test('late in the round: 2× stakes, the gap to the leader, free shot and redraw
   await page.getByRole('button', { name: /^Got it/ }).click();
   await passGroupReveal(page, '37-group-reveal-free-shot');
 });
+
+test('pick a picture: emoji and colour, remembered and changeable in the lobby', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'New game' }).click();
+  await page.getByLabel('Your name').fill('Sam');
+  await page.getByRole('button', { name: 'Pick a picture' }).click();
+  await page.getByRole('radio', { name: '🦈' }).click();
+  await page.getByRole('radio', { name: 'Colour 4' }).click();
+  await shot(page, '40-pick-picture');
+  await expect(page.locator('.name-row .avatar')).toHaveText('🦈');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Skip/ }).click();
+  await page.getByRole('button', { name: /Front 9/ }).click();
+
+  const sam = page.locator('.player-row', { hasText: 'Sam' });
+  await expect(sam.locator('.avatar')).toHaveText('🦈');
+
+  // Change it from the lobby: back to the letter, new colour.
+  await sam.click();
+  await page.getByRole('radio', { name: 'Your letter' }).click();
+  await page.getByRole('radio', { name: 'Colour 2' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(sam.locator('.avatar')).toHaveText('S');
+
+  // A guest can't take Sam's colour.
+  await page.getByRole('button', { name: /No phone\? Add them/ }).click();
+  await expect(page.getByRole('radio', { name: 'Colour 2, taken' })).toBeDisabled();
+});

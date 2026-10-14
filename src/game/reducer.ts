@@ -3,7 +3,7 @@ import { drawCard, returnCard, takeCard } from './deck';
 import { anyPicked, canAddPlayers, entryKey, holeComplete, isVoteable, judgeFromStrokes, outcomeChoices, redrawUsed } from './rules';
 import { freePassAvailable } from './selectors';
 import { isTier } from './tiers';
-import { LIMITS, type Action, type ActionContext, type Entry, type Game, type Hole, type Settings } from './types';
+import { LIMITS, type Action, type ActionContext, type Entry, type Game, type Hole, type Player, type Settings } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   distanceCards: true,
@@ -12,6 +12,19 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export const PLAYER_COLORS = 8;
+
+/** The avatar emojis players can pick from. Anything else from the network is dropped. */
+export const AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🐐', '🍺', '🎯', '👑', '🌵'] as const;
+export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && (AVATAR_EMOJIS as readonly string[]).includes(v);
+
+/** The wanted colour if nobody else has it, else the first free one. */
+function freeColor(players: Player[], want?: number, exceptId?: string): number {
+  const used = new Set(players.filter((p) => p.id !== exceptId).map((p) => p.color));
+  if (want != null && want >= 0 && want < PLAYER_COLORS && !used.has(want)) return want;
+  let color = 0;
+  while (used.has(color) && color < PLAYER_COLORS - 1) color++;
+  return color;
+}
 
 export function cleanName(name: string): string {
   return name.replace(/\s+/g, ' ').trim().slice(0, LIMITS.maxNameLength);
@@ -30,7 +43,7 @@ export interface NewGameInput {
   id: string;
   hostDeviceId: string;
   now: number;
-  players: { id: string; name: string }[];
+  players: { id: string; name: string; emoji?: string; color?: number }[];
   holes: Hole[];
   course?: string;
   settings?: Partial<Settings>;
@@ -49,12 +62,16 @@ export function createGame(input: NewGameInput): Game {
     status: 'lobby',
     holes: input.holes.map((h) => ({ number: h.number, par: h.par })),
     current: 0,
-    players: input.players.map((p, i) => ({
-      id: p.id,
-      name: cleanName(p.name),
-      color: i % PLAYER_COLORS,
-      deviceId: i === 0 ? input.hostDeviceId : null,
-    })),
+    players: input.players.reduce<Player[]>((list, p, i) => {
+      list.push({
+        id: p.id,
+        name: cleanName(p.name),
+        color: freeColor(list, p.color ?? i % PLAYER_COLORS),
+        ...(isAvatarEmoji(p.emoji) ? { emoji: p.emoji } : {}),
+        deviceId: i === 0 ? input.hostDeviceId : null,
+      });
+      return list;
+    }, []),
     entries: {},
     settings: { ...DEFAULT_SETTINGS, ...input.settings },
     decks: {},
@@ -84,10 +101,27 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!isHost && !action.claim) return fail('Only the host can add guests.');
       const name = cleanName(action.name);
       if (!name) return fail('Add a name.');
-      const used = new Set(g.players.map((p) => p.color));
-      let color = 0;
-      while (used.has(color) && color < PLAYER_COLORS - 1) color++;
-      g.players.push({ id: action.id, name, color, deviceId: action.claim ? ctx.deviceId : null });
+      g.players.push({
+        id: action.id,
+        name,
+        color: freeColor(g.players, action.color),
+        ...(isAvatarEmoji(action.emoji) ? { emoji: action.emoji } : {}),
+        deviceId: action.claim ? ctx.deviceId : null,
+      });
+      break;
+    }
+
+    case 'setLook': {
+      const player = findPlayer(action.playerId);
+      if (!player) return fail('Player not found.');
+      if (!isHost && player.deviceId !== ctx.deviceId) return fail('You can only change your own picture.');
+      if (action.emoji !== null && !isAvatarEmoji(action.emoji)) return fail('Pick one of the pictures.');
+      if (action.color < 0 || action.color >= PLAYER_COLORS) return fail('Pick one of the colours.');
+      if (g.players.some((p) => p.id !== player.id && p.color === action.color)) return fail('Someone else has that colour.');
+      if (player.color === action.color && (player.emoji ?? null) === action.emoji) return unchanged;
+      player.color = action.color;
+      if (action.emoji) player.emoji = action.emoji;
+      else delete player.emoji;
       break;
     }
 

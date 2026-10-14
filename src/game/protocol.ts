@@ -10,7 +10,7 @@ export interface GameInfo {
   holes: number;
   current: number;
   hostName: string;
-  players: { id: string; name: string; color: number; claimed: boolean }[];
+  players: { id: string; name: string; color: number; emoji?: string; claimed: boolean }[];
   /** Whether someone new can still add themselves. */
   canJoinAsNew: boolean;
 }

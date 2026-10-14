@@ -14,6 +14,8 @@ export interface Player {
   name: string;
   /** Index into the avatar colour palette. */
   color: number;
+  /** Picked avatar emoji (one of AVATAR_EMOJIS). Absent = show the name's first letter. */
+  emoji?: string;
   /** Device that controls this player online. null = a guest run from the host's phone. */
   deviceId: string | null;
 }
@@ -80,7 +82,8 @@ export interface Game {
 }
 
 export type Action =
-  | { type: 'addPlayer'; id: string; name: string; claim?: boolean }
+  | { type: 'addPlayer'; id: string; name: string; claim?: boolean; emoji?: string; color?: number }
+  | { type: 'setLook'; playerId: string; emoji: string | null; color: number }
   | { type: 'renamePlayer'; playerId: string; name: string }
   | { type: 'removePlayer'; playerId: string }
   | { type: 'claimPlayer'; playerId: string }

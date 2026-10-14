@@ -30,11 +30,14 @@ import { Connection, type ConnStatus } from './connection';
 import {
   clearHistory as clearSavedHistory,
   loadDeviceId,
+  loadLook,
   loadName,
   loadSession,
+  saveLook,
   saveName,
   saveRecord,
   saveSession,
+  type Look,
   type Session,
 } from './persist';
 import { freshUi, myPlayers, type HoleUi } from './view';
@@ -86,6 +89,8 @@ export interface Flash {
 export interface AppState {
   deviceId: string;
   profileName: string;
+  /** This phone's picked avatar, used for its player in new and joined games. */
+  profileLook: Look;
   stack: Route[];
   sheet: Sheet | null;
   session: Session | null;
@@ -124,6 +129,7 @@ const bootGame = predictedGame(bootSession, bootDevice);
 let state: AppState = {
   deviceId: bootDevice,
   profileName: loadName(),
+  profileLook: loadLook(),
   stack: [ROOT],
   sheet: null,
   session: bootSession,
@@ -406,7 +412,7 @@ export function createLocalGame(holes: Hole[]): void {
     id: newId(12),
     hostDeviceId: state.deviceId,
     now: Date.now(),
-    players: names.map((name) => ({ id: newId(12), name })),
+    players: names.map((name, i) => ({ id: newId(12), name, ...(i === 0 ? lookFields(state.profileLook) : {}) })),
     holes: withCoursePars(holes, course),
     course: course?.name,
   });
@@ -438,6 +444,16 @@ export async function goOnline(quiet = false): Promise<boolean> {
   }
 }
 
+function lookFields(look: Look): { emoji?: string; color: number } {
+  return { color: look.color, ...(look.emoji ? { emoji: look.emoji } : {}) };
+}
+
+/** Remembers this phone's picture for next time. */
+export function setProfileLook(look: Look): void {
+  saveLook(look);
+  set({ profileLook: look });
+}
+
 /** Join someone's online game, as an existing player or as someone new. */
 export function joinGame(info: GameInfo, choice: { playerId: string } | { name: string }): void {
   const current = state.game;
@@ -455,19 +471,24 @@ export function joinGame(info: GameInfo, choice: { playerId: string } | { name: 
     return;
   }
   let action: Action;
+  const extra: Action[] = [];
   if ('playerId' in choice) {
     action = { type: 'claimPlayer', playerId: choice.playerId };
-    const name = info.players.find((p) => p.id === choice.playerId)?.name;
-    if (name) saveName(name);
+    const known = info.players.find((p) => p.id === choice.playerId);
+    if (known) saveName(known.name);
+    // Bring this phone's picture along; keep the colour the host gave them so it can't clash.
+    if (known && state.profileLook.emoji && known.emoji !== state.profileLook.emoji) {
+      extra.push({ type: 'setLook', playerId: known.id, emoji: state.profileLook.emoji, color: known.color });
+    }
   } else {
     const name = cleanName(choice.name);
     if (!name) return;
-    action = { type: 'addPlayer', id: newId(12), name, claim: true };
+    action = { type: 'addPlayer', id: newId(12), name, claim: true, ...lookFields(state.profileLook) };
     saveName(name);
     set({ profileName: name });
   }
   closeConnection();
-  setSession({ mode: 'online', code: info.code, game: null, pending: [{ id: newId(10), action }] });
+  setSession({ mode: 'online', code: info.code, game: null, pending: [action, ...extra].map((a) => ({ id: newId(10), action: a })) });
   connect(info.code);
   resetTo({ name: 'game' });
 }

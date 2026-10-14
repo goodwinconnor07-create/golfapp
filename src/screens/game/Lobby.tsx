@@ -94,7 +94,7 @@ export function Lobby({ game }: { game: Game }) {
               ) : online ? (
                 <span className="tag tag-waiting">On host's phone</span>
               ) : null;
-            return host ? (
+            return host || p.deviceId === deviceId ? (
               <button key={p.id} type="button" className="player-row press" onClick={() => openSheet({ name: 'player', playerId: p.id })}>
                 <Avatar player={p} size={48} />
                 <span className="name">{p.name}</span>

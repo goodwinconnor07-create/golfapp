@@ -102,3 +102,10 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - The product owner found "5 − 4 = 1" next to "−3 to par" confusing, so every hole now shows its working against par as two pills that add up to the big number: **[Bogey +1] + [✓ Card −4]** → **−3**. The golf pill uses the usual names (Birdie −1, Par, Bogey +1…; plain "Par", never "Par 0"). The card pill is green when made and red when missed, with ✓/✗ as well, and notes "(2×)" on double-stakes holes and "free shot" when a free shot makes a fail cost 0.
 - The splash and the fix-a-score sheet show the pills large with the total: [Bogey +1] + [✓ Card −4] = −3. The splash no longer repeats "3 under on this hole".
 - Display only: scoring is unchanged, and real strokes still show on the stroke picker, the splash, the leaderboard and the scorecard.
+
+## Player pictures (Oct 2026)
+
+- Players can pick a picture: one of 12 emojis (⛳ 🏌️ 🐦 🦅 🔥 😎 🦈 🐐 🍺 🎯 👑 🌵) or their first letter, on one of the 8 avatar colours. It's optional: the letter on a colour is still the default.
+- Picked on the name screen ("Pick a picture" or tap the avatar), or later by tapping your own row in the lobby. The host can set one for guests on their phone. The phone remembers your pick for the next game.
+- Colours stay unique within a game: a colour someone else has is greyed out. Emojis can repeat.
+- The server only accepts emojis from the list (`isAvatarEmoji`). No photo uploads for now.
