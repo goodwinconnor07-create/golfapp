@@ -27,8 +27,8 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
   const sunk = begin(roll);
   // Two putts: the first stops ~85% of the way, a beat, then the tap-in.
   const motion = two
-    ? { keyPoints: '0;0.84;0.84;1', keyTimes: '0;0.62;0.78;1', keySplines: '0.15 0.6 0.3 1;0 0 1 1;0.3 0 0.4 1' }
-    : { keyPoints: '0;1', keyTimes: '0;1', keySplines: '0.18 0.55 0.32 1' };
+    ? { keyPoints: '0;0.84;0.84;1', keyTimes: '0;0.62;0.78;1', keySplines: '0.33 0.67 0.67 1;0 0 1 1;0.33 0.67 0.67 1' }
+    : { keyPoints: '0;1', keyTimes: '0;1', keySplines: '0.33 0.67 0.67 1' };
   // The ball sits at the start from the first frame: the wait before the roll is a held segment.
   const total = delay + roll;
   const t = (x: number) => ((delay + x * roll) / total).toFixed(3);
@@ -70,11 +70,11 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
             <rect width="22" height="44" fill="#ffffff" opacity="0.07" />
           </pattern>
           {/* Grass grain: fine noise, kept faint. */}
-          <filter id={id('grain')} x="0" y="0" width="100%" height="100%">
-            <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7" result="n" />
-            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.25  0 0 0 0 0.08  0 0 0 0.35 0" />
-            <feComposite in2="SourceGraphic" operator="in" />
-          </filter>
+          <pattern id={id('grain')} width="7" height="5" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="0.5" fill="#103a10" opacity="0.2" />
+        <circle cx="4.5" cy="3.4" r="0.45" fill="#103a10" opacity="0.16" />
+        <circle cx="5.6" cy="0.9" r="0.4" fill="#ffffff" opacity="0.1" />
+      </pattern>
           {/* Cup: dark inside, a soft lip. */}
           <radialGradient id={id('cup')} cx="50%" cy="35%" r="65%">
             <stop offset="0" stopColor="#050806" />
@@ -96,16 +96,18 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
             <stop offset="0" stopColor="#ff5a6e" />
             <stop offset="1" stopColor="#c8102e" />
           </linearGradient>
-          <filter id={id('soft')} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.6" />
-          </filter>
+          <radialGradient id={id('shade')}>
+        <stop offset="0" stopColor="#0d3a15" />
+        <stop offset="0.55" stopColor="#0d3a15" stopOpacity="0.7" />
+        <stop offset="1" stopColor="#0d3a15" stopOpacity="0" />
+      </radialGradient>
         </defs>
 
         {/* Fringe, then the putting surface with stripes and grain. */}
         <rect width="340" height="144" fill={`url(#${id('fringe')})`} />
         <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('green')})`} />
         <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('stripes')})`} />
-        <ellipse cx="176" cy="92" rx="214" ry="86" fill="#000" filter={`url(#${id('grain')})`} />
+        <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('grain')})`} />
 
         {/* Aim line and distance: they dim while the ball rolls and come back once it drops. */}
         <g>
@@ -172,9 +174,8 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
           strokeOpacity="0.28"
           strokeWidth="3"
           strokeLinecap="round"
-          filter={`url(#${id('soft')})`}
         />
-        <path d="M300 78 L 330 96 L 314 99 Z" fill="#0d3a15" fillOpacity="0.2" filter={`url(#${id('soft')})`} />
+        <path d="M300 78 L 330 96 L 314 99 Z" fill={`url(#${id('shade')})`} fillOpacity="0.32" />
 
         {/* Cup and its rim, drawn under the rolling ball so the ball crosses over the front lip. */}
         <ellipse cx="262" cy="66" rx="12.5" ry="5.6" fill={`url(#${id('cup')})`} />
@@ -216,7 +217,7 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
                     dur={`${total}s`}
                     fill="freeze"
                   />
-                  <Ball id={id} spin={{ dur: total, at: t(0), turns: two ? 5 : 4 }} />
+                  <Ball id={id} spin={{ dur: total, turns: two ? 5 : 4, ...held }} />
                 </g>
               </g>
             </g>
@@ -294,21 +295,22 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
   );
 }
 
-/** spin: the dimples turn as it rolls (the light stays put), slowing with the ball. */
-function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; at: string; turns: number } }) {
+/** spin: the dimples turn as it rolls (the light stays put), following the roll's own timing. */
+function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; turns: number; keyPoints: string; keyTimes: string; keySplines: string } }) {
   return (
     <>
-      <ellipse cx="2.4" cy="5.2" rx="7.6" ry="2.6" fill="#0d3a15" fillOpacity="0.4" filter={`url(#${id('soft')})`} />
+      <ellipse cx="2.4" cy="5.2" rx="7.6" ry="2.6" fill={`url(#${id('shade')})`} fillOpacity="0.64" />
       <circle r="7.5" fill={`url(#${id('ball')})`} />
       <g>
         {spin && (
           <animateTransform
             attributeName="transform"
             type="rotate"
-            values={`0;0;${spin.turns * 360}`}
-            keyTimes={`0;${spin.at};1`}
+            // Turns in step with the roll, so it stops spinning when the ball stops (between two putts too).
+            values={spin.keyPoints.split(';').map((k) => (+k * spin.turns * 360).toFixed(0)).join(';')}
+            keyTimes={spin.keyTimes}
             calcMode="spline"
-            keySplines="0 0 1 1;0.18 0.55 0.32 1"
+            keySplines={spin.keySplines}
             begin="0s"
             dur={`${spin.dur}s`}
             fill="freeze"

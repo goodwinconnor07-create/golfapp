@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react';
 import { haptic, reducedMotion } from './effects';
 import { PuttScene } from './PuttScene';
 import type { ShotArt } from './shotArt';
+import { simulate, tracks, type Leg, type Spot } from './shotPhysics';
 
 // Illustration colours (grass, sand, water, ball, flag, paper) are part of the drawings, not UI tokens.
 
@@ -73,21 +74,6 @@ interface Plan {
 
 // ── Timing helpers ───────────────────────────────────────────────────────────
 
-/** SMIL attributes for a move that waits for the delay, then runs: the object sits at the start meanwhile. */
-function held(c: Ctx, start: number, dur: number, spline = '0.25 0.1 0.25 1') {
-  const total = c.delay + start + dur;
-  const at = ((c.delay + start) / total).toFixed(3);
-  return {
-    begin: '0s',
-    dur: `${total}s`,
-    keyPoints: '0;0;1',
-    keyTimes: `0;${at};1`,
-    calcMode: 'spline' as const,
-    keySplines: `0 0 1 1;${spline}`,
-    fill: 'freeze' as const,
-  };
-}
-
 const at = (c: Ctx, s: number) => `${(c.delay + s).toFixed(2)}s`;
 
 /** Fades something in at a moment in the scene (or shows it straight away in a still). */
@@ -137,11 +123,11 @@ function Defs({ id }: { id: (n: string) => string }) {
       <pattern id={id('bands')} width="340" height="22" patternUnits="userSpaceOnUse">
         <rect width="340" height="11" fill="#ffffff" opacity="0.07" />
       </pattern>
-      <filter id={id('grain')} x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="5" result="n" />
-        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.25  0 0 0 0 0.08  0 0 0 0.32 0" />
-        <feComposite in2="SourceGraphic" operator="in" />
-      </filter>
+      <pattern id={id('grain')} width="7" height="5" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="0.5" fill="#103a10" opacity="0.2" />
+        <circle cx="4.5" cy="3.4" r="0.45" fill="#103a10" opacity="0.16" />
+        <circle cx="5.6" cy="0.9" r="0.4" fill="#ffffff" opacity="0.1" />
+      </pattern>
       <radialGradient id={id('sand')} cx="45%" cy="40%" r="70%">
         <stop offset="0" stopColor="#fbefc9" />
         <stop offset="0.7" stopColor="#ecd59a" />
@@ -183,9 +169,11 @@ function Defs({ id }: { id: (n: string) => string }) {
         <stop offset="0.5" stopColor="#f5b800" />
         <stop offset="1" stopColor="#c98f00" />
       </linearGradient>
-      <filter id={id('soft')} x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1.6" />
-      </filter>
+      <radialGradient id={id('shade')}>
+        <stop offset="0" stopColor="#0d3a15" />
+        <stop offset="0.55" stopColor="#0d3a15" stopOpacity="0.7" />
+        <stop offset="1" stopColor="#0d3a15" stopOpacity="0" />
+      </radialGradient>
       <filter id={id('shadow')} x="-20%" y="-20%" width="140%" height="160%">
         <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#1b2a12" floodOpacity="0.35" />
       </filter>
@@ -193,27 +181,14 @@ function Defs({ id }: { id: (n: string) => string }) {
   );
 }
 
-/** spin: the dimples turn (the light stays put), easing out like the ball does. Negative = backspin. */
-function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string; dur: number; turns: number } }) {
+/** spin: rotation keyframes for the dimples (the light stays put), in step with the ball's travel. */
+function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string; dur: string; values: string } }) {
   const k = r / 7;
   return (
     <g transform={`scale(${k})`}>
       <circle r="7" fill={`url(#${c.id('ball')})`} />
       <g>
-        {spin && (
-          <animateTransform
-            attributeName="transform"
-            type="rotate"
-            from="0"
-            to={spin.turns * 360}
-            calcMode="spline"
-            keyTimes="0;1"
-            keySplines="0.2 0.6 0.35 1"
-            begin={spin.begin}
-            dur={`${spin.dur}s`}
-            fill="freeze"
-          />
-        )}
+        {spin && <animateTransform attributeName="transform" type="rotate" values={spin.values} begin={spin.begin} dur={spin.dur} fill="freeze" />}
         <circle cx="-1.6" cy="1.4" r="0.8" fill="#9aa3ad" opacity="0.5" />
         <circle cx="1.8" cy="2.6" r="0.7" fill="#9aa3ad" opacity="0.45" />
         <circle cx="3.2" cy="-0.6" r="0.7" fill="#9aa3ad" opacity="0.4" />
@@ -227,7 +202,7 @@ function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string
 }
 
 function BallShadow({ c, r = 6.5 }: { c: Ctx; r?: number }) {
-  return <ellipse cx="1.5" cy="2" rx={r * 1.05} ry={r * 0.38} fill="#0d3a15" fillOpacity="0.38" filter={`url(#${c.id('soft')})`} />;
+  return <ellipse cx="1.5" cy="2" rx={r * 1.35} ry={r * 0.5} fill={`url(#${c.id('shade')})`} fillOpacity="0.55" />;
 }
 
 function Flag({ c, x, y, h = 46 }: { c: Ctx; x: number; y: number; h?: number }) {
@@ -243,7 +218,6 @@ function Flag({ c, x, y, h = 46 }: { c: Ctx; x: number; y: number; h?: number })
         strokeOpacity="0.22"
         strokeWidth="3"
         strokeLinecap="round"
-        filter={`url(#${c.id('soft')})`}
       />
       <rect x={x - 1} y={top} width="2.2" height={h} rx="1.1" fill={`url(#${c.id('pin')})`} />
       <circle cx={x + 0.1} cy={top} r="1.8" fill="#ffffff" />
@@ -301,9 +275,7 @@ function Trees({ c, spots }: { c: Ctx; spots: [number, number, number][] }) {
             cy={y + r * 0.8}
             rx={r * 1.1}
             ry={r * 0.45}
-            fill="#0d2a10"
-            fillOpacity="0.35"
-            filter={`url(#${c.id('soft')})`}
+            fill={`url(#${c.id('shade')})`} fillOpacity="0.56"
           />
           <circle cx={x - r * 0.45} cy={y + r * 0.1} r={r * 0.7} fill={`url(#${c.id('tree')})`} />
           <circle cx={x + r * 0.45} cy={y + r * 0.15} r={r * 0.68} fill={`url(#${c.id('tree')})`} />
@@ -316,93 +288,52 @@ function Trees({ c, spots }: { c: Ctx; spots: [number, number, number][] }) {
 }
 
 /**
- * A ball in flight: it follows `air` (an arc above the ground) while its shadow follows `ground`,
- * then both roll along `roll` (relative). Grows a little at the top of the arc and shrinks with distance.
+ * A ball played along physical legs (see shotPhysics): the ball and its shadow are keyframed at
+ * 40fps, so flights are true parabolas, rolls slow under friction and spin follows the distance.
  */
-function Flight({
-  c,
-  air,
-  ground,
-  roll,
-  start,
-  fly,
-  rollFor,
-  scale,
-  r = 6.5,
-  sinkAt,
-  turns = 3,
-}: {
-  c: Ctx;
-  air: string;
-  ground: string;
-  roll: string;
-  start: number;
-  fly: number;
-  rollFor: number;
-  scale: [number, number, number];
-  r?: number;
-  /** Hand over to the cup drop at this moment (relative to the scene start). */
-  sinkAt?: number;
-  /** Turns of the ball over the flight and roll; negative for backspin. */
-  turns?: number;
-}) {
+function Flight({ c, from, legs, start = 0, r = 6.5, sink }: { c: Ctx; from: Spot; legs: Leg[]; start?: number; r?: number; sink?: boolean }) {
   if (c.still) return null;
-  const total = c.delay + start + fly;
-  const a = ((c.delay + start) / total).toFixed(3);
-  const mid = ((c.delay + start + fly * 0.45) / total).toFixed(3);
-  const sc = { begin: '0s', dur: `${total}s`, fill: 'freeze' as const };
-  const rollMove = {
-    begin: at(c, start + fly),
-    dur: `${rollFor}s`,
-    fill: 'freeze' as const,
-    calcMode: 'spline' as const,
-    keyPoints: '0;1',
-    keyTimes: '0;1',
-    keySplines: '0.2 0.6 0.35 1',
-  };
+  const { samples, duration } = simulate(from, legs, r);
+  const t = tracks(samples);
+  const first = samples[0];
+  const run = { begin: at(c, start), dur: `${duration.toFixed(3)}s`, fill: 'freeze' as const };
   // At the cup the dropping ball (CupDrop) takes over, so this one just goes.
-  const sink = sinkAt != null && <animate attributeName="opacity" to="0" begin={at(c, sinkAt)} dur="0.01s" fill="freeze" />;
+  const gone = sink && <animate attributeName="opacity" to="0" begin={at(c, start + duration)} dur="0.01s" fill="freeze" />;
   return (
     <g>
-      <g>
-        <animateMotion path={ground} {...held(c, start, fly, '0.3 0.2 0.5 1')} />
-        <g>
-          <animateMotion path={roll} {...rollMove} />
-          <g>
-            {sink}
-            <g>
-              <animateTransform
-                attributeName="transform"
-                type="scale"
-                values={`${scale[0]};${scale[0]};${scale[2]}`}
-                keyTimes={`0;${a};1`}
-                {...sc}
-              />
-              <BallShadow c={c} r={r} />
-            </g>
-          </g>
+      {gone}
+      <g transform={`translate(${first.gx} ${first.gy})`}>
+        <animateTransform attributeName="transform" type="translate" values={t.ground} {...run} />
+        <g transform={`scale(${first.s})`} opacity="1">
+          <animateTransform attributeName="transform" type="scale" values={t.shadowScale} {...run} />
+          <animate attributeName="opacity" values={t.shadow} {...run} />
+          <BallShadow c={c} r={r} />
         </g>
       </g>
-      <g>
-        <animateMotion path={air} {...held(c, start, fly, '0.3 0.2 0.5 1')} />
-        <g>
-          <animateMotion path={roll} {...rollMove} />
-          <g>
-            {sink}
-            <g>
-              <animateTransform
-                attributeName="transform"
-                type="scale"
-                values={`${scale[0]};${scale[0]};${scale[1]};${scale[2]}`}
-                keyTimes={`0;${a};${mid};1`}
-                {...sc}
-              />
-              <Ball c={c} r={r} spin={{ begin: at(c, start), dur: fly + rollFor, turns }} />
-            </g>
-          </g>
+      <g transform={`translate(${first.bx} ${first.by})`}>
+        <animateTransform attributeName="transform" type="translate" values={t.ball} {...run} />
+        <g transform={`scale(${first.s})`}>
+          <animateTransform attributeName="transform" type="scale" values={t.scale} {...run} />
+          <Ball c={c} r={r} spin={{ ...run, values: t.spin }} />
         </g>
       </g>
     </g>
+  );
+}
+
+/** The flight as a dotted line, for stills. */
+function Trail({ from, legs }: { from: Spot; legs: Leg[] }) {
+  const { samples } = simulate(from, legs);
+  return (
+    <path
+      d={'M' + samples.map((p) => `${p.bx.toFixed(1)} ${p.by.toFixed(1)}`).join(' L ')}
+      fill="none"
+      stroke="#ffffff"
+      strokeOpacity="0.7"
+      strokeWidth="1.6"
+      strokeDasharray="1 6"
+      strokeLinecap="round"
+    />
   );
 }
 
@@ -517,7 +448,7 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
       ))}
       {/* Ground: hazy at the horizon, rich up close. */}
       <rect y={HORIZON} width="340" height={144 - HORIZON} fill={`url(#${c.id('ground')})`} />
-      <rect y={HORIZON} width="340" height={144 - HORIZON} fill="#000" filter={`url(#${c.id('grain')})`} />
+      <rect y={HORIZON} width="340" height={144 - HORIZON} fill={`url(#${c.id('grain')})`} />
       {/* Fairway with stripes. */}
       <path d={FAIRWAY} fill={`url(#${c.id('fairway')})`} />
       <clipPath id={c.id('fw')}>
@@ -525,7 +456,7 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
       </clipPath>
       <g clipPath={`url(#${c.id('fw')})`}>
         {bands.map((b, k) => b.on && <rect key={k} y={b.y0} width="340" height={b.y1 - b.y0} fill="#ffffff" opacity="0.09" />)}
-        <path d={FAIRWAY} fill="#000" filter={`url(#${c.id('grain')})`} />
+        <path d={FAIRWAY} fill={`url(#${c.id('grain')})`} />
       </g>
       {/* The green at the end, with its flag. */}
       <ellipse cx="218" cy={HORIZON + 1.5} rx="15" ry="3.4" fill="#8ede76" />
@@ -613,7 +544,7 @@ function GreenView({ c, bunker = true }: { c: Ctx; bunker?: boolean }) {
   return (
     <g>
       <rect width="340" height="144" fill={`url(#${c.id('rough')})`} />
-      <rect width="340" height="144" fill="#000" filter={`url(#${c.id('grain')})`} />
+      <rect width="340" height="144" fill={`url(#${c.id('grain')})`} />
       <Trees
         c={c}
         spots={[
@@ -629,7 +560,7 @@ function GreenView({ c, bunker = true }: { c: Ctx; bunker?: boolean }) {
       <ellipse cx={GREEN.cx} cy={GREEN.cy} rx={GREEN.rx + 7} ry={GREEN.ry + 5} fill="#4c9f43" />
       <ellipse {...GREEN} fill={`url(#${c.id('green')})`} />
       <ellipse {...GREEN} fill={`url(#${c.id('stripes')})`} />
-      <ellipse {...GREEN} fill="#000" filter={`url(#${c.id('grain')})`} />
+      <ellipse {...GREEN} fill={`url(#${c.id('grain')})`} />
       {bunker && (
         <g>
           <path d={BUNKER} fill={`url(#${c.id('sand')})`} />
@@ -641,7 +572,7 @@ function GreenView({ c, bunker = true }: { c: Ctx; bunker?: boolean }) {
             strokeOpacity="0.45"
             strokeWidth="2.4"
           />
-          <path d={BUNKER} fill="#000" opacity="0.06" filter={`url(#${c.id('grain')})`} />
+          <path d={BUNKER} fill={`url(#${c.id('grain')})`} opacity="0.5" />
         </g>
       )}
       <Cup c={c} x={CUP.x} y={CUP.y} />
@@ -674,103 +605,79 @@ function Ring({ c, feet }: { c: Ctx; feet: number }) {
 
 // ── Scenes ───────────────────────────────────────────────────────────────────
 
-const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number) => Plan> = {
-  drive: (art) => ({
-    label: art.metres ? `a ${art.metres} metre drive down the fairway` : 'a drive landing in the fairway',
-    duration: 2.1,
-    landAt: 1.5,
-    draw: (c) => (
-      <>
-        <TeeView c={c} />
-        {art.metres && <Pill ctx={c} x={262} y={48} text={`${art.metres} m`} at={1.6} anchor="middle" />}
-        <Flight
-          c={c}
-          air="M186 136 Q 174 -40 216 64"
-          ground="M186 136 L 216 64"
-          roll="M0 0 L 2 -7"
-          start={0}
-          fly={1.5}
-          rollFor={0.6}
-          scale={[1.05, 1.15, 0.4]}
-        />
-        <RestingBall c={c} x={218} y={57} r={6.5 * 0.4} s={0} />
-        {c.still && (
-          <path
-            d="M186 136 Q 174 -40 216 64"
-            fill="none"
-            stroke="#ffffff"
-            strokeOpacity="0.7"
-            strokeWidth="1.6"
-            strokeDasharray="1 6"
-            strokeLinecap="round"
-          />
-        )}
-      </>
-    ),
-  }),
+// Each shot: where the ball starts, then its legs (flight with a height, bounces, rolls). Times in
+// seconds; the scene's landAt and duration line up with the leg times.
+const TEE: Spot = { x: 186, y: 136, s: 1.05 };
+const off = (x: number, y: number, s: number): Spot => ({ x, y, s });
 
-  trouble: (art) => ({
-    label:
-      art.hazard === 'water'
-        ? 'a drive staying clear of the water'
-        : art.hazard === 'stakes'
-          ? 'a drive staying inside the white stakes'
-          : 'a drive staying clear of trouble',
-    duration: 2.1,
-    landAt: 1.5,
-    draw: (c) => (
-      <>
-        <TeeView c={c} hazard={art.hazard} />
-        <Flight
-          c={c}
-          air="M186 136 Q 192 -30 218 66"
-          ground="M186 136 L 218 66"
-          roll="M0 0 L 1 -7"
-          start={0}
-          fly={1.5}
-          rollFor={0.6}
-          scale={[1.05, 1.15, 0.42]}
-        />
-        <RestingBall c={c} x={219} y={59} r={6.5 * 0.42} s={0} />
-        {c.still && (
-          <path
-            d="M186 136 Q 192 -30 218 66"
-            fill="none"
-            stroke="#ffffff"
-            strokeOpacity="0.7"
-            strokeWidth="1.6"
-            strokeDasharray="1 6"
-            strokeLinecap="round"
-          />
-        )}
-      </>
-    ),
-  }),
+const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number) => Plan> = {
+  drive: (art) => {
+    const legs: Leg[] = [
+      { to: off(215, 66, 0.44), t: 1.3, h: 105 },
+      { to: off(217, 61, 0.42), t: 0.3, h: 10 },
+      { to: off(218, 57, 0.4), t: 0.45 },
+    ];
+    return {
+      label: art.metres ? `a ${art.metres} metre drive down the fairway` : 'a drive landing in the fairway',
+      duration: 2.1,
+      landAt: 1.3,
+      draw: (c) => (
+        <>
+          <TeeView c={c} />
+          {art.metres && <Pill ctx={c} x={262} y={48} text={`${art.metres} m`} at={1.4} anchor="middle" />}
+          <Flight c={c} from={TEE} legs={legs} />
+          <RestingBall c={c} x={218} y={57} r={6.5 * 0.4} s={0} />
+          {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
+        </>
+      ),
+    };
+  },
+
+  trouble: (art) => {
+    const legs: Leg[] = [
+      { to: off(218, 68, 0.45), t: 1.3, h: 103 },
+      { to: off(218.5, 63, 0.43), t: 0.3, h: 9 },
+      { to: off(219, 59, 0.42), t: 0.45 },
+    ];
+    return {
+      label:
+        art.hazard === 'water'
+          ? 'a drive staying clear of the water'
+          : art.hazard === 'stakes'
+            ? 'a drive staying inside the white stakes'
+            : 'a drive staying clear of trouble',
+      duration: 2.1,
+      landAt: 1.3,
+      draw: (c) => (
+        <>
+          <TeeView c={c} hazard={art.hazard} />
+          <Flight c={c} from={TEE} legs={legs} />
+          <RestingBall c={c} x={219} y={59} r={6.5 * 0.42} s={0} />
+          {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
+        </>
+      ),
+    };
+  },
 
   approach: (art) => {
     // Finish inside the ring (or just on the green when there's no distance).
     const stop = art.feet ? { x: CUP.x - 4 - art.feet * 0.35, y: CUP.y + 3 } : { x: 226, y: 70 };
+    // Backspin: it pitches just past the target, skips on, then checks back to stop.
+    const legs: Leg[] = [
+      { to: off(stop.x + 6, stop.y - 2, 0.76), t: 1.25, h: 85 },
+      { to: off(stop.x + 13, stop.y - 4, 0.75), t: 0.25, h: 6 },
+      { to: off(stop.x, stop.y, 0.75), t: 0.6 },
+    ];
     return {
       label: art.feet ? `an approach finishing within ${art.feet} feet of the hole` : 'an approach landing on the green',
       duration: 2.2,
-      landAt: 1.3,
+      landAt: 1.25,
       draw: (c) => (
         <>
           <GreenView c={c} />
           {art.feet && <Ring c={c} feet={art.feet} />}
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
-          <Flight
-            c={c}
-            air={`M20 160 Q 110 -40 ${stop.x - 14} ${stop.y + 6}`}
-            ground={`M20 160 L ${stop.x - 14} ${stop.y + 6}`}
-            // Backspin: it lands, skips on past the target, then checks back.
-            roll="M0 0 L 24 -10 L 14 -6"
-            start={0}
-            fly={1.3}
-            rollFor={0.8}
-            scale={[1.4, 1.6, 0.75]}
-            turns={-2}
-          />
+          <Flight c={c} from={off(20, 160, 1.4)} legs={legs} />
           <RestingBall c={c} x={stop.x} y={stop.y} r={6.5 * 0.75} s={0} />
         </>
       ),
@@ -779,96 +686,77 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
 
   bunker: (art) => {
     if (art.miss) {
+      const legs: Leg[] = [
+        { to: off(218, 70, 0.76), t: 1.25, h: 92 },
+        { to: off(225, 68, 0.75), t: 0.25, h: 6 },
+        { to: off(230, 66, 0.75), t: 0.45 },
+      ];
       return {
         label: 'an approach carrying the bunker onto the green',
         duration: 2,
-        landAt: 1.3,
+        landAt: 1.25,
         draw: (c) => (
           <>
             <GreenView c={c} />
             <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
-            <Flight
-              c={c}
-              air="M60 160 Q 130 -30 214 72"
-              ground="M60 160 L 214 72"
-              roll="M0 0 L 16 -6"
-              start={0}
-              fly={1.3}
-              rollFor={0.6}
-              scale={[1.3, 1.55, 0.75]}
-            />
+            <Flight c={c} from={off(60, 160, 1.3)} legs={legs} />
             <RestingBall c={c} x={230} y={66} r={6.5 * 0.75} s={0} />
           </>
         ),
       };
     }
+    // Popped up soft out of the sand, lands on the green and runs out.
+    const legs: Leg[] = [
+      { to: off(228, 66, 0.77), t: 1.0, h: 66 },
+      { to: off(234, 64, 0.76), t: 0.22, h: 5 },
+      { to: off(240, 62, 0.75), t: 0.5 },
+    ];
     return {
       label: 'a splash out of the bunker onto the green',
-      duration: 2.1,
-      landAt: 1.1,
+      duration: 2,
+      landAt: 1.05,
       draw: (c) => (
         <>
           <GreenView c={c} />
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Spray c={c} x={154} y={96} s={0} />
-          {/* Sits in the sand until the splash, then flies. */}
-          {c.still ? (
-            <RestingBall c={c} x={240} y={62} r={6.5 * 0.75} s={0} />
-          ) : (
-            <Flight
-              c={c}
-              air="M154 96 Q 190 6 226 66"
-              ground="M154 96 L 226 66"
-              roll="M0 0 L 14 -4"
-              start={0.05}
-              fly={1.05}
-              rollFor={0.7}
-              scale={[1, 1.25, 0.75]}
-            />
-          )}
+          <Flight c={c} from={off(154, 96, 1)} legs={legs} start={0.05} />
+          <RestingBall c={c} x={240} y={62} r={6.5 * 0.75} s={0} />
         </>
       ),
     };
   },
 
-  chip: (art) => ({
-    label: art.holeOut ? 'a chip from off the green rolling into the hole' : 'a chip from off the green onto it',
-    duration: art.holeOut ? 2.2 : 1.9,
-    landAt: art.holeOut ? 2.0 : 0.7,
-    draw: (c) => {
-      const end = art.holeOut ? { x: CUP.x, y: CUP.y } : { x: 230, y: 66 };
-      return (
+  chip: (art) => {
+    // A low pitch that lands on the fringe edge, then rolls out (into the cup for a hole-out).
+    const end = art.holeOut ? off(CUP.x, CUP.y, 0.8) : off(230, 66, 0.8);
+    const roll = art.holeOut ? 1.1 : 0.8;
+    const legs: Leg[] = [
+      { to: off(192, 81, 0.86), t: 0.6, h: 34 },
+      { to: off(199, 77, 0.85), t: 0.2, h: 4 },
+      { to: end, t: roll },
+    ];
+    const sinkAt = 0.8 + roll;
+    return {
+      label: art.holeOut ? 'a chip from off the green rolling into the hole' : 'a chip from off the green onto it',
+      duration: art.holeOut ? 2.1 : 1.7,
+      landAt: art.holeOut ? sinkAt : 0.6,
+      draw: (c) => (
         <>
           <GreenView c={c} bunker={false} />
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
-          {c.still ? (
-            art.holeOut ? null : (
-              <RestingBall c={c} x={end.x} y={end.y} r={5} s={0} />
-            )
-          ) : (
-            <Flight
-              c={c}
-              air="M150 108 Q 172 66 194 80"
-              ground="M150 108 L 194 80"
-              roll={`M0 0 L ${end.x - 194} ${end.y - 80}`}
-              start={0}
-              fly={0.7}
-              rollFor={art.holeOut ? 1.3 : 1.0}
-              scale={[1, 1.15, 0.8]}
-              sinkAt={art.holeOut ? 2.0 : undefined}
-              turns={5}
-            />
-          )}
+          <Flight c={c} from={off(150, 108, 1)} legs={legs} r={6.5} sink={art.holeOut} />
+          {!art.holeOut && <RestingBall c={c} x={end.x} y={end.y} r={6.5 * 0.8} s={0} />}
           {art.holeOut && (
             <>
-              <CupDrop c={c} x={CUP.x} y={CUP.y} s={2.0} r={5.2} />
-              <Ripple c={c} x={CUP.x} y={CUP.y} s={2.0} />
+              <CupDrop c={c} x={CUP.x} y={CUP.y} s={sinkAt} r={6.5 * 0.8} />
+              <Ripple c={c} x={CUP.x} y={CUP.y} s={sinkAt} />
             </>
           )}
         </>
-      );
-    },
-  }),
+      ),
+    };
+  },
 
   score: (art, par) => ({
     label: `a scorecard marked ${scoreName(art.toPar ?? 0)}`,
@@ -922,7 +810,7 @@ function Scorecard({ c, par, toPar }: { c: Ctx; par: number; toPar: number }) {
   return (
     <g>
       <rect width="340" height="144" fill={`url(#${c.id('rough')})`} />
-      <rect width="340" height="144" fill="#000" filter={`url(#${c.id('grain')})`} />
+      <rect width="340" height="144" fill={`url(#${c.id('grain')})`} />
       <g transform="translate(22 6) scale(0.88) rotate(-3 170 84)" filter={`url(#${c.id('shadow')})`}>
         <rect x="76" y="36" width="188" height="102" rx="8" fill={`url(#${c.id('paper')})`} />
         {/* Header row and grid. */}
