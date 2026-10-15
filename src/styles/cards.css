@@ -347,6 +347,29 @@
   }
 }
 
+.putt-scene {
+  position: relative;
+}
+
+.scene-tag {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  max-width: calc(100% - 24px);
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(11, 11, 18, 0.74);
+  color: var(--on-color);
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  animation: fade-in 0.25s ease-out both;
+}
+
 .putt-scene svg {
   display: block;
   width: 100%;

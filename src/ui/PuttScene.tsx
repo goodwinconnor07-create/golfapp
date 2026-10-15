@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { haptic, reducedMotion } from './effects';
+import { SceneTag } from './ShotScene';
 
 // Illustration colours (grass, cup, ball, flag) are part of the drawing, not UI tokens.
 
@@ -268,33 +269,9 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
           </ellipse>
         )}
 
-        {/* The card's extra condition, by the flag once the ball is in. */}
-        {tag && (
-          <g opacity={still ? 1 : 0}>
-            <rect
-              x={254 - (tag.length * 7.4 + 20)}
-              y="9"
-              width={tag.length * 7.4 + 20}
-              height="24"
-              rx="12"
-              fill="#0b0b12"
-              fillOpacity="0.72"
-            />
-            <text
-              x={254 - (tag.length * 7.4 + 20) / 2}
-              y="25.5"
-              textAnchor="middle"
-              fontSize="13"
-              fontWeight="800"
-              fill="#ffffff"
-              fontFamily="-apple-system, system-ui, sans-serif"
-            >
-              {tag}
-            </text>
-            {!still && <animate attributeName="opacity" to="1" begin={begin(roll + 0.35)} dur="0.25s" fill="freeze" />}
-          </g>
-        )}
       </svg>
+      {/* The card's extra condition, once the ball is in. */}
+      {tag && <SceneTag key={run} text={tag} at={still ? 0 : total + 0.35} />}
     </button>
   );
 }

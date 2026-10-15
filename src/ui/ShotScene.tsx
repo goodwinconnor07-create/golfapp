@@ -51,9 +51,22 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
       <svg key={run} viewBox="0 0 340 144" preserveAspectRatio="xMidYMid slice" aria-hidden>
         <Defs id={id} />
         {plan.draw(ctx)}
-        {art.tag && <Pill ctx={ctx} x={12} y={10} text={art.tag} at={plan.duration + 0.2} />}
       </svg>
+      {art.tag && <SceneTag key={run} text={art.tag} at={still ? 0 : start + plan.duration + 0.2} />}
     </button>
+  );
+}
+
+/**
+ * The card's tag ("par 3 tee shot"), pinned to the strip's top-left corner. It's outside the
+ * drawing so it never gets cropped when the strip is shorter (small phones) or wider than the
+ * picture. at: seconds from mount when it fades in.
+ */
+export function SceneTag({ text, at }: { text: string; at: number }) {
+  return (
+    <span className="scene-tag" style={{ animationDelay: `${at.toFixed(2)}s` }}>
+      {text}
+    </span>
   );
 }
 
