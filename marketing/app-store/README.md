@@ -18,7 +18,7 @@ Every phone screen is the real app, captured from a seeded four-player round.
 ## How they're made
 
 - `seed.ts` plays a believable round through the real game engine (`src/game`) and saves it to `seed/`.
-- `capture.spec.ts` loads that round in the app on a 430 × 932 screen at 3× and saves `screens/`.
+- `capture.spec.ts` loads that round in the app on a 430 × 878 screen at 3× (a Pro Max minus its status bar) and saves `screens/`.
 - `cards.html` lays out each card: caption, phone frame, real screen. `render.mjs` saves `out/`.
 
 ```
