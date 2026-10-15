@@ -41,6 +41,9 @@ for (const card of Object.keys(LABELS)) {
     const scene = page.locator('.putt-scene');
     await expect(scene).toBeVisible();
     await expect(scene).toHaveAttribute('aria-label', LABELS[card]);
+    // However long the card, Redraw and Got it stay on screen without scrolling.
+    await expect(page.getByRole('button', { name: /Redraw/ })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: /^Got it/ })).toBeInViewport({ ratio: 1 });
     if (process.env.SHOTS_DIR) {
       await page.waitForTimeout(3500);
       await page.screenshot({ path: `${process.env.SHOTS_DIR}/44-shot-${card}.png` });

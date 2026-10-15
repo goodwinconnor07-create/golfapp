@@ -1,14 +1,29 @@
-import { cardStakes, getEntry, holeResult, mulliganAllowance, mulligansLeft, ownsPlayer, type Game } from '../../game';
+import { useState } from 'react';
+import { cardStakes, getCard, getEntry, holeResult, mulliganAllowance, mulligansLeft, ownsPlayer, type Game } from '../../game';
 import { dispatch, startScoring, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { Avatar } from '../../ui/components';
+import { Avatar, TierChip } from '../../ui/components';
 import { colourWipe, haptic } from '../../ui/effects';
-import { FlagIcon } from '../../ui/Icons';
+import { BackIcon, FlagIcon } from '../../ui/Icons';
 
 /** Everyone has a card: put the phone away and play. */
 export function PlayHole({ game }: { game: Game }) {
   const h = game.current;
   const deviceId = useApp((s) => s.deviceId);
+  // One card is open (your own, or the first on a shared phone); the rest are one-line rows that
+  // open on a tap, so the list fits above Hole done.
+  const [open, setOpen] = useState<Set<string>>(() => {
+    const mine = game.code ? game.players.find((p) => ownsPlayer(game, deviceId, p.id)) : undefined;
+    const first = mine ?? game.players[0];
+    return new Set(first ? [first.id] : []);
+  });
+  const toggle = (id: string) =>
+    setOpen((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   return (
     <>
       <div className="screen-body">
@@ -20,17 +35,27 @@ export function PlayHole({ game }: { game: Game }) {
         </div>
         {game.players.map((p, i) => {
           const e = getEntry(game, p.id, h);
+          const shown = open.has(p.id) || !e?.tier;
           return (
             <div key={p.id} className="stack rise" style={{ gap: 8, animationDelay: `${i * 60}ms` }}>
-              <div className="row">
+              <button
+                type="button"
+                className="row play-who"
+                aria-expanded={shown}
+                aria-label={`${p.name}${e?.tier ? `: ${getCard(e.cardId)?.title ?? ''}` : ''}${shown ? '' : ', show card'}`}
+                onClick={() => e?.tier && toggle(p.id)}
+              >
                 <Avatar player={p} size={36} />
-                <span className="h3" style={{ flex: 1 }}>
-                  {p.name}
+                <span className="play-name">
+                  <span className="h3">{p.name}</span>
+                  {!shown && <small className="play-card-title">{getCard(e?.cardId)?.title}</small>}
                 </span>
                 {holeResult(game, p.id, h) && <span className="tag tag-done">Scored</span>}
-              </div>
-              {e?.tier && <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />}
-              {e?.tier && mulliganAllowance(game) > 0 && (
+                {!shown && e?.tier && <TierChip tier={e.tier} />}
+                {e?.tier && <BackIcon width={20} height={20} className={`play-chevron${shown ? ' open' : ''}`} aria-hidden />}
+              </button>
+              {shown && e?.tier && <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />}
+              {shown && e?.tier && mulliganAllowance(game) > 0 && (
                 <MulliganBar
                   game={game}
                   playerId={p.id}

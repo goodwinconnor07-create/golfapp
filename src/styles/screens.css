@@ -2548,3 +2548,60 @@
     transform: translate(-50%, -40px) rotate(-20deg);
   }
 }
+
+/* Go play!: each player's name row, which opens or closes their card. */
+.play-who {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.play-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.play-chevron {
+  flex: none;
+  color: var(--muted);
+  transform: rotate(-90deg);
+  transition: transform 0.2s ease;
+}
+
+.play-chevron.open {
+  transform: rotate(90deg);
+}
+
+.play-card-title {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Narrow phones: "✓ Completed" needs a little more room than the button has at full size. */
+@media (max-width: 374px) {
+  .made-missed {
+    gap: 8px;
+  }
+
+  .made-missed .btn {
+    padding: 0 8px;
+    gap: 4px;
+    font-size: var(--fs-lead);
+  }
+
+  .made-missed .btn svg {
+    width: 22px;
+    height: 22px;
+  }
+}

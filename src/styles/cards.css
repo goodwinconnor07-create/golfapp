@@ -339,6 +339,14 @@
   animation: fade-in 0.25s ease-out both;
 }
 
+/* Short phones: a shorter strip, so the card's words stay above the footer. The scenes keep the
+   golfer and the ball inside the middle of the picture, so trimming top and bottom is safe. */
+@media (max-height: 740px) {
+  .putt-scene {
+    height: 112px;
+  }
+}
+
 .putt-scene svg {
   display: block;
   width: 100%;

@@ -86,8 +86,11 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   // Both phones get the 3-2-1 reveal of everyone's level.
   await passGroupReveal(guest);
   await passGroupReveal(host);
+  // Each phone opens its own player's card; the other is a one-line row that opens on a tap.
+  await expect(host.locator('.ccard')).toHaveCount(1);
+  await expect(guest.locator('.ccard')).toHaveCount(1);
+  await host.getByRole('button', { name: /^Gus: .*show card/ }).click();
   await expect(host.locator('.ccard')).toHaveCount(2);
-  await expect(guest.locator('.ccard')).toHaveCount(2);
 
   // Gus finishes first: straight to his score, then the waiting room while Hana plays on.
   await holeDoneAndScore(guest, 6, false);
@@ -265,6 +268,7 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await expect(guest.getByRole('button', { name: /Take a mulligan/ })).toHaveCount(1);
   await guest.getByRole('button', { name: /Take a mulligan/ }).click();
   await expect(host.getByText('Gus took a mulligan 🔁')).toBeVisible();
+  await host.getByRole('button', { name: /^Gus: .*show card/ }).click();
   await expect(host.getByText('🔁 Mulligan taken')).toBeVisible();
   await holeDoneAndScore(guest, 6, false);
   await holeDoneAndScore(host, 5, true);

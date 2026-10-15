@@ -827,8 +827,8 @@ input {
   position: fixed;
   left: 0;
   right: 0;
-  /* Just under the top bar, so it never covers the hole title or its buttons. */
-  top: calc(var(--safe-top) + 84px);
+  /* Just above the footer buttons, so it never covers a screen's heading or a table's labels. */
+  bottom: calc(var(--safe-bottom) + 112px);
   z-index: 80;
   display: flex;
   flex-direction: column;

@@ -39,11 +39,6 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
           stakes={cardStakes(game, game.current, tier, entry?.freePass)}
           par={game.holes[game.current]?.par ?? undefined}
         />
-        {card && !redrawUsed(game, playerId) && (
-          <button type="button" className="btn btn-outline" onClick={() => redrawCard(playerId)}>
-            <SwapIcon width={24} height={24} /> Redraw · once a round
-          </button>
-        )}
         {card && entry?.redrawn && <p className="note">Redrawn. This one's yours.</p>}
         {card?.needsBunker && (
           <button type="button" className="btn btn-ghost" onClick={() => swapCard(playerId)}>
@@ -52,6 +47,12 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
         )}
       </div>
       <div className="screen-foot">
+        {/* In the footer, so a long card or a small phone never hides it. */}
+        {card && !redrawUsed(game, playerId) && (
+          <button type="button" className="btn btn-sm btn-outline" onClick={() => redrawCard(playerId)}>
+            <SwapIcon width={22} height={22} /> Redraw · once a round
+          </button>
+        )}
         <button type="button" className="btn btn-xl btn-green" disabled={!card} onClick={doneReveal}>
           {next ? `Got it · pass to ${next.name}` : 'Got it'}
         </button>

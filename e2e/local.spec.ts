@@ -52,7 +52,9 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await pickAndReveal(page, 'Insane');
 
   await passGroupReveal(page, '09b-group-reveal');
-  await expect(page.locator('.ccard')).toHaveCount(2);
+  // The first card is open; Alex's is a one-line row with its title.
+  await expect(page.locator('.ccard')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /^Alex: .*show card/ })).toBeVisible();
   await shot(page, '10-play');
   await page.getByRole('button', { name: /Hole done/ }).click();
 

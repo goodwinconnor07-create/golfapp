@@ -140,3 +140,9 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 - Every hole: standings rows slide from their old place to the new one, with a green glow for a climb and red for a drop; scores count up.
 - Big moments only, once per hole, after the standings settle: a new leader (crown and confetti), a tie for the lead, halfway in an 18-hole round, and the double-stakes holes coming up. It fades on its own after about 2.5 seconds and never blocks taps (Next hole works straight through). No extra screen per hole.
+
+## Small-phone layout (Oct 2026)
+
+- Card reveal: "Redraw · once a round" sits in the footer above Got it, so a long card or a small phone never hides it. The shot strip is a little shorter on short phones (740px tall or less).
+- Go play!: one card is open (your own online, or the first player's on a shared phone). Everyone else's is a one-line row with their card's title and level; tap to open it. Mulligans show under open cards.
+- Pop-up messages sit just above the footer buttons instead of under the top bar, so they don't cover headings or the scorecard's labels.

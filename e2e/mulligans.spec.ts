@@ -20,7 +20,8 @@ test('mulligans: on by default, 2 for 9 holes, taken on the Go play! screen', as
 
   // Taken during the hole, on the Go play! screen: a token is spent, and it can be undone.
   const take = page.getByRole('button', { name: /Take a mulligan/ });
-  await expect(take).toHaveCount(2);
+  // Only the open card (Sam's) shows the button; Alex's opens on a tap.
+  await expect(take).toHaveCount(1);
   await take.first().click();
   await expect(page.getByText('🔁 Mulligan taken')).toBeVisible();
   await expect(page.getByLabel('1 of 2 mulligans left')).toBeVisible();
