@@ -13,7 +13,7 @@ function names(game: Game, ids: string[]): string {
 }
 
 function shareText(game: Game, rc: Recap): string {
-  const lines = [`⛳ Send It${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
+  const lines = [`⛳ CardShot${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
   if (rc.winners.length) {
     const who = joinNames(rc.winners.map((w) => w.player.name));
     lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} at ${toParWords(rc.winners[0].totals.toPar)}`);
@@ -59,7 +59,7 @@ async function share(game: Game, rc: Recap, image: File | null) {
   }
   if (navigator.share) {
     try {
-      await navigator.share({ title: 'Send It results', text, url });
+      await navigator.share({ title: 'CardShot results', text, url });
       return;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
@@ -84,7 +84,7 @@ export function Final({ game }: { game: Game }) {
     let live = true;
     resultsImage(game, rc)
       .then((blob) => {
-        if (live && blob) image.current = new File([blob], 'send-it-results.png', { type: 'image/png' });
+        if (live && blob) image.current = new File([blob], 'cardshot-results.png', { type: 'image/png' });
       })
       .catch(() => undefined);
     return () => {

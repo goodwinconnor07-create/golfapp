@@ -5,17 +5,170 @@
       <stop offset="0.5" stop-color="#F43F5E"/>
       <stop offset="1" stop-color="#8B5CF6"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.26" r="0.62">
+      <stop offset="0" stop-color="#FFF7D6" stop-opacity="0.75"/>
+      <stop offset="0.35" stop-color="#FFE08A" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFE08A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="barrel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5B6478"/>
+      <stop offset="0.28" stop-color="#2E3445"/>
+      <stop offset="0.7" stop-color="#161A26"/>
+      <stop offset="1" stop-color="#0B0D14"/>
+    </linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE7A3"/>
+      <stop offset="0.35" stop-color="#F5B82E"/>
+      <stop offset="1" stop-color="#A86A06"/>
+    </linearGradient>
+    <radialGradient id="bore" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFF4C2"/>
+      <stop offset="0.35" stop-color="#FFB020"/>
+      <stop offset="0.75" stop-color="#7A2E00"/>
+      <stop offset="1" stop-color="#1A0A00"/>
+    </radialGradient>
+    <radialGradient id="wheel" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#8A5A36"/>
+      <stop offset="0.6" stop-color="#5A3418"/>
+      <stop offset="1" stop-color="#2E1708"/>
+    </radialGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9A6438"/>
+      <stop offset="1" stop-color="#4A2810"/>
+    </linearGradient>
+    <radialGradient id="blast" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFBEA"/>
+      <stop offset="0.3" stop-color="#FFE066"/>
+      <stop offset="0.65" stop-color="#FF8A1F" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FF5A1F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="smoke" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.7" stop-color="#F1ECF7"/>
+      <stop offset="1" stop-color="#D9D0E6"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.7" stop-color="#FBF8F2"/>
+      <stop offset="1" stop-color="#EDE6D8"/>
+    </linearGradient>
+    <linearGradient id="streak" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF5A6E"/>
+      <stop offset="1" stop-color="#C8102E"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5DD36A"/>
+      <stop offset="1" stop-color="#1F8A3B"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#2A0A3A" flood-opacity="0.45"/>
+    </filter>
+    <filter id="cardShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="-6" dy="14" stdDeviation="9" flood-color="#3B0A2A" flood-opacity="0.5"/>
+    </filter>
+    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
   </defs>
+
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g fill="#fff">
-    <rect x="62" y="186" width="150" height="28" rx="14" opacity="0.9"/>
-    <rect x="34" y="242" width="178" height="28" rx="14"/>
-    <rect x="82" y="298" width="130" height="28" rx="14" opacity="0.9"/>
-    <circle cx="318" cy="256" r="104"/>
-  </g>
-  <g fill="#0b0b12" opacity="0.1">
-    <circle cx="282" cy="214" r="13"/><circle cx="324" cy="200" r="13"/><circle cx="364" cy="220" r="13"/>
-    <circle cx="268" cy="258" r="13"/><circle cx="310" cy="248" r="13"/><circle cx="352" cy="264" r="13"/>
-    <circle cx="290" cy="300" r="13"/><circle cx="334" cy="304" r="13"/>
+
+  <g clip-path="url(#tile)">
+    <!-- Light from the shot, up where the card is flying. -->
+    <rect width="512" height="512" fill="url(#glow)"/>
+    <!-- Ground the cannon sits on. -->
+    <ellipse cx="170" cy="470" rx="190" ry="34" fill="#2A0A3A" opacity="0.28" filter="url(#blur6)"/>
+
+    <!-- Smoke rolling out of the muzzle. -->
+    <g filter="url(#soft)">
+      <circle cx="262" cy="214" r="26" fill="url(#smoke)" opacity="0.92"/>
+      <circle cx="236" cy="236" r="18" fill="url(#smoke)" opacity="0.85"/>
+      <circle cx="318" cy="286" r="28" fill="url(#smoke)" opacity="0.92"/>
+      <circle cx="292" cy="302" r="18" fill="url(#smoke)" opacity="0.8"/>
+      <circle cx="346" cy="300" r="15" fill="url(#smoke)" opacity="0.75"/>
+    </g>
+    <!-- Muzzle flash, centred just past the muzzle. -->
+    <g transform="translate(-26 8)">
+    <circle cx="318" cy="238" r="58" fill="url(#blast)"/>
+    <path d="M318 238 l 18 -62 l 4 58 l 50 -34 l -38 46 l 60 6 l -58 18 l 40 44 l -54 -26 l -6 58 l -16 -56 l -42 40 l 22 -54 l -58 -2 l 56 -20 l -44 -42 l 54 24 Z"
+      fill="#FFE066" opacity="0.9"/>
+    <circle cx="318" cy="238" r="20" fill="#FFFBEA"/>
+    </g>
+
+    <!-- Sparks. -->
+    <g fill="#FFF3B0">
+      <circle cx="396" cy="282" r="5"/>
+      <circle cx="372" cy="312" r="3.5"/>
+      <circle cx="262" cy="178" r="4"/>
+      <circle cx="410" cy="246" r="3"/>
+      <circle cx="244" cy="214" r="3"/>
+    </g>
+
+    <!-- The cannon, aimed up and to the right. -->
+    <g filter="url(#soft)">
+      <!-- Carriage. -->
+      <path d="M78 418 L 118 330 L 214 330 L 250 418 Z" fill="url(#wood)"/>
+      <path d="M90 410 L 122 340 L 208 340" fill="none" stroke="#C88A55" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+      <g transform="rotate(-36 160 340)">
+        <!-- Breech knob. -->
+        <circle cx="62" cy="340" r="30" fill="url(#barrel)"/>
+        <circle cx="56" cy="332" r="9" fill="#8A93A8" opacity="0.6"/>
+        <!-- Barrel, tapering to the muzzle. -->
+        <path d="M70 286 L 290 300 L 290 380 L 70 394 Q 52 340 70 286 Z" fill="url(#barrel)"/>
+        <path d="M78 296 L 284 308" stroke="#A9B2C6" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+        <!-- Brass bands. -->
+        <rect x="104" y="284" width="20" height="112" rx="6" fill="url(#band)"/>
+        <rect x="196" y="292" width="16" height="96" rx="5" fill="url(#band)"/>
+        <!-- Muzzle lip and the glowing bore. -->
+        <rect x="276" y="288" width="30" height="104" rx="10" fill="url(#band)"/>
+        <ellipse cx="306" cy="340" rx="12" ry="42" fill="url(#bore)"/>
+      </g>
+      <!-- Wheel. -->
+      <circle cx="168" cy="404" r="66" fill="url(#wheel)"/>
+      <circle cx="168" cy="404" r="66" fill="none" stroke="#2A1406" stroke-width="10"/>
+      <circle cx="168" cy="404" r="52" fill="none" stroke="#B07A4A" stroke-width="3" opacity="0.5"/>
+      <g stroke="#3A1E0A" stroke-width="10" stroke-linecap="round">
+        <path d="M168 346 V 462"/>
+        <path d="M110 404 H 226"/>
+        <path d="M127 363 L 209 445"/>
+        <path d="M209 363 L 127 445"/>
+      </g>
+      <circle cx="168" cy="404" r="18" fill="url(#band)"/>
+      <circle cx="163" cy="399" r="6" fill="#FFF1C4" opacity="0.8"/>
+    </g>
+
+    <!-- Motion streaks in the gap between the muzzle and the card. -->
+    <g stroke="#FFFFFF" stroke-linecap="round">
+      <path d="M326 214 L 366 184" stroke-width="7" opacity="0.85"/>
+      <path d="M344 236 L 392 200" stroke-width="5" opacity="0.7"/>
+      <path d="M314 196 L 344 174" stroke-width="4" opacity="0.6"/>
+    </g>
+
+    <!-- The card, spinning out of the cannon. -->
+    <g transform="translate(392 118) rotate(18) scale(1.08)" filter="url(#cardShadow)">
+      <rect x="-62" y="-86" width="124" height="172" rx="16" fill="url(#card)"/>
+      <rect x="-62" y="-86" width="124" height="172" rx="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+      <rect x="-52" y="-76" width="104" height="152" rx="10" fill="none" stroke="#F43F5E" stroke-width="3" opacity="0.35"/>
+      <!-- Middle: a flag on a green. -->
+      <ellipse cx="0" cy="44" rx="42" ry="14" fill="url(#hill)"/>
+      <ellipse cx="0" cy="40" rx="9" ry="3.5" fill="#0B1A10"/>
+      <rect x="-2.5" y="-40" width="5" height="82" rx="2.5" fill="#9AA3AD"/>
+      <path d="M2.5 -40 C 18 -36, 26 -42, 40 -32 C 28 -24, 18 -26, 2.5 -14 Z" fill="url(#flag)"/>
+      <circle cx="0" cy="-41" r="4" fill="#FFFFFF"/>
+      <!-- Corner pips. -->
+      <g fill="#E11D48">
+        <path d="M-44 -66 h4 v20 h-4 Z"/>
+        <path d="M-40 -66 l 14 5 l -14 5 Z"/>
+        <g transform="rotate(180)">
+          <path d="M-44 -66 h4 v20 h-4 Z"/>
+          <path d="M-40 -66 l 14 5 l -14 5 Z"/>
+        </g>
+      </g>
+      <!-- A shine across the face. -->
+      <path d="M-62 -40 L 10 -86 L 40 -86 L -62 -12 Z" fill="#FFFFFF" opacity="0.45"/>
+    </g>
   </g>
 </svg>

@@ -41,7 +41,7 @@ const ogPage = `<!doctype html><html><head><style>
   <div class="blob" style="width:420px;height:420px;background:#F97316;right:-80px;bottom:-200px"></div>
   <div class="blob" style="width:300px;height:300px;background:#8B5CF6;right:280px;top:-180px"></div>
   <div class="icon">${svg}</div>
-  <div style="position:relative"><h1>SEND IT</h1><p>Golf, but riskier.<br/>Pick your risk. Play the hole.</p>
+  <div style="position:relative"><h1>CARDSHOT</h1><p>Golf, but riskier.<br/>Pick your risk. Play the hole.</p>
     <div class="chips"><span class="chip" style="background:#0D9488">SAFE</span><span class="chip" style="background:#EA580C">BOLD</span><span class="chip" style="background:#7C3AED">INSANE</span></div>
   </div></div></body></html>`;
 

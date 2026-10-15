@@ -1,6 +1,6 @@
-# Send It
+# CardShot
 
-Golf, but riskier. Send It is a phone game that sits on top of a normal round of golf with friends.
+Golf, but riskier. CardShot is a phone game that sits on top of a normal round of golf with friends.
 
 Before each hole, every player picks **Safe**, **Bold** or **Insane** and draws a random challenge card from that pile. Everyone gets a different card. You play the hole for real, then enter your real strokes and whether you completed the card.
 

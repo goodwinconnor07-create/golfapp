@@ -1,6 +1,6 @@
 // Offline support: golf courses often have patchy signal, so the app shell is
 // cached and keeps working without a connection. The API is never cached.
-const CACHE = 'send-it-v1';
+const CACHE = 'cardshot-v1';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {

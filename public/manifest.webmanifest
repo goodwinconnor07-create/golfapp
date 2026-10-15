@@ -1,6 +1,6 @@
 {
-  "name": "Send It",
-  "short_name": "Send It",
+  "name": "CardShot",
+  "short_name": "CardShot",
   "description": "Golf, but riskier. Pick Safe, Bold or Insane before each hole.",
   "start_url": "/",
   "scope": "/",

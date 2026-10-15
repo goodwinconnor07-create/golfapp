@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
 import { colourWipe } from '../ui/effects';
-import { ArrowIcon, BallIcon, ClockIcon } from '../ui/Icons';
+import { ArrowIcon, ClockIcon } from '../ui/Icons';
 
 /** The intro plays once per visit, not every time you come back Home. */
 let introPlayed = false;
@@ -39,17 +39,8 @@ export function Home() {
       )}
       <div className="screen-body">
         <div className={`home-hero center${active ? ' with-strip' : ''}${intro ? ' intro' : ''}`}>
-          <div className="home-icon" aria-hidden>
-            <div className="row" style={{ gap: 4 }}>
-              <span className="lines">
-                <i style={{ width: 26 }} />
-                <i style={{ width: 34 }} />
-                <i style={{ width: 22 }} />
-              </span>
-              <BallIcon width={54} height={54} />
-            </div>
-          </div>
-          <h1 className="hero brand-text logo-word">SEND IT</h1>
+          <img className="home-icon" src="/icons/icon.svg" alt="" width={112} height={112} />
+          <h1 className="hero brand-text logo-word">CARDSHOT</h1>
           <p className="h3 muted" style={{ margin: 0 }}>
             Golf, but riskier.
           </p>

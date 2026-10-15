@@ -1,4 +1,4 @@
-/* Send It: white background (dark when the phone is), big bold SF Pro, colourful buttons, instant feedback.
+/* CardShot: white background (dark when the phone is), big bold SF Pro, colourful buttons, instant feedback.
    Every colour, size, radius and shadow comes from the tokens below. */
 
 :root {
@@ -22,7 +22,6 @@
   --fs-display-3: 56px;
   --fs-display-4: 64px;
   --fs-display-5: 72px;
-  --fs-logo: 78px;
   --fs-counter: 104px;
   --fs-counter-small: 88px;
   --fs-countdown: 180px;

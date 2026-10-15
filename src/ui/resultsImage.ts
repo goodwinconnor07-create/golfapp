@@ -64,7 +64,7 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
   ctx.font = font(96, 900, true);
-  ctx.fillText('SEND IT', 80, 170);
+  ctx.fillText('CARDSHOT', 80, 170);
   ctx.fillStyle = MUTED;
   const where = [
     game.course,

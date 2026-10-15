@@ -2,7 +2,7 @@
   "name": "send-it",
   "private": true,
   "version": "0.1.0",
-  "description": "Send It: a risk-and-reward party game layer for a casual round of golf.",
+  "description": "CardShot: a risk-and-reward party game layer for a casual round of golf.",
   "type": "module",
   "scripts": {
     "dev": "vite",

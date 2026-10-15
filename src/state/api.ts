@@ -1,4 +1,4 @@
-// HTTP calls to the Send It server (the Cloudflare Worker in /worker).
+// HTTP calls to the CardShot server (the Cloudflare Worker in /worker).
 
 import type { CourseDetail, CourseSummary, CreateGameResponse, Game, GameInfo } from '../game';
 

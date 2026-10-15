@@ -20,7 +20,7 @@ export async function shareInvite(code: string) {
   const link = `${location.origin}/j/${code}`;
   if (navigator.share) {
     try {
-      await navigator.share({ title: 'Join my Send It game', text: `Join my golf game on Send It. Code: ${code}`, url: link });
+      await navigator.share({ title: 'Join my CardShot game', text: `Join my golf game on CardShot. Code: ${code}`, url: link });
       return;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;

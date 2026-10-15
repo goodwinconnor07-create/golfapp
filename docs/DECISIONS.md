@@ -154,3 +154,9 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - The par screen no longer repeats "Hole 1" under the top bar.
 - Standings say "1 of 3 cards made" instead of "1/3 cards".
 - The trophy and Past games stay as icons with no labels (product owner's call).
+
+## Rebrand to CardShot (Oct 2026)
+
+- The app is now called **CardShot**. The logo (`public/icons/icon.svg`) is a playing card with a golf flag on it, fired out of a cannon. The app icons and link-preview image are rendered from it (`npm run icons`), and the home screen shows the same icon.
+- Only the name and logo changed. The game, its levels (Safe / Bold / Insane) and the lobby's "Ready to send it?" stay as they are.
+- Kept on purpose: the `sendit.*` storage keys (so saved games and settings survive the update) and the Worker name `send-it` (renaming it would change the web address and start fresh game rooms).

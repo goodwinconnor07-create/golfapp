@@ -3,7 +3,7 @@ import { enterScore, passGroupReveal, pickAndReveal, shot } from './helpers';
 
 test('a one-phone round: setup, picks, scores, fixes and final results', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'SEND IT' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'CARDSHOT' })).toBeVisible();
   await shot(page, '01-home');
 
   await page.getByRole('button', { name: 'New game' }).click();
@@ -106,12 +106,12 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
 
   // On a computer, Share saves the results picture.
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Share results' }).click()]);
-  expect(download.suggestedFilename()).toBe('send-it-results.png');
+  expect(download.suggestedFilename()).toBe('cardshot-results.png');
   if (process.env.SHOTS_DIR) await download.saveAs(`${process.env.SHOTS_DIR}/30-results-picture.png`);
 
   // The game survives a reload.
   await page.reload();
-  await expect(page.getByText(/wins!|tie!/).or(page.getByText('SEND IT'))).toBeVisible();
+  await expect(page.getByText(/wins!|tie!/).or(page.getByText('CARDSHOT'))).toBeVisible();
 
   // The round is saved in Past games, behind the small clock button on Home.
   await page.goto('/');
