@@ -30,7 +30,7 @@ export function Lobby({ game }: { game: Game }) {
     <>
       <div className="screen-body">
         <div>
-          <h1 className="h1">{host ? 'Ready to send it?' : "You're in!"}</h1>
+          <h1 className="h1">{host ? 'Ready to tee off?' : "You're in!"}</h1>
           <p className="muted" style={{ margin: '6px 0 0' }}>
             {game.holes.length} hole{game.holes.length === 1 ? '' : 's'} · starting on hole {game.holes[0].number}
             {game.course ? ` · ${game.course}` : ''}

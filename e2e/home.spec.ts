@@ -8,5 +8,5 @@ test('Back to your game is a slim strip at the top of Home', async ({ page }) =>
   await expect(page.getByRole('button', { name: /Back to your game/ })).toBeVisible();
   await shot(page, '31-home-back-to-game');
   await page.getByRole('button', { name: /Back to your game/ }).click();
-  await expect(page.getByText('Ready to send it?')).toBeVisible();
+  await expect(page.getByText('Ready to tee off?')).toBeVisible();
 });

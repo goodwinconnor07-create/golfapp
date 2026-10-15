@@ -1,4 +1,5 @@
 import { getCard } from './cards';
+import { isNameBlocked, NAME_BLOCKED } from './names';
 import { drawCard, returnCard, takeCard } from './deck';
 import {
   anyPicked,
@@ -176,6 +177,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!isHost && !action.claim) return fail('Only the host can add guests.');
       const name = cleanName(action.name);
       if (!name) return fail('Add a name.');
+      if (isNameBlocked(name)) return fail(NAME_BLOCKED);
       g.players.push({
         id: action.id,
         name,
@@ -207,6 +209,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const name = cleanName(action.name);
       if (!name) return fail('Add a name.');
       if (name === player.name) return unchanged;
+      if (isNameBlocked(name)) return fail(NAME_BLOCKED);
       player.name = name;
       break;
     }

@@ -1,6 +1,6 @@
 // Offline support: golf courses often have patchy signal, so the app shell is
 // cached and keeps working without a connection. The API is never cached.
-const CACHE = 'cardshot-v1';
+const CACHE = 'cardshot-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {
@@ -29,6 +29,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  // The privacy and support pages are plain pages, not the app: never cache them as the app shell.
+  if (/^\/(privacy|support)(\.html)?\/?$/.test(url.pathname) || url.pathname.startsWith('/.well-known/')) return;
 
   if (req.mode === 'navigate') {
     // Pages: try the network (so updates arrive), fall back to the cached app after 3s.

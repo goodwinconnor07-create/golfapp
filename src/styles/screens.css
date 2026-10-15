@@ -2785,3 +2785,23 @@
   width: 24px;
   background: var(--contrast);
 }
+
+/* A short message under a field, e.g. a name that isn't allowed. */
+.field-error {
+  margin: 0;
+  color: var(--red-ink);
+  font-size: var(--fs-small);
+  font-weight: 800;
+}
+
+.howto-links {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  font-weight: 800;
+}
+
+.howto-links a {
+  color: var(--blue);
+  text-decoration: none;
+}

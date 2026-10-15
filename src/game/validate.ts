@@ -4,6 +4,7 @@
 import { CARDS, getCard } from './cards';
 import { shuffle } from './deck';
 import { isDeviceId } from './ids';
+import { isNameBlocked } from './names';
 import { cleanCourse, cleanName, DEFAULT_SETTINGS, isAvatarEmoji, PLAYER_COLORS } from './reducer';
 import { isTier, TIER_ORDER } from './tiers';
 import { LIMITS, type Action, type Entry, type Game, type Hole, type Outcome, type Par, type Player, type Settings } from './types';
@@ -173,7 +174,8 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
     ids.add(p.id);
     players.push({
       id: p.id,
-      name,
+      // The phone checks names too; this catches anything that slips past it.
+      name: isNameBlocked(name) ? `Player ${players.length + 1}` : name,
       color: isInt(p.color, 0, PLAYER_COLORS - 1) ? p.color : players.length % PLAYER_COLORS,
       ...(isAvatarEmoji(p.emoji) ? { emoji: p.emoji } : {}),
       deviceId: isDeviceId(p.deviceId) ? p.deviceId : null,

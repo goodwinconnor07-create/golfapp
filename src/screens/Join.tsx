@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { cleanName, CODE_LENGTH, LIMITS, normalizeCode, type GameInfo } from '../game';
+import { cleanName, CODE_LENGTH, isNameBlocked, LIMITS, NAME_BLOCKED, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
 import { confirm, joinGame, navigate, resetTo, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
@@ -153,10 +153,15 @@ export function JoinWho({ info }: { info: GameInfo }) {
               aria-label="Your name"
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && cleanName(name)) joinGame(info, { name });
+                if (e.key === 'Enter' && cleanName(name) && !isNameBlocked(name)) joinGame(info, { name });
               }}
             />
-            <button type="button" className="btn btn-blue" disabled={!cleanName(name)} onClick={() => joinGame(info, { name })}>
+            {isNameBlocked(name) && (
+              <p className="field-error" role="alert">
+                {NAME_BLOCKED}
+              </p>
+            )}
+            <button type="button" className="btn btn-blue" disabled={!cleanName(name) || isNameBlocked(name)} onClick={() => joinGame(info, { name })}>
               Join as {cleanName(name) || 'me'}
             </button>
           </div>

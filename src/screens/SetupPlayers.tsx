@@ -1,11 +1,12 @@
-import { cleanName, LIMITS } from '../game';
+import { cleanName, isNameBlocked, LIMITS, NAME_BLOCKED } from '../game';
 import { navigate, openSheet, setDraftNames, useApp } from '../state/store';
 import { Avatar, BackBar } from '../ui/components';
 
 /** Setup step 1: just the host's name. Everyone else joins from their own phone with the code. */
 export function SetupPlayers() {
   const name = useApp((s) => s.draft.names[0] ?? '');
-  const valid = Boolean(cleanName(name));
+  const blocked = isNameBlocked(name);
+  const valid = Boolean(cleanName(name)) && !blocked;
   const look = useApp((s) => s.profileLook);
   const next = () => {
     // Older drafts could hold other players' names: only the host's carries on.
@@ -45,6 +46,11 @@ export function SetupPlayers() {
             }}
           />
         </div>
+        {blocked && (
+          <p className="field-error" role="alert">
+            {NAME_BLOCKED}
+          </p>
+        )}
         <button type="button" className="btn-link-small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet({ name: 'look' })}>
           {look.emoji ? 'Change your picture' : 'Pick a picture'}
         </button>

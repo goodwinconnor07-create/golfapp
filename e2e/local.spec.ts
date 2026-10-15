@@ -15,7 +15,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await shot(page, '03-setup-holes');
   await page.getByRole('button', { name: /Front 9/ }).click();
 
-  await expect(page.getByText('Ready to send it?')).toBeVisible();
+  await expect(page.getByText('Ready to tee off?')).toBeVisible();
   // Invite first: the code is up straight away, and starting alone asks first.
   await expect(page.locator('.invite-panel .code-tiles')).toBeVisible();
   await shot(page, '04-lobby');

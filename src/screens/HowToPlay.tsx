@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDelta, TIER_ORDER, TIERS, type Player, type Tier } from '../game';
+import { publicOrigin } from '../state/platform';
 import { back } from '../state/store';
 import { ChallengeCard } from '../ui/ChallengeCard';
 import { Breakdown, BackBar, Pips, TierIcon, TIER_LOOK } from '../ui/components';
@@ -221,6 +222,15 @@ function TwistsDemo() {
       ))}
       <p className="muted small" style={{ margin: '4px 0 0' }}>
         It's a party score, not an official golf score or handicap.
+      </p>
+      <p className="howto-links">
+        <a href={`${publicOrigin()}/privacy`} target="_blank" rel="noreferrer">
+          Privacy
+        </a>
+        {' · '}
+        <a href={`${publicOrigin()}/support`} target="_blank" rel="noreferrer">
+          Support
+        </a>
       </p>
     </div>
   );
