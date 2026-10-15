@@ -19,19 +19,21 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
   const [run, setRun] = useState(0);
   const still = reducedMotion();
   const id = (n: string) => `${n}-${uid}`;
+  // The putter takes it back first; the ball leaves when the blade gets to it.
+  const start = delay + STROKE_HIT;
 
   // The line from the ball to the cup, breaking left to right as it slows.
   const line = 'M54 116 C 118 124, 204 104, 262 66';
   const roll = two ? 2.1 : 1.7;
-  const begin = (s: number) => `${(delay + s).toFixed(2)}s`;
+  const begin = (s: number) => `${(start + s).toFixed(2)}s`;
   const sunk = begin(roll);
   // Two putts: the first stops ~85% of the way, a beat, then the tap-in.
   const motion = two
     ? { keyPoints: '0;0.84;0.84;1', keyTimes: '0;0.62;0.78;1', keySplines: '0.33 0.67 0.67 1;0 0 1 1;0.33 0.67 0.67 1' }
     : { keyPoints: '0;1', keyTimes: '0;1', keySplines: '0.33 0.67 0.67 1' };
   // The ball sits at the start from the first frame: the wait before the roll is a held segment.
-  const total = delay + roll;
-  const t = (x: number) => ((delay + x * roll) / total).toFixed(3);
+  const total = start + roll;
+  const t = (x: number) => ((start + x * roll) / total).toFixed(3);
   const held = two
     ? { keyPoints: '0;0;0.84;0.84;1', keyTimes: `0;${t(0)};${t(0.62)};${t(0.78)};1`, keySplines: `0 0 1 1;${motion.keySplines}` }
     : { keyPoints: '0;0;1', keyTimes: `0;${t(0)};1`, keySplines: `0 0 1 1;${motion.keySplines}` };
@@ -198,6 +200,8 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         </path>
         <path d="M263.4 8 C 276 10, 286 7, 298 13" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
 
+        <Putter still={still} begin={`${delay.toFixed(2)}s`} />
+
         {/* Ball and its shadow, rolling on the line. */}
         <g>
           {still ? null : (
@@ -325,5 +329,41 @@ function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; t
       </g>
       <circle cx="-2.6" cy="-2.4" r="1.6" fill="#ffffff" opacity="0.9" />
     </>
+  );
+}
+
+/** Seconds from the start of the stroke until the blade meets the ball. */
+const STROKE_HIT = 0.7;
+
+/**
+ * The putter, at the scale of this close-up: the golfer's hands are well above the picture, so
+ * only the blade and shaft show. It rocks back and through like a pendulum from his shoulders and
+ * meets the ball STROKE_HIT seconds after `begin`. The still shows it through the stroke.
+ */
+function Putter({ still, begin }: { still: boolean; begin: string }) {
+  const pivot = '10 -40';
+  return (
+    <g transform={`rotate(${still ? -5 : 0} ${pivot})`}>
+      {!still && (
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          values={`0 ${pivot};0 ${pivot};7 ${pivot};0 ${pivot};-5 ${pivot}`}
+          keyTimes={`0;0.12;0.5;${STROKE_HIT};1`}
+          calcMode="spline"
+          keySplines="0 0 1 1;0.42 0 0.58 1;0.5 0 1 1;0 0 0.4 1"
+          begin={begin}
+          dur="1s"
+          fill="freeze"
+        />
+      )}
+      {/* Shadow on the green, shaft, then the blade with a lit top edge and a sight line. */}
+      <ellipse cx="38" cy="124.5" rx="10" ry="2.2" fill="#0d3a15" opacity="0.3" />
+      <path d="M13 -20 L 31 115" stroke="#dfe3e9" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M13 -20 L 18.5 22" stroke="#1c1f26" strokeWidth="3.4" strokeLinecap="round" />
+      <rect x="28" y="114" width="16.5" height="9" rx="2.6" fill="#3a404c" />
+      <rect x="28.6" y="114.4" width="15.3" height="2.4" rx="1.2" fill="#8b93a1" />
+      <rect x="35.4" y="114.6" width="1.6" height="1.8" rx="0.6" fill="#ffffff" />
+    </g>
   );
 }

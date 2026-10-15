@@ -1,5 +1,7 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { haptic, reducedMotion } from './effects';
+import { Golfer } from './Golfer';
+import { impactAt, type Swing, type View } from './golferPose';
 import { PuttScene } from './PuttScene';
 import type { ShotArt } from './shotArt';
 import { simulate, tracks, type Leg, type Spot } from './shotPhysics';
@@ -24,16 +26,18 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
   const still = reducedMotion();
   const id = (n: string) => `${n}-${uid}`;
   const plan = PLANS[art.kind as Exclude<ShotArt['kind'], 'putt'>](art, par);
-  const done = delay + plan.duration;
+  // With a golfer in the scene, the ball waits for his swing: everything else runs from impact.
+  const start = delay + (plan.lead ?? 0);
+  const done = start + plan.duration;
 
   // A light tap on the phone as the ball lands (or the score is circled).
   useEffect(() => {
     if (still) return;
-    const timer = setTimeout(() => haptic('light'), (delay + plan.landAt) * 1000);
+    const timer = setTimeout(() => haptic('light'), (start + plan.landAt) * 1000);
     return () => clearTimeout(timer);
-  }, [run, still, delay, plan.landAt]);
+  }, [run, still, start, plan.landAt]);
 
-  const ctx: Ctx = { id, still, delay, done, art, par };
+  const ctx: Ctx = { id, still, delay: start, done, art, par };
   return (
     <button
       type="button"
@@ -56,6 +60,7 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
 interface Ctx {
   id: (n: string) => string;
   still: boolean;
+  /** When the ball is struck (seconds from mount); scene times count from here. */
   delay: number;
   /** Seconds from mount until the scene has settled. */
   done: number;
@@ -65,6 +70,8 @@ interface Ctx {
 
 interface Plan {
   label: string;
+  /** Seconds the golfer swings before the club meets the ball (scene times count from impact). */
+  lead?: number;
   /** Seconds of motion after the delay. */
   duration: number;
   /** When the ball lands or the mark is made, for the haptic. */
@@ -181,6 +188,14 @@ function Defs({ id }: { id: (n: string) => string }) {
   );
 }
 
+const BALL_R = 6.5;
+
+/**
+ * How big the ball is drawn at a perspective scale: squeezed towards the middle, so up close it's
+ * no bigger than the golfer's head and far away it's still easy to see.
+ */
+const ballSize = (s: number) => 0.55 * (s / 0.75) ** 0.35;
+
 /** spin: rotation keyframes for the dimples (the light stays put), in step with the ball's travel. */
 function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string; dur: string; values: string } }) {
   const k = r / 7;
@@ -293,7 +308,8 @@ function Trees({ c, spots }: { c: Ctx; spots: [number, number, number][] }) {
  */
 function Flight({ c, from, legs, start = 0, r = 6.5, sink }: { c: Ctx; from: Spot; legs: Leg[]; start?: number; r?: number; sink?: boolean }) {
   if (c.still) return null;
-  const { samples, duration } = simulate(from, legs, r);
+  const { samples: path, duration } = simulate(from, legs, r);
+  const samples = path.map((p) => ({ ...p, s: ballSize(p.s) }));
   const t = tracks(samples);
   const first = samples[0];
   const run = { begin: at(c, start), dur: `${duration.toFixed(3)}s`, fill: 'freeze' as const };
@@ -338,15 +354,39 @@ function Trail({ from, legs }: { from: Spot; legs: Leg[] }) {
 }
 
 /** Where a ball rests in the still (and after the motion, for scenes that don't animate it there). */
-function RestingBall({ c, x, y, r = 6.5, s }: { c: Ctx; x: number; y: number; r?: number; s: number }) {
+function RestingBall({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
   // With motion the moving ball stays where it stopped; only the still needs one drawn.
   if (!c.still) return null;
-  void s;
+  const r = BALL_R * ballSize(s);
   return (
     <g transform={`translate(${x} ${y})`}>
       <BallShadow c={c} r={r} />
       <Ball c={c} r={r} />
     </g>
+  );
+}
+
+/**
+ * The golfer standing over the ball at `ball`, sized to its place in the scene. He starts his
+ * swing early enough to strike it at the scene's time 0. peg: the ball sits on a tee this high.
+ */
+function Player({ c, ball, view, swing, peg = 0, driver }: { c: Ctx; ball: Spot; view: View; swing: Swing; peg?: number; driver?: boolean }) {
+  const lift = BALL_R * ballSize(ball.s) + peg;
+  return (
+    <>
+      <Golfer
+        x={ball.x}
+        y={ball.y + lift}
+        scale={ball.s}
+        ballY={lift}
+        view={view}
+        swing={swing}
+        begin={at(c, -impactAt(swing))}
+        still={c.still}
+        driver={driver}
+      />
+      {peg > 0 && <rect x={ball.x - 0.7} y={ball.y + lift - peg - 0.5} width="1.4" height={peg + 0.5} rx="0.5" fill="#ffffff" />}
+    </>
   );
 }
 
@@ -527,9 +567,9 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
           );
         })}
       {/* Tee box and markers. */}
-      <path d="M150 128 L 222 128 L 230 146 L 142 146 Z" fill="#8ad472" opacity="0.65" />
-      <circle cx="156" cy="133" r="3.4" fill="#e11d48" />
-      <circle cx="216" cy="133" r="3.4" fill="#e11d48" />
+      <path d="M144 110 L 230 110 L 240 140 L 134 140 Z" fill="#8ad472" opacity="0.65" />
+      <circle cx="150" cy="114" r="3" fill="#e11d48" />
+      <circle cx="226" cy="114" r="3" fill="#e11d48" />
     </g>
   );
 }
@@ -607,8 +647,12 @@ function Ring({ c, feet }: { c: Ctx; feet: number }) {
 
 // Each shot: where the ball starts, then its legs (flight with a height, bounces, rolls). Times in
 // seconds; the scene's landAt and duration line up with the leg times.
-const TEE: Spot = { x: 186, y: 136, s: 1.05 };
+const TEE: Spot = { x: 192, y: 116, s: 1.05 };
+/** The tee peg under the ball on the tee. */
+const PEG = 3;
 const off = (x: number, y: number, s: number): Spot => ({ x, y, s });
+/** Where approaches are played from: on the fairway, near enough to see the golfer. */
+const FAIRWAY_BALL = off(58, 122, 1.15);
 
 const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number) => Plan> = {
   drive: (art) => {
@@ -619,14 +663,16 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     ];
     return {
       label: art.metres ? `a ${art.metres} metre drive down the fairway` : 'a drive landing in the fairway',
+      lead: impactAt('full'),
       duration: 2.1,
       landAt: 1.3,
       draw: (c) => (
         <>
           <TeeView c={c} />
           {art.metres && <Pill ctx={c} x={262} y={48} text={`${art.metres} m`} at={1.4} anchor="middle" />}
+          <Player c={c} ball={TEE} view="side" swing="full" peg={PEG} driver />
           <Flight c={c} from={TEE} legs={legs} />
-          <RestingBall c={c} x={218} y={57} r={6.5 * 0.4} s={0} />
+          <RestingBall c={c} x={218} y={57} s={0.4} />
           {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
         </>
       ),
@@ -646,13 +692,15 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
           : art.hazard === 'stakes'
             ? 'a drive staying inside the white stakes'
             : 'a drive staying clear of trouble',
+      lead: impactAt('full'),
       duration: 2.1,
       landAt: 1.3,
       draw: (c) => (
         <>
           <TeeView c={c} hazard={art.hazard} />
+          <Player c={c} ball={TEE} view="side" swing="full" peg={PEG} driver />
           <Flight c={c} from={TEE} legs={legs} />
-          <RestingBall c={c} x={219} y={59} r={6.5 * 0.42} s={0} />
+          <RestingBall c={c} x={219} y={59} s={0.42} />
           {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
         </>
       ),
@@ -670,6 +718,7 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     ];
     return {
       label: art.feet ? `an approach finishing within ${art.feet} feet of the hole` : 'an approach landing on the green',
+      lead: impactAt('full'),
       duration: 2.2,
       landAt: 1.25,
       draw: (c) => (
@@ -677,8 +726,9 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
           <GreenView c={c} />
           {art.feet && <Ring c={c} feet={art.feet} />}
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
-          <Flight c={c} from={off(20, 160, 1.4)} legs={legs} />
-          <RestingBall c={c} x={stop.x} y={stop.y} r={6.5 * 0.75} s={0} />
+          <Player c={c} ball={FAIRWAY_BALL} view="face" swing="full" />
+          <Flight c={c} from={FAIRWAY_BALL} legs={legs} />
+          <RestingBall c={c} x={stop.x} y={stop.y} s={0.75} />
         </>
       ),
     };
@@ -693,14 +743,16 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
       ];
       return {
         label: 'an approach carrying the bunker onto the green',
+        lead: impactAt('full'),
         duration: 2,
         landAt: 1.25,
         draw: (c) => (
           <>
             <GreenView c={c} />
             <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
-            <Flight c={c} from={off(60, 160, 1.3)} legs={legs} />
-            <RestingBall c={c} x={230} y={66} r={6.5 * 0.75} s={0} />
+            <Player c={c} ball={FAIRWAY_BALL} view="face" swing="full" />
+            <Flight c={c} from={FAIRWAY_BALL} legs={legs} />
+            <RestingBall c={c} x={230} y={66} s={0.75} />
           </>
         ),
       };
@@ -713,15 +765,17 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     ];
     return {
       label: 'a splash out of the bunker onto the green',
+      lead: impactAt('splash'),
       duration: 2,
       landAt: 1.05,
       draw: (c) => (
         <>
           <GreenView c={c} />
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
+          <Player c={c} ball={off(154, 96, 1)} view="face" swing="splash" />
           <Spray c={c} x={154} y={96} s={0} />
           <Flight c={c} from={off(154, 96, 1)} legs={legs} start={0.05} />
-          <RestingBall c={c} x={240} y={62} r={6.5 * 0.75} s={0} />
+          <RestingBall c={c} x={240} y={62} s={0.75} />
         </>
       ),
     };
@@ -739,17 +793,19 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     const sinkAt = 0.8 + roll;
     return {
       label: art.holeOut ? 'a chip from off the green rolling into the hole' : 'a chip from off the green onto it',
+      lead: impactAt('chip'),
       duration: art.holeOut ? 2.1 : 1.7,
       landAt: art.holeOut ? sinkAt : 0.6,
       draw: (c) => (
         <>
           <GreenView c={c} bunker={false} />
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
+          <Player c={c} ball={off(150, 108, 1)} view="face" swing="chip" />
           <Flight c={c} from={off(150, 108, 1)} legs={legs} r={6.5} sink={art.holeOut} />
-          {!art.holeOut && <RestingBall c={c} x={end.x} y={end.y} r={6.5 * 0.8} s={0} />}
+          {!art.holeOut && <RestingBall c={c} x={end.x} y={end.y} s={0.8} />}
           {art.holeOut && (
             <>
-              <CupDrop c={c} x={CUP.x} y={CUP.y} s={sinkAt} r={6.5 * 0.8} />
+              <CupDrop c={c} x={CUP.x} y={CUP.y} s={sinkAt} r={BALL_R * ballSize(0.8)} />
               <Ripple c={c} x={CUP.x} y={CUP.y} s={sinkAt} />
             </>
           )}
