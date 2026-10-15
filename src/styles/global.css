@@ -6,7 +6,7 @@
   --font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui, sans-serif;
 
-  /* ── Type scale. Display numbers (stroke counter, big scores) set their own size. */
+  /* ── Type scale. */
   --fs-caption: 13px;
   --fs-small: 15px;
   --fs-body: 17px;
@@ -16,6 +16,19 @@
   --fs-h1: 30px;
   --fs-title: 36px;
   --fs-stamp: 42px;
+  /* Display sizes: big headings, card titles, scores, codes and counters. */
+  --fs-display-1: 40px;
+  --fs-display-2: 44px;
+  --fs-display-3: 56px;
+  --fs-display-4: 64px;
+  --fs-display-5: 72px;
+  --fs-logo: 78px;
+  --fs-counter: 104px;
+  --fs-counter-small: 88px;
+  --fs-countdown: 180px;
+  /* Tiny labels inside pills and score cells. */
+  --fs-micro: 11px;
+  --fs-nano: 10px;
 
   /* ── Shape. Spacing is on a 4px grid. */
   --r-xs: 4px;
@@ -282,7 +295,7 @@ input {
 /* ── Type ────────────────────────────────────────────────────────────────── */
 
 .hero {
-  font-size: 56px;
+  font-size: var(--fs-display-3);
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 0.95;
@@ -290,7 +303,7 @@ input {
 }
 
 .h1 {
-  font-size: 40px;
+  font-size: var(--fs-display-1);
   font-weight: 900;
   letter-spacing: -0.025em;
   line-height: 1.02;
@@ -770,7 +783,7 @@ input {
 .stepper-value {
   min-width: 132px;
   text-align: center;
-  font-size: 104px;
+  font-size: var(--fs-counter);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.05em;

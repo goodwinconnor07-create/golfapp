@@ -62,7 +62,7 @@
 }
 
 .ccard-back-label {
-  font-size: 44px;
+  font-size: var(--fs-display-2);
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.02em;
@@ -124,7 +124,7 @@
 
 .ccard-title {
   margin: 0;
-  font-size: 40px;
+  font-size: var(--fs-display-1);
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.02;
