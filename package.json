@@ -16,7 +16,10 @@
     "format": "prettier --write .",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
-    "icons": "node --experimental-strip-types scripts/make-icons.ts"
+    "icons": "node --experimental-strip-types scripts/make-icons.ts",
+    "store:seed": "esbuild marketing/app-store/seed.ts --bundle --platform=node --format=esm --log-level=warning --outfile=marketing/app-store/seed.bundle.mjs && node marketing/app-store/seed.bundle.mjs",
+    "store:capture": "playwright test -c marketing/app-store/capture.config.ts",
+    "store:render": "node marketing/app-store/render.mjs"
   },
   "engines": {
     "node": ">=20"
