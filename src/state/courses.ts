@@ -1,7 +1,7 @@
 // Course search for setup. Two sources, searched together:
 //  - OpenGolfAPI, called straight from the phone (free, no key, ODbL © OpenStreetMap
 //    contributors). Strong on US hole pars; elsewhere it often has the course but no pars.
-//  - GolfCourseAPI through our Worker, which holds its key. Off until the key is added.
+//  - GolfCore and GolfCourseAPI through our Worker, which holds their keys (see worker/courses.ts).
 
 import type { CourseDetail, CourseSummary } from '../game';
 import { fetchCourse as fetchFromServer, searchCourses as searchServer } from './api';

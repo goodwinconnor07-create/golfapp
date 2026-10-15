@@ -39,7 +39,7 @@ export interface CreateGameResponse {
   code: string;
 }
 
-/** A course in search results. Ids carry their source, e.g. "og:…" (OpenGolfAPI) or "gc:…" (GolfCourseAPI). */
+/** A course in search results. Ids carry their source, e.g. "og:…" (OpenGolfAPI), "core:…" (GolfCore) or "gc:…" (GolfCourseAPI). */
 export interface CourseSummary {
   id: string;
   name: string;

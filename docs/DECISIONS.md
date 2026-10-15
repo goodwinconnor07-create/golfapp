@@ -58,7 +58,8 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 
 - **OpenGolfAPI** (in use, free, no key): about 17,000 courses with hole pars, mostly in the US. Outside the US it usually finds the course but not its pars. Data is ODbL, so the app shows "© OpenStreetMap contributors" under results.
 - **GolfCourseAPI** (switched on 13 Oct 2026): about 30,000 courses worldwide, including Australia and the UK. Free plan is 35 lookups a day; paid is US$9.99 a month for 10,000. The key lives only in the Worker secret `GOLFCOURSE_API_KEY` and is sent as `Authorization: Bearer <key>`. Its results show first.
-- OpenGolfAPI is called straight from the phone: it refuses requests from Cloudflare Workers (403) but allows browsers. GolfCourseAPI goes through our Worker so its key stays secret, and its answers are saved in a CourseStore Durable Object (courses for 180 days, searches for 30), so each course or search only uses one lookup.
+- **GolfCore** (added 15 Oct 2026): about 35,000 courses with hole-by-hole scorecards, and much better Australian coverage than the others (it had 8 of the 9 Queensland clubs no other source had, and Brisbane River, listed as "Karana Downs Golf Course"). Its results with a scorecard show first. Free plan is 500 requests a month (10 a minute); Basic is US$10 a month for 10,000. It answers without a key until 4 Dec 2026; after that set the Worker secret `GOLFCORE_API_KEY`. Its terms (golfcore.org/terms) still need checking for commercial use.
+- OpenGolfAPI is called straight from the phone: it refuses requests from Cloudflare Workers (403) but allows browsers. GolfCore and GolfCourseAPI go through our Worker so their keys stay secret, and their answers are saved in a CourseStore Durable Object (courses for 180 days, searches for 30), so each course or search only uses one lookup.
 
 ## Playing without signal (online games)
 
