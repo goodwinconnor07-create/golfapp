@@ -142,8 +142,16 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
 test('how to play explains the stakes', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'How to play' }).click();
-  await expect(page.getByText('Lowest score wins')).toBeVisible();
-  await shot(page, '19-howto');
+  // A slideshow: Next (or a swipe) moves on, one idea per slide, ending with Let's play.
+  const titles = ['Pick your risk', 'Get a card', 'Play the hole', 'Score it', 'Lowest score wins', 'Twists'];
+  for (const [i, title] of titles.entries()) {
+    await expect(page.getByRole('heading', { name: title })).toBeInViewport({ ratio: 0.9 });
+    await page.waitForTimeout(1600); // let the example play
+    await shot(page, `19-howto-${i + 1}`);
+    if (i < titles.length - 1) await page.getByRole('button', { name: 'Next' }).click();
+  }
+  await page.getByRole('button', { name: "Let's play" }).click();
+  await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
 });
 
 test('picking a course fills in the pars', async ({ page }) => {

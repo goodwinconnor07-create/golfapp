@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { anyPicked, LIMITS, type Par, type Settings } from '../../game';
+import { anyPicked, type Par, type Settings } from '../../game';
 import { closeSheet, dispatch, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
 import { Sheet, Toggle } from '../../ui/components';
@@ -7,43 +6,20 @@ import { Sheet, Toggle } from '../../ui/components';
 export function OptionsSheet() {
   const game = useApp((s) => s.game);
   const deviceId = useApp((s) => s.deviceId);
-  const [course, setCourse] = useState(game?.course ?? '');
   if (!game) return null;
   const host = isHost(game, deviceId);
   const hostName = game.players.find((p) => p.deviceId === game.hostDeviceId)?.name ?? 'the host';
 
-  const saveCourse = () => {
-    if (host && course.trim() !== game.course) dispatch({ type: 'setCourse', course });
-  };
   const set = (settings: Partial<Settings>) => dispatch({ type: 'setSettings', settings });
 
   return (
-    <Sheet
-      title="Game options"
-      onClose={() => {
-        saveCourse();
-        closeSheet();
-      }}
-    >
+    // The course is picked at the start (New game → Where are you playing?), so it isn't here.
+    <Sheet title="Game options" onClose={closeSheet}>
       {!host && (
         <p className="note" style={{ marginTop: 0 }}>
           Only {hostName} can change these.
         </p>
       )}
-      <label className="label" htmlFor="course">
-        Course name (optional)
-      </label>
-      <input
-        id="course"
-        className="field"
-        style={{ marginTop: 8 }}
-        value={course}
-        placeholder="Where are you playing?"
-        maxLength={LIMITS.maxCourseLength}
-        disabled={!host}
-        onChange={(e) => setCourse(e.target.value)}
-        onBlur={saveCourse}
-      />
       <div style={{ marginTop: 8 }}>
         <Toggle
           on={game.settings.distanceCards}
@@ -85,10 +61,7 @@ export function OptionsSheet() {
         <button
           type="button"
           className="btn btn-dark"
-          onClick={() => {
-            saveCourse();
-            closeSheet();
-          }}
+          onClick={closeSheet}
         >
           Done
         </button>

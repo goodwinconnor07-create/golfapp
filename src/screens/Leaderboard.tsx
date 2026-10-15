@@ -27,7 +27,7 @@ export function Leaderboard() {
                 <>
                   <span className="board-detail">
                     <span>
-                      {row.totals.made}/{row.totals.holes} cards
+                      {row.totals.made} of {row.totals.holes} cards made
                     </span>{' '}
                     · <span>{row.totals.real} strokes</span>
                   </span>

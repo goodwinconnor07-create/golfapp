@@ -8,11 +8,10 @@ const PARS: { par: Par; className: string }[] = [
 ];
 
 export function ParPick({ game }: { game: Game }) {
-  const hole = game.holes[game.current];
   return (
     <div className="screen-body center" style={{ justifyContent: 'center', paddingBottom: '12vh' }}>
-      <p className="eyebrow">Hole {hole.number}</p>
-      <h1 className="hero" style={{ marginTop: 8 }}>
+      {/* The hole number is in the top bar already. */}
+      <h1 className="hero">
         What's the par?
       </h1>
       <div className="par-buttons">

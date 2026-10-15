@@ -2570,7 +2570,7 @@
 
 .play-chevron {
   flex: none;
-  color: var(--muted);
+  color: var(--ink-3);
   transform: rotate(-90deg);
   transition: transform 0.2s ease;
 }
@@ -2581,7 +2581,7 @@
 
 .play-card-title {
   overflow: hidden;
-  color: var(--muted);
+  color: var(--ink-3);
   font-size: var(--fs-small);
   font-weight: 700;
   white-space: nowrap;
@@ -2604,4 +2604,198 @@
     width: 22px;
     height: 22px;
   }
+}
+
+/* ── How to play: a swipeable slideshow ──────────────────────────────────── */
+
+.howto-track {
+  flex: 1;
+  display: flex;
+  margin: 0 -16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.howto-track::-webkit-scrollbar {
+  display: none;
+}
+
+.howto-slide {
+  flex: 0 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px 16px;
+  overflow-y: auto;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.howto-num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.howto-text {
+  margin: 0 0 8px;
+  color: var(--ink-3);
+  font-size: var(--fs-lead);
+  line-height: 1.3;
+}
+
+.howto-demo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* The example sits in the middle of the space under the words. */
+  justify-content: center;
+  padding-bottom: 24px;
+}
+
+.howto-tiers .tier-btn {
+  grid-template-columns: 48px 1fr;
+  min-height: 84px;
+  padding: 12px 16px;
+}
+
+.howto-scene {
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.howto-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  text-align: center;
+}
+
+.howto-strokes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.howto-strokes small {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.howto-strokes b {
+  font-size: var(--fs-stamp);
+  line-height: 1.1;
+}
+
+/* The working builds up a piece at a time: golf score, then the card, then the total. */
+.howto-sum .breakdown > *,
+.howto-sum .pill-group > * {
+  animation: pop-in 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+.howto-sum .breakdown > :nth-child(1) {
+  animation-delay: 0.3s;
+}
+
+.howto-sum .breakdown > :nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.howto-sum .pill-group > :nth-child(1) {
+  animation-delay: 0.9s;
+}
+
+.howto-sum .pill-group > :nth-child(2),
+.howto-sum .pill-group > :nth-child(3) {
+  animation-delay: 1.3s;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.howto-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.howto-lead .board-row.reorder {
+  animation-delay: 0.9s;
+}
+
+.howto-lead .board-row.reorder::after {
+  animation-delay: 1.1s;
+}
+
+.howto-twist {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.howto-twist-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  font-size: var(--fs-h3);
+  font-weight: 900;
+}
+
+.howto-dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.howto-dots button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.howto-dots button::before {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: auto;
+  border-radius: 5px;
+  background: var(--line);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.howto-dots button.on::before {
+  width: 24px;
+  background: var(--contrast);
 }

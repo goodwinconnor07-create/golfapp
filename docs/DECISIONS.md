@@ -146,3 +146,11 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - Card reveal: "Redraw · once a round" sits in the footer above Got it, so a long card or a small phone never hides it. The shot strip is a little shorter on short phones (740px tall or less).
 - Go play!: one card is open (your own online, or the first player's on a shared phone). Everyone else's is a one-line row with their card's title and level; tap to open it. Mulligans show under open cards.
 - Pop-up messages sit just above the footer buttons instead of under the top bar, so they don't cover headings or the scorecard's labels.
+
+## How to play, wording and the course name (Oct 2026)
+
+- How to play is a swipeable slideshow, one idea per slide (pick your risk, get a card, play the hole, score it, lowest score wins, twists). Each slide has a small example built from the real game pieces (the level buttons, a card flip, the golfer scene, the score pills, the leaderboard reorder) that replays when you land on it. Next or a swipe moves on; the last slide's button is Let's play.
+- The course is set once, at the start (New game → Where are you playing?, which also fills in the pars). The free-text course name is gone from Game options.
+- The par screen no longer repeats "Hole 1" under the top bar.
+- Standings say "1 of 3 cards made" instead of "1/3 cards".
+- The trophy and Past games stay as icons with no labels (product owner's call).
