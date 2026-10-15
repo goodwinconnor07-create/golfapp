@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { formatDelta, getCard, recap, type Game, type Recap, formatToPar, toParWords } from '../../game';
+import { nativeShare } from '../../state/native';
+import { APP_STORE_URL, canHost, isNative, publicOrigin } from '../../state/platform';
 import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { colourWipe, confetti, CONFETTI } from '../../ui/effects';
@@ -37,7 +39,11 @@ function download(file: File) {
 /** Shares the results picture with the text as its caption; falls back to text only. */
 async function share(game: Game, rc: Recap, image: File | null) {
   const text = shareText(game, rc);
-  const url = location.origin;
+  const url = publicOrigin();
+  if (isNative) {
+    await nativeShare({ title: 'CardShot results', text: `${text}\n\n${url}`, image });
+    return;
+  }
   if (image && navigator.canShare?.({ files: [image] })) {
     try {
       await navigator.share({ files: [image], text: `${text}\n\n${url}` });
@@ -185,9 +191,15 @@ export function Final({ game }: { game: Game }) {
           <button type="button" className="btn btn-ghost" onClick={() => navigate({ name: 'scorecard' })}>
             Scorecard
           </button>
-          <button type="button" className="btn btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
-            New game
-          </button>
+          {canHost ? (
+            <button type="button" className="btn btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
+              New game
+            </button>
+          ) : (
+            <a className="btn btn-green" href={APP_STORE_URL}>
+              Host your own
+            </a>
+          )}
         </div>
       </div>
     </>

@@ -1,3 +1,5 @@
+import { nativeHaptic } from '../state/native';
+import { isNative } from '../state/platform';
 import { CONFETTI_COLORS } from './theme';
 // Instant feedback: haptics, tap ripples and confetti. All of it is skipped
 // when the phone asks for reduced motion, and none of it blocks the game.
@@ -16,8 +18,12 @@ export function reducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Vibrates where the phone supports it (Android). iPhones ignore this quietly. */
+/** A tap on the phone: real haptics in the iPhone app, vibrate on Android browsers (iPhone browsers ignore it). */
 export function haptic(kind: HapticKind = 'light'): void {
+  if (isNative) {
+    void nativeHaptic(kind).catch(() => undefined);
+    return;
+  }
   try {
     navigator.vibrate?.(PATTERNS[kind]);
   } catch {

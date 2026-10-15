@@ -1,4 +1,5 @@
-// Renders the PNG app icons and the link-preview image from public/icons/icon.svg.
+// Renders the PNG app icons, the link-preview image and the iPhone app's icon and launch
+// screen from public/icons/icon.svg.
 // Run with: npx tsx scripts/make-icons.ts  (or node --experimental-strip-types)
 // Uses Playwright's Chromium. Set CHROMIUM_PATH to use a specific browser binary.
 
@@ -14,7 +15,9 @@ function fullBleed(scale: number): string {
   const inner = svg
     .replace(/^[\s\S]*?<\/defs>/, '')
     .replace('</svg>', '')
-    .replace(/<rect width="512" height="512" rx="112" fill="url\(#bg\)"\/>/, '');
+    .replace(/<rect width="512" height="512" rx="112" fill="url\(#bg\)"\/>/, '')
+    // At full size the square itself is the edge (iOS rounds it), so the rounded clip would show.
+    .replace(scale === 1 ? ' clip-path="url(#tile)"' : '\0', '');
   const defs = svg.match(/<defs>[\s\S]*?<\/defs>/)?.[0] ?? '';
   const offset = (512 * (1 - scale)) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">${defs}
@@ -62,5 +65,16 @@ await render(page(svg, 512, 512), 512, 512, 'icons/icon-512.png');
 await render(page(fullBleed(0.78), 512, 512), 512, 512, 'icons/icon-maskable-512.png', false);
 await render(page(fullBleed(0.9), 180, 180), 180, 180, 'icons/apple-touch-icon.png', false);
 await render(ogPage, 1200, 630, 'og-image.png', false);
+
+// The iPhone app: a 1024 icon with no transparency (iOS rounds the corners itself), and the
+// launch screen, the icon on white.
+const ios = '../ios/App/App/Assets.xcassets';
+await render(page(fullBleed(1), 1024, 1024), 1024, 1024, `${ios}/AppIcon.appiconset/AppIcon-512@2x.png`, false);
+const splash = `<!doctype html><html><head><style>html,body{margin:0;width:2732px;height:2732px;background:#fff;display:grid;place-items:center}
+  .icon{width:560px;height:560px;filter:drop-shadow(0 30px 50px rgba(124,58,237,.3))}.icon svg{width:100%;height:100%}</style></head>
+  <body><div class="icon">${svg}</div></body></html>`;
+for (const name of ['splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']) {
+  await render(splash, 2732, 2732, `${ios}/Splash.imageset/${name}`, false);
+}
 
 await browser.close();

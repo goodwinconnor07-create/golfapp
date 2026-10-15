@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { nativeShare } from '../../state/native';
+import { isNative, publicOrigin } from '../../state/platform';
 import { goOnline, toast, useApp } from '../../state/store';
 import { Sheet, Spinner } from '../../ui/components';
 import { CopyIcon, ShareIcon } from '../../ui/Icons';
@@ -17,7 +19,11 @@ async function copy(text: string) {
 
 /** Opens the phone's share sheet with the join link, or copies it. */
 export async function shareInvite(code: string) {
-  const link = `${location.origin}/j/${code}`;
+  const link = `${publicOrigin()}/j/${code}`;
+  if (isNative) {
+    await nativeShare({ title: 'Join my CardShot game', text: `Join my golf game on CardShot. Code: ${code}`, url: link });
+    return;
+  }
   if (navigator.share) {
     try {
       await navigator.share({ title: 'Join my CardShot game', text: `Join my golf game on CardShot. Code: ${code}`, url: link });
@@ -80,7 +86,7 @@ export function InviteSheet() {
     );
   }
 
-  const link = `${location.origin}/j/${game.code}`;
+  const link = `${publicOrigin()}/j/${game.code}`;
   const code = game.code;
   const share = () => shareInvite(code);
 

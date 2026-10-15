@@ -1,0 +1,94 @@
+name: iOS
+
+# Builds the iPhone app on a Mac and uploads it to TestFlight.
+# Run it from the Actions tab ("Run workflow"), or push a tag like ios-v1.0.0.
+#
+# Needs these repository secrets (Settings → Secrets and variables → Actions):
+#   APPLE_TEAM_ID                  10-character Team ID (developer.apple.com → Membership)
+#   APP_STORE_CONNECT_KEY_ID       App Store Connect API key ID
+#   APP_STORE_CONNECT_ISSUER_ID    Issuer ID shown above the keys list
+#   APP_STORE_CONNECT_KEY          The .p8 key file's contents
+# See docs/IOS.md for how to get them.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['ios-v*']
+
+concurrency:
+  group: ios
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check the secrets are set
+        run: |
+          for name in TEAM_ID KEY_ID ISSUER_ID; do
+            if [ -z "${!name}" ]; then echo "Missing secret for $name (see docs/IOS.md)"; exit 1; fi
+          done
+      - name: Use Xcode 26
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+      - run: npm ci
+      # The app's web files, pointed at the live server, copied into the iOS project.
+      - run: npm run build:ios
+      - name: Write the App Store Connect key
+        env:
+          KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "$KEY" > "$RUNNER_TEMP/keys/AuthKey.p8"
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/CardShot.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID"
+      - name: Upload to TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/CardShot.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID"
+      - name: Remove the key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"

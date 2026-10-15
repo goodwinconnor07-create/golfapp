@@ -1,12 +1,13 @@
 // HTTP calls to the CardShot server (the Cloudflare Worker in /worker).
 
 import type { CourseDetail, CourseSummary, CreateGameResponse, Game, GameInfo } from '../game';
+import { apiUrl } from './platform';
 
 async function request(path: string, init: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(path, { ...init, signal: controller.signal });
+    return await fetch(apiUrl(path), { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }

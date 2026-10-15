@@ -3,6 +3,7 @@
 
 import { PING, type ClientMessage, type ServerMessage } from '../game';
 import { fetchGameInfo } from './api';
+import { socketUrl } from './platform';
 
 export type ConnStatus = 'connecting' | 'open' | 'offline';
 
@@ -59,8 +60,7 @@ export class Connection {
   }
 
   private url(): string {
-    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${proto}//${location.host}/api/games/${this.code}/ws?device=${encodeURIComponent(this.deviceId)}`;
+    return socketUrl(`/api/games/${this.code}/ws?device=${encodeURIComponent(this.deviceId)}`);
   }
 
   private open = (): void => {

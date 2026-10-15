@@ -11,6 +11,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 - `npm run check`: typecheck + unit tests + build. Run it before committing.
 - `npm run deploy`: build and `wrangler deploy` (needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`)
 - After editing `wrangler.jsonc`, run `npm run cf-typegen` and commit `worker-configuration.d.ts`.
+- `npm run build:ios`: build for the iPhone app (with the live server's address) and copy it into `ios/`. TestFlight builds run on GitHub Actions (`.github/workflows/ios.yml`). See `docs/IOS.md`.
 
 ## Layout
 
@@ -18,6 +19,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
   Every game change goes through `applyAction()` in `reducer.ts`; screens never edit game objects.
 - `src/state/store.ts`: the single app store and all screen commands. One-phone games apply actions locally; online games send them to the server and show a prediction until it confirms.
 - `src/state/view.ts`: works out the in-game screen from the game data (never stored), so every phone lands on the right screen after a reconnect.
+- `src/state/platform.ts` / `native.ts`: website vs iPhone app, the server's address, and the app's native extras. Use `apiUrl()`/`publicOrigin()` for server calls and shared links, never `location`.
 - `worker/room.ts`: one `GameRoom` Durable Object per join code, the only true copy of an online game. `redactForDevice()` hides other players' picks until everyone has picked.
 
 ## Rules that matter

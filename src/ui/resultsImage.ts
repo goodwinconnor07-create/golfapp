@@ -2,6 +2,7 @@
 // Portrait 1080×1350, which chat apps and stories show without cropping.
 
 import { formatToPar, toParWords, type Game, type Recap } from '../game';
+import { publicOrigin } from '../state/platform';
 import { playerColor } from './components';
 import { joinNames, plural } from './format';
 
@@ -148,7 +149,7 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
   ctx.fillStyle = MUTED;
   ctx.font = font(30, 800);
   ctx.textAlign = 'center';
-  ctx.fillText(`Play at ${location.host}`, W / 2, H - 52);
+  ctx.fillText(`Play at ${new URL(publicOrigin()).host}`, W / 2, H - 52);
   return canvas;
 }
 

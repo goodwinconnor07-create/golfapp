@@ -198,6 +198,14 @@ body {
   min-height: 100dvh;
 }
 
+/* In the iPhone app, no text selection or long-press callouts on screens: it's an app, not a page.
+   Typing in fields still works (input, below). */
+html.native body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 button,
 input {
   font: inherit;
@@ -362,6 +370,7 @@ input {
   font-size: var(--fs-h3);
   font-weight: 800;
   letter-spacing: 0.01em;
+  text-decoration: none; /* also used on links, e.g. "Host a game · get the app" */
   color: var(--on-color);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
   box-shadow: var(--shadow);

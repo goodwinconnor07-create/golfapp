@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { APP_STORE_URL, canHost } from '../state/platform';
 import { navigate, startNewGame, useApp } from '../state/store';
 import { Blobs, TierChip } from '../ui/components';
 import { colourWipe } from '../ui/effects';
@@ -53,12 +54,26 @@ export function Home() {
       </div>
 
       <div className="screen-foot clear">
-        <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
-          New game
-        </button>
-        <button type="button" className="btn btn-xl btn-blue" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
-          Join a game
-        </button>
+        {canHost ? (
+          <>
+            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
+              New game
+            </button>
+            <button type="button" className="btn btn-xl btn-blue" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
+              Join a game
+            </button>
+          </>
+        ) : (
+          // The host pays for the iPhone app; joining stays free here on the website.
+          <>
+            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
+              Join a game
+            </button>
+            <a className="btn btn-xl btn-blue" href={APP_STORE_URL}>
+              Host · get the app
+            </a>
+          </>
+        )}
         <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'howto' })}>
           How to play
         </button>

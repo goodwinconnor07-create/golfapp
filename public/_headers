@@ -11,3 +11,7 @@
 
 /sw.js
   Cache-Control: no-cache
+
+# Apple fetches this to let invite links (/j/CODE) open the iPhone app. It has to be JSON.
+/.well-known/apple-app-site-association
+  Content-Type: application/json

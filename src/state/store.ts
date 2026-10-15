@@ -762,12 +762,8 @@ export function boot(): void {
   const s = state.session;
   // A round finished before Past games existed (or before this visit) still gets saved.
   recordIfFinished(state.game);
-  if (code.length === CODE_LENGTH) {
-    if (s?.mode === 'online' && s.code === code) resetTo({ name: 'game' });
-    else resetTo({ name: 'join', code });
-  } else if (s?.game && s.game.status !== 'finished') {
-    resetTo({ name: 'game' });
-  }
+  if (code.length === CODE_LENGTH) openJoinLink(code);
+  else if (s?.game && s.game.status !== 'finished') resetTo({ name: 'game' });
   if (s?.mode === 'online' && s.code) connect(s.code);
 
   void recheckServer();
@@ -776,6 +772,15 @@ export function boot(): void {
   setInterval(() => {
     if (state.server === 'down' && document.visibilityState === 'visible') void recheckServer();
   }, 20_000);
+}
+
+/** A join link (/j/CODE) was opened: on the website at load, or tapped while the iPhone app runs. */
+export function openJoinLink(raw: string): void {
+  const code = normalizeCode(raw);
+  if (code.length !== CODE_LENGTH) return;
+  const s = state.session;
+  if (s?.mode === 'online' && s.code === code) resetTo({ name: 'game' });
+  else resetTo({ name: 'join', code });
 }
 
 /** Checks the server; when it comes back, a game made with no signal gets its invite code. */

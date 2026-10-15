@@ -160,3 +160,9 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - The app is now called **CardShot**. The logo (`public/icons/icon.svg`) is a playing card with a golf flag on it, fired out of a cannon. The app icons and link-preview image are rendered from it (`npm run icons`), and the home screen shows the same icon.
 - Only the name and logo changed. The game, its levels (Safe / Bold / Insane) and the lobby's "Ready to send it?" stay as they are.
 - Kept on purpose: the `sendit.*` storage keys (so saved games and settings survive the update) and the Worker name `send-it` (renaming it would change the web address and start fresh game rooms).
+
+## The iPhone app and who pays (Oct 2026)
+
+- Logo: the driver knocking the card off a tee (not the cannon). It's the app icon and launch screen.
+- The iPhone app is the web app wrapped with Capacitor (details in `docs/IOS.md`). It adds real haptics, the iOS share sheet, invite links that open the app and a native backup of saved games.
+- **The host pays** for the app (planned $4.99). Friends join free on the website with the link or code. Once the app is in the App Store, the website stops starting games (`VITE_WEB_HOSTING=off`): Home shows Join a game first, and "Host · get the app" goes to the App Store.
