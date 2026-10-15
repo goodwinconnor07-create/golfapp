@@ -93,10 +93,45 @@
   gap: 8px;
   padding: 16px 20px;
   color: var(--on-color);
-  background: linear-gradient(120deg, var(--tier), var(--tier-lo));
+  background: linear-gradient(120deg, var(--tier), var(--tier-lo), var(--tier));
+  background-size: 200% 100%;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  /* The tier colours drift slowly, and a soft shine sweeps across every few seconds,
+     so the card feels alive. Reduce Motion stops both (global.css). */
+  position: relative;
+  overflow: hidden;
+  animation: band-drift 6s ease-in-out infinite alternate;
+}
+
+.ccard-band::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.28) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: band-shine 4.5s ease-in-out 1s infinite;
+}
+
+@keyframes band-drift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes band-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  40%,
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .ccard-tier {
