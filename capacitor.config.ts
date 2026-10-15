@@ -15,6 +15,10 @@ const config: CapacitorConfig = {
     backgroundColor: '#ffffff',
   },
   plugins: {
+    PushNotifications: {
+      // No banner while the app is open: the screen already shows what changed.
+      presentationOptions: [],
+    },
     SplashScreen: {
       // Hidden by the app as soon as it has drawn (startNativeShell); this is the fallback.
       launchAutoHide: true,

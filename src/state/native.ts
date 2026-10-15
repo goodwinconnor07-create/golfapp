@@ -101,6 +101,30 @@ export async function backUpSavedData(): Promise<void> {
   }
 }
 
+// ── Push notifications ───────────────────────────────────────────────────────
+
+let pushStarted = false;
+
+/**
+ * Asks once to send notifications (the first time this phone joins an online game, when the
+ * reason is obvious), then hands Apple's token to onToken. Later calls do nothing.
+ * Notifications only show while the app is in the background: in the app you see the change anyway.
+ */
+export async function enablePush(onToken: (token: string) => void): Promise<void> {
+  if (pushStarted) return;
+  pushStarted = true;
+  try {
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    await PushNotifications.addListener('registration', ({ value }) => onToken(value));
+    await PushNotifications.addListener('registrationError', (e) => console.warn('Push registration failed', e.error));
+    let perm = await PushNotifications.checkPermissions();
+    if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') perm = await PushNotifications.requestPermissions();
+    if (perm.receive === 'granted') await PushNotifications.register();
+  } catch (e) {
+    console.warn('Push unavailable', e);
+  }
+}
+
 // ── App shell ────────────────────────────────────────────────────────────────
 
 /**

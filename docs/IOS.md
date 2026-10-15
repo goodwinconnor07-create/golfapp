@@ -17,6 +17,10 @@ same Cloudflare server as the website.
 - `ios/App/App/PrivacyInfo.xcprivacy`: Apple's privacy manifest (no tracking; UserDefaults and
   file timestamps for saving games and sharing the results picture).
 - `.github/workflows/ios.yml`: builds on a Mac and uploads to TestFlight.
+- Push notifications: `src/game/notify.ts` decides who to tell (the round starting, a hole's
+  results being in, a vote on someone's claim, a score fix waiting on you; never the phone that
+  did it), `worker/apns.ts` sends them straight to Apple, and the app asks permission the first
+  time it's in an online game. They only show when the app is in the background.
 
 ## Who pays
 
@@ -48,6 +52,22 @@ is in the App Store, the website can still start games. On launch day:
    - `APP_STORE_CONNECT_ISSUER_ID`: the Issuer ID above the keys list
    - `APP_STORE_CONNECT_KEY`: the whole contents of the `.p8` file
 
+7. **Push notifications**:
+   - developer.apple.com → Identifiers → `app.cardshot.ios`: tick **Push Notifications**.
+   - developer.apple.com → Keys → +: name it "CardShot push", tick **Apple Push Notifications
+     service (APNs)**, then download the `.p8` (only once) and note its Key ID. This is a
+     different key from step 5.
+   - Give the server the key (from the repo folder, with the Cloudflare token set):
+     ```
+     npx wrangler secret put APNS_KEY        # paste the whole .p8 file
+     npx wrangler secret put APNS_KEY_ID     # the push key's ID
+     npx wrangler secret put APNS_TEAM_ID    # your Team ID
+     ```
+     Until these are set the server just doesn't send notifications; nothing breaks.
+   - Builds run straight from Xcode use Apple's test push server: set the var
+     `APNS_HOST=api.sandbox.push.apple.com` while testing those. TestFlight and App Store builds
+     use the default.
+
 ## Making a TestFlight build
 
 GitHub → Actions → iOS → Run workflow (or push a tag like `ios-v1.0.0`). About 15 minutes later
@@ -76,3 +96,5 @@ instead of the live server.
 - Tapping an invite link in Messages opens the app straight into Join (needs step 2 above).
 - Close and reopen the app mid-round: it carries on where it was.
 - Airplane mode mid-hole: the round keeps going and catches up after.
+- Notifications: allow them when asked, lock the phone, and have a friend finish the hole, claim
+  a distance card, or ask to fix your score. Each should buzz your phone.

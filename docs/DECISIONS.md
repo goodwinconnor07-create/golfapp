@@ -172,3 +172,9 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - Player names go through a light filter (`src/game/names.ts`): slurs and obvious sexual or abusive words are refused with "Pick a different name.", including l33t and spaced-out spellings, without blocking real names like Dickson or Scunthorpe. Enforced in the reducer and on upload. Hosts can still remove players in the lobby.
 - The host's lobby heading is "Ready to tee off?" (was the old brand's "Ready to send it?").
 - `/privacy` and `/support` are plain pages on the website, linked from the last How to play slide (so they're one tap away in the app, as Apple asks). The contact email is a placeholder (`SUPPORT_EMAIL`) until the product owner picks one.
+
+## Push notifications (Oct 2026)
+
+- iPhone app only. It asks permission the first time it's in an online game.
+- Four moments, never to the phone that caused them: the host starts the round; a hole's last score lands ("Hole 3 results are in"); someone claims a card judged by eye (the others are asked to vote); a score fix is waiting on your answer. Nothing for every pick or tap, to keep it from being noisy on the course.
+- No banner while the app is open (the screen already shows it). Tokens are stored with the online game and deleted with it after 14 days; tokens Apple says are dead are dropped straight away.

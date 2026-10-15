@@ -20,7 +20,14 @@ export type ClientMessage =
   | { t: 'act'; id: string; a: Action }
   /** Ask for the latest state. */
   | { t: 'sync' }
+  /** The iPhone app's push notification token for this phone (null: stop sending). */
+  | { t: 'push'; token: string | null }
   | { t: 'ping' };
+
+/** An APNs device token: hex, 32 bytes today but Apple says not to rely on the length. */
+export function isPushToken(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{32,200}$/i.test(value);
+}
 
 export type ServerMessage = { t: 'state'; game: Game; ack?: string } | { t: 'reject'; id?: string; error: string } | { t: 'pong' };
 

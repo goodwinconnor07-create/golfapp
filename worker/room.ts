@@ -4,7 +4,9 @@ import {
   canAddPlayers,
   cryptoRng,
   isDeviceId,
+  isPushToken,
   LIMITS,
+  notesFor,
   parseAction,
   PING,
   PONG,
@@ -13,6 +15,7 @@ import {
   type GameInfo,
   type ServerMessage,
 } from '../src/game';
+import { sendPush, type ApnsEnv } from './apns';
 
 /** Games are deleted this long after the last change. */
 const KEEP_FOR_MS = 14 * 24 * 60 * 60 * 1000;
@@ -31,6 +34,8 @@ interface SocketMeta {
  */
 export class GameRoom extends DurableObject<Env> {
   private game: Game | null | undefined;
+  /** Push notification tokens by device id (iPhone app only). Deleted with the game. */
+  private push: Record<string, string> | undefined;
   private rate = new WeakMap<WebSocket, { start: number; count: number }>();
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -98,6 +103,7 @@ export class GameRoom extends DurableObject<Env> {
       return;
     }
     if (t === 'sync') return this.send(ws, { t: 'state', game: redactForDevice(game, deviceId) });
+    if (t === 'push') return this.setPushToken(game, deviceId, (msg as { token?: unknown }).token);
     if (t !== 'act') return;
 
     const id = typeof rawId === 'string' && rawId.length <= 40 ? rawId : undefined;
@@ -120,6 +126,40 @@ export class GameRoom extends DurableObject<Env> {
         ack: socket === ws ? id : undefined,
       });
     }
+    // Buzz the other phones for the moments that matter (round started, results in, a vote…).
+    const notes = notesFor(game, result.game, action, deviceId);
+    if (notes.length) this.ctx.waitUntil(this.notify(notes));
+  }
+
+  /** Remembers (or forgets) this phone's push token. Only phones in the game can register. */
+  private async setPushToken(game: Game, deviceId: string, token: unknown): Promise<void> {
+    const inGame = deviceId === game.hostDeviceId || game.players.some((p) => p.deviceId === deviceId);
+    if (!inGame || !(token === null || isPushToken(token))) return;
+    const push = await this.loadPush();
+    if (token === null) delete push[deviceId];
+    else if (push[deviceId] === token) return;
+    else push[deviceId] = token;
+    await this.ctx.storage.put('push', push);
+  }
+
+  private async notify(notes: ReturnType<typeof notesFor>): Promise<void> {
+    const push = await this.loadPush();
+    let changed = false;
+    for (const note of notes) {
+      const tokens = note.devices.map((d) => push[d]).filter((t): t is string => Boolean(t));
+      const results = await sendPush(this.env as Env & ApnsEnv, tokens, { title: note.title, body: note.body });
+      for (const r of results) {
+        if (!r.gone) continue;
+        for (const [d, t] of Object.entries(push)) if (t === r.token) delete push[d];
+        changed = true;
+      }
+    }
+    if (changed) await this.ctx.storage.put('push', push);
+  }
+
+  private async loadPush(): Promise<Record<string, string>> {
+    this.push ??= (await this.ctx.storage.get<Record<string, string>>('push')) ?? {};
+    return this.push;
   }
 
   async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
@@ -149,6 +189,7 @@ export class GameRoom extends DurableObject<Env> {
     }
     await this.ctx.storage.deleteAll();
     this.game = null;
+    this.push = undefined;
   }
 
   private async load(): Promise<Game | null> {

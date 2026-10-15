@@ -28,6 +28,8 @@ import {
 import { haptic, reducedMotion } from '../ui/effects';
 import { checkServer, createOnlineGame } from './api';
 import { Connection, type ConnStatus } from './connection';
+import { enablePush } from './native';
+import { isNative } from './platform';
 import {
   clearHistory as clearSavedHistory,
   loadDeviceId,
@@ -343,8 +345,18 @@ function announceMulligans(before: Game | null, after: Game): void {
   }
 }
 
+/** This phone's push token, once the iPhone app has one. Sent to every online game it's in. */
+let pushToken: string | null = null;
+
+function onPushToken(token: string): void {
+  pushToken = token;
+  conn?.send({ t: 'push', token });
+}
+
 function connect(code: string): void {
   closeConnection();
+  // The iPhone app asks for notifications the first time it's in an online game.
+  if (isNative) void enablePush(onPushToken);
   set({ conn: 'connecting' });
   conn = new Connection(code, state.deviceId, {
     onMessage: onServerMessage,
@@ -352,6 +364,7 @@ function connect(code: string): void {
     onOpen: () => {
       const s = state.session;
       if (s?.mode !== 'online') return;
+      if (pushToken) conn?.send({ t: 'push', token: pushToken });
       for (const p of s.pending) conn?.send({ t: 'act', id: p.id, a: p.action });
     },
     onGone: (message) => {

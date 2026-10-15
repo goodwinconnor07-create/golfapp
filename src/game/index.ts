@@ -9,3 +9,4 @@ export * from './reducer';
 export * from './selectors';
 export * from './validate';
 export * from './protocol';
+export * from './notify';

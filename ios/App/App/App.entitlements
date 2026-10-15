@@ -4,6 +4,9 @@
 <dict>
 	<!-- Invite links (https://…/j/CODE) open the app when it's installed.
 	     The site serves the matching /.well-known/apple-app-site-association. -->
+	<!-- Push notifications. Xcode switches this to production for TestFlight and App Store builds. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:send-it.kavishahtemu11.workers.dev</string>
