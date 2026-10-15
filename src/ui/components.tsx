@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type SVGProps,
 } from 'react';
-import { AVATAR_EMOJIS, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
+import { AVATAR_EMOJIS, CODE_LENGTH, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic, reducedMotion } from './effects';
 import { BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
@@ -428,6 +428,55 @@ export function Blobs({ colors = BLOB_COLORS }: { colors?: string[] }) {
           }}
         />
       ))}
+    </div>
+  );
+}
+
+// ── Loading skeletons ───────────────────────────────────────────────────────
+// Grey shapes of what's about to appear. Each card rocks gently side to side (a deck
+// being shuffled) so it's clear something is on its way. role="status" + label for screen readers.
+
+/** Rows shaped like course or player rows. */
+export function SkeletonRows({ count = 3, label = 'Loading' }: { count?: number; label?: string }) {
+  return (
+    <div className="stack skeleton-deck" role="status" aria-label={label}>
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="player-row course-row skeleton-card" style={{ animationDelay: `${i * 120}ms` }}>
+          <span className="skeleton skeleton-icon" />
+          <span className="course-text">
+            <span className="skeleton skeleton-line" />
+            <span className="skeleton skeleton-line short" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The invite code tiles and a button, while a code is on its way. */
+export function SkeletonInvite({ label, qr = false }: { label: string; qr?: boolean }) {
+  return (
+    <div className="stack skeleton-deck" role="status" aria-label={label} style={{ gap: 16 }}>
+      <p className="muted skeleton-caption">{label}</p>
+      <div className="code-tiles">
+        {Array.from({ length: CODE_LENGTH }, (_, i) => (
+          <span key={i} className="skeleton skeleton-card skeleton-tile" style={{ animationDelay: `${i * 90}ms` }} />
+        ))}
+      </div>
+      {qr && <span className="skeleton skeleton-card skeleton-qr" />}
+      <span className="skeleton skeleton-card skeleton-button" />
+    </div>
+  );
+}
+
+/** A game screen: title, the big challenge card and a couple of player rows. */
+export function SkeletonGame({ label }: { label: string }) {
+  return (
+    <div className="stack skeleton-deck" role="status" aria-label={label} style={{ gap: 16, width: '100%' }}>
+      <span className="skeleton skeleton-title" />
+      <span className="skeleton skeleton-card skeleton-hero" />
+      <SkeletonRows count={2} label={label} />
+      <p className="muted skeleton-caption">{label}</p>
     </div>
   );
 }

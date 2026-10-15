@@ -2,7 +2,7 @@ import { isDoubleHole, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
 import { gameView, myPlayers, type GameView } from '../../state/view';
-import { BackBar, Spinner } from '../../ui/components';
+import { BackBar, SkeletonGame } from '../../ui/components';
 import { BellIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
@@ -30,8 +30,8 @@ export function GameScreen() {
     return (
       <div className="screen">
         <BackBar title="Joining" />
-        <div className="screen-body center" style={{ justifyContent: 'center' }}>
-          <Spinner label="Joining the game…" />
+        <div className="screen-body">
+          <SkeletonGame label="Joining the game…" />
           {conn === 'offline' && <p className="muted">Waiting for signal…</p>}
         </div>
       </div>

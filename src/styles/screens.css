@@ -1921,17 +1921,28 @@
   color: var(--ink-3);
 }
 
-/* Loading placeholders: soft shimmer in the shape of what's coming. */
-.skeleton-row {
-  animation: fade-in 0.2s ease-out both;
-}
-
+/* Loading placeholders: grey shapes of what's coming. Each card rocks gently side to side,
+   like a deck being shuffled, and a soft shimmer runs across it, so it reads as "on its way". */
 .skeleton {
   display: block;
   border-radius: var(--r-sm);
   background: linear-gradient(90deg, var(--bg-3) 25%, var(--line) 50%, var(--bg-3) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-card {
+  animation:
+    fade-in 0.2s ease-out both,
+    skeleton-sway 1.6s ease-in-out infinite;
+  animation-delay: inherit;
+}
+
+/* A .skeleton that is also a card keeps both the shimmer and the sway. */
+.skeleton.skeleton-card {
+  animation:
+    shimmer 1.2s ease-in-out infinite,
+    skeleton-sway 1.6s ease-in-out infinite;
 }
 
 .skeleton-icon {
@@ -1949,6 +1960,68 @@
   width: 45%;
   margin-top: 8px;
   height: 12px;
+}
+
+.skeleton-title {
+  height: 32px;
+  width: 60%;
+  border-radius: var(--r-md);
+}
+
+.skeleton-hero {
+  height: 220px;
+  border-radius: var(--r-lg);
+}
+
+.code-tiles .skeleton-tile {
+  background-color: var(--bg-3);
+}
+
+.skeleton-qr {
+  width: 196px;
+  height: 196px;
+  margin: 0 auto;
+  border-radius: var(--r-lg);
+}
+
+.skeleton-button {
+  height: 64px;
+  border-radius: var(--r-lg);
+}
+
+.skeleton-caption {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+@keyframes skeleton-sway {
+  0%,
+  100% {
+    transform: translateX(-4px) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(0.6deg);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Reduce Motion: no rocking or shimmer, just a slow fade so it still reads as loading. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton-card,
+  .skeleton.skeleton-card {
+    animation: skeleton-pulse 1.6s ease-in-out infinite !important;
+  }
 }
 
 @keyframes shimmer {

@@ -1,7 +1,7 @@
 import { LIMITS, type Game } from '../../game';
 import { confirm, dispatch, goOnline, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
-import { Avatar, Spinner } from '../../ui/components';
+import { Avatar, SkeletonInvite } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
 import { GearIcon, ShareIcon } from '../../ui/Icons';
 import { CodeTiles, shareInvite } from '../sheets/InviteSheet';
@@ -52,7 +52,7 @@ export function Lobby({ game }: { game: Game }) {
                 </button>
               </>
             ) : busy ? (
-              <Spinner label={busy} />
+              <SkeletonInvite label={busy} />
             ) : (
               <>
                 <p style={{ margin: 0 }}>

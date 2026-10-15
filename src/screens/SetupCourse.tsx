@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CourseDetail, CourseSummary } from '../game';
 import { fetchCourse, searchCourses } from '../state/courses';
 import { navigate, setDraftCourse, toast, useApp } from '../state/store';
-import { BackBar } from '../ui/components';
+import { BackBar, SkeletonRows } from '../ui/components';
 import { haptic } from '../ui/effects';
 import { FlagIcon } from '../ui/Icons';
 
@@ -104,17 +104,7 @@ export function SetupCourse() {
         {server === 'down' && <p className="note">Course search needs a connection. You can skip and enter pars on each tee.</p>}
         {searching && results.length === 0 && (
           // Placeholder rows while results load, shaped like the real ones.
-          <div className="stack" aria-label="Searching" role="status">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="player-row course-row skeleton-row" style={{ animationDelay: `${i * 120}ms` }}>
-                <span className="skeleton skeleton-icon" />
-                <span className="course-text">
-                  <span className="skeleton skeleton-line" />
-                  <span className="skeleton skeleton-line short" />
-                </span>
-              </div>
-            ))}
-          </div>
+          <SkeletonRows label="Searching" />
         )}
         {error === 'none' && !searching && (
           <div className="empty-state">
@@ -161,7 +151,7 @@ export function SetupCourse() {
           ))}
         </div>
         {results.length > 0 && (
-          <p className="note small">Course data from GolfCourseAPI, and © OpenStreetMap contributors (ODbL) via OpenGolfAPI.</p>
+          <p className="note small">Course data from GolfCore, GolfCourseAPI, and © OpenStreetMap contributors (ODbL) via OpenGolfAPI.</p>
         )}
       </div>
       <div className="screen-foot">

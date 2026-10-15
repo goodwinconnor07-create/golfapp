@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { nativeShare } from '../../state/native';
 import { isNative, publicOrigin } from '../../state/platform';
 import { goOnline, toast, useApp } from '../../state/store';
-import { Sheet, Spinner } from '../../ui/components';
+import { Sheet, SkeletonInvite } from '../../ui/components';
 import { CopyIcon, ShareIcon } from '../../ui/Icons';
 import { QRCode } from '../../ui/QRCode';
 import { TILE_COLORS } from '../../ui/theme';
@@ -69,7 +69,7 @@ export function InviteSheet() {
     return (
       <Sheet title="Invite friends">
         {busy ? (
-          <Spinner label={busy} />
+          <SkeletonInvite label={busy} qr />
         ) : (
           <div className="stack">
             <p style={{ marginTop: 0 }}>
