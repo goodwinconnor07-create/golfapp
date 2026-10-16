@@ -389,13 +389,14 @@
     box-shadow 0.2s ease;
 }
 
-.tier-btn > :not(.tier-fx) {
+.tier-btn-icon,
+.tier-btn-text {
   position: relative;
   z-index: 1;
 }
 
-.tier-btn > .tier-btn-check {
-  position: absolute;
+.tier-btn-check {
+  z-index: 1;
 }
 
 /* Live shapes behind each level: decoration only, kept faint and to the right. */

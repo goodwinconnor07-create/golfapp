@@ -34,6 +34,21 @@
   transform: rotateY(180deg);
 }
 
+/* Only one face is ever drawn, swapped at the halfway point of the flip. Safari doesn't
+   always respect backface-visibility while things animate, and showed the back mirrored
+   through the front. */
+.ccard .ccard-front,
+.ccard.flipped .ccard-back {
+  visibility: hidden;
+  transition: visibility 0s linear 0.2s;
+}
+
+.ccard .ccard-back,
+.ccard.flipped .ccard-front {
+  visibility: visible;
+  transition: visibility 0s linear 0.2s;
+}
+
 .ccard-face {
   grid-area: 1 / 1;
   border-radius: var(--r-lg);
@@ -247,20 +262,21 @@
    sweeps the shield, Bold catches fire from the bottom, Insane shakes hard while lightning
    strikes. Times match flipDelay() in ChallengeCard.tsx. */
 
-.ccard-back {
+.ccard {
   position: relative;
 }
 
-.ccard-back-art {
-  position: relative;
-  z-index: 1;
-}
-
+/* Sits over the card, not inside the flip. Gone once the card is face up. */
 .ccard-fx {
   position: absolute;
   inset: 0;
+  border-radius: var(--r-lg);
   overflow: hidden;
   pointer-events: none;
+}
+
+.ccard.flipped .ccard-fx {
+  display: none;
 }
 
 .ccard-fx > * {
@@ -276,7 +292,7 @@
 }
 
 /* Safe: a small shake and a glint. */
-.ccard-safe.winding .ccard-inner {
+.ccard-safe.winding {
   animation: wind-safe 0.56s ease-in-out;
 }
 
@@ -325,7 +341,7 @@
 }
 
 /* Bold: flames lick up from the bottom while the card heats up and swells. */
-.ccard-bold.winding .ccard-inner {
+.ccard-bold.winding {
   animation: wind-bold 0.64s ease-in;
 }
 
@@ -421,7 +437,7 @@
 }
 
 /* Insane: a hard shake, two lightning strikes and a white flash. */
-.ccard-insane.winding .ccard-inner {
+.ccard-insane.winding {
   animation: wind-up 0.72s ease-in-out;
 }
 

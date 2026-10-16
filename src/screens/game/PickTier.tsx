@@ -65,7 +65,7 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
                 <span className="tier-btn-icon">
                   <TierIcon tier={t} size={38} />
                 </span>
-                <span>
+                <span className="tier-btn-text">
                   <span className="tier-btn-label">
                     {TIERS[t].label}
                     <Pips n={TIER_LOOK[t].pips} />

@@ -13,7 +13,7 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: external ?? `http://localhost:${PORT}`,
-    browserName: 'chromium',
+    browserName: (process.env.BROWSER as 'webkit') ?? 'chromium',
     // SMALL=1 checks a small phone (360×740) instead of a typical one.
     viewport: process.env.SMALL ? { width: 360, height: 740 } : { width: 390, height: 844 },
     deviceScaleFactor: 2,
