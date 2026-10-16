@@ -58,7 +58,6 @@ jobs:
             exit 1
           fi
           { echo '-----BEGIN PRIVATE KEY-----'; printf '%s' "$BODY" | fold -w 64; echo; echo '-----END PRIVATE KEY-----'; } > "$RUNNER_TEMP/keys/AuthKey.p8"
-      # Sign for the App Store straight away: a development profile would need a registered iPhone.
       - name: Archive
         run: |
           xcodebuild archive \
@@ -68,8 +67,6 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/CardShot.xcarchive" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
