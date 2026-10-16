@@ -158,7 +158,7 @@ function PickDemo() {
   );
 }
 
-/** 5 strokes on a par 4 with a Bold card completed: a bogey, minus 4, is 3 under. */
+/** 5 strokes on a par 4 with a Bold card completed: a bogey, minus 2, is 1 under. */
 function ScoreDemo() {
   return (
     <div className="howto-score">
@@ -190,7 +190,7 @@ function LeadDemo() {
         className="board-row first reorder climbed"
         style={{ '--from': 1 } as React.CSSProperties}
         score="−4"
-        detail="Insane card ✓ −6"
+        detail="Insane card ✓ −9"
       />
       <PlayerRow
         player={ALEX}
@@ -207,7 +207,6 @@ function LeadDemo() {
 function TwistsDemo() {
   const items = [
     { icon: '2×', text: 'In longer rounds, the last 3 holes count double.' },
-    { icon: '🛟', text: 'Last place gets one free shot a round: failing costs nothing.' },
     { icon: '⇄', text: "Don't like your card? Redraw once a round." },
     { icon: '👍', text: 'Cards judged by eye? The group votes on them.' },
     { icon: '🔁', text: 'Mulligans: a couple of re-hits a round that don’t count.' },

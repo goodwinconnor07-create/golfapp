@@ -82,7 +82,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 ## Round twists (approved by the product owner, Oct 2026)
 
 - **2× finish.** In rounds of 6 holes or more, the last 3 holes count double: every card's complete and fail values are doubled (Insane −12 / +6). The tier values in `tiers.ts` are unchanged; the doubling is applied in `stakeFor()` in `rules.ts`. Shorter rounds play at normal stakes throughout.
-- **Free shot.** Whoever is in last place (after at least one finished hole; not when everyone is tied) can play one card a round where failing costs nothing. Completing it still counts in full (doubled on the last holes). Players tied for last can each use theirs. It's chosen on the pick screen before the card is drawn.
+- **Free shot** (switched off in Oct 2026, see Game balance v2). Whoever is in last place (after at least one finished hole; not when everyone is tied) can play one card a round where failing costs nothing. Completing it still counts in full (doubled on the last holes). Players tied for last can each use theirs. It's chosen on the pick screen before the card is drawn.
 - **Redraw.** Each player can swap one card a round for another from the same tier, on the card screen, before scoring.
 - **Group vote.** On cards judged by eye (distance cards), when a player says they completed it, everyone else in an online game gets 👍 Fair / 👎 No way on their own phone. More 👎 than 👍 turns it into a fail. Ties and no votes leave the claim standing. Voting is open while the hole is being played and closes when the group moves on. Players without their own phone don't vote. One-phone games have no vote.
 - **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once.
@@ -179,3 +179,16 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - iPhone app only. It asks permission the first time it's in an online game.
 - Four moments, never to the phone that caused them: the host starts the round; a hole's last score lands ("Hole 3 results are in"); someone claims a card judged by eye (the others are asked to vote); a score fix is waiting on your answer. Nothing for every pick or tap, to keep it from being noisy on the course.
 - No banner while the app is open (the screen already shows it). Tokens are stored with the online game and deleted with it after 14 days; tokens Apple says are dead are dropped straight away.
+
+## Game balance v2 (Oct 2026)
+
+Decided by the product owner after the balance simulations. The full rulebook, targets and reasoning are in [GAME_BALANCE.md](GAME_BALANCE.md); `npm run balance` re-checks them.
+
+- **Values:** Safe −1/+1, Bold −2/+2, Insane −9/+3 (was −2/+1, −4/+2, −6/+3). The old values made Safe the right pick almost every time.
+- **Same rules for everyone:** nothing depends on the standings. The **free shot is switched off** (old games that used one still score it). The 2× finish on the last 3 holes stays.
+- **Deck v2:** 8 Safe, 5 Bold, 7 Insane, mostly skill-flat cards. 12 new cards (S16, B16–B18, I16–I22) and Fairway Finder and The Lay-Up re-added as Bold (B19, B20; their Safe ids S03 and S15 are retired). Every other card is retired with `enabled: false`, including all situation cards, so the Situation cards option is hidden.
+- **Cards judged against your own last hole** (B16 Hold the Line, I18 Bounce Back, I21 Big Improvement): the app compares this hole's score against par with your last hole's. With no last hole (first hole, joined late) each card has its own first-hole target. Correcting the last hole re-judges them.
+- **10 strokes max per hole** (casual pick-up). Saved games with up to 20 still load.
+- **No hidden dealing:** a skill-matched dealer was tested and made no difference once the deck was skill-flat.
+- **Tested and not adopted:** chaser's shield, leader can't pick Safe on 2× holes, bounce-back and momentum boosts, a Safe streak, per-card values, capping holes at bogey, players declaring a skill level. Reasons in GAME_BALANCE.md.
+- This answers the open questions about Green in Regulation, Par Three Sniper vs Master, Two-Shot Threat and The Chip-In Chance: all retired.

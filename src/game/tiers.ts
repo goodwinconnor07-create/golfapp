@@ -9,11 +9,13 @@ export interface TierDef {
   missed: number;
 }
 
-// The spec's fixed stroke modifiers. Changing these is a product decision, not a tweak.
+// The fixed stroke modifiers. Changing these is a product decision, not a tweak:
+// they were tuned together with the deck in docs/GAME_BALANCE.md (Oct 2026). Re-run the
+// balance checks there before touching them.
 export const TIERS: Record<Tier, TierDef> = {
-  safe: { id: 'safe', label: 'Safe', made: -2, missed: 1 },
-  bold: { id: 'bold', label: 'Bold', made: -4, missed: 2 },
-  insane: { id: 'insane', label: 'Insane', made: -6, missed: 3 },
+  safe: { id: 'safe', label: 'Safe', made: -1, missed: 1 },
+  bold: { id: 'bold', label: 'Bold', made: -2, missed: 2 },
+  insane: { id: 'insane', label: 'Insane', made: -9, missed: 3 },
 };
 
 export const TIER_ORDER: readonly Tier[] = ['safe', 'bold', 'insane'];

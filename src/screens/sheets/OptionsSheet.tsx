@@ -28,13 +28,7 @@ export function OptionsSheet() {
           detail="Cards like “within 15 feet”, judged by eye. Online, the group votes on them."
           onChange={(v) => set({ distanceCards: v })}
         />
-        <Toggle
-          on={game.settings.situationCards}
-          disabled={!host}
-          title="Situation cards"
-          detail="Cards that only count if something happens, like landing in a bunker. If it doesn't happen, no change."
-          onChange={(v) => set({ situationCards: v })}
-        />
+        {/* Situation cards are all retired in deck v2 (docs/GAME_BALANCE.md), so their option is hidden. */}
         <Toggle
           on={game.settings.tiebreakOnStrokes}
           disabled={!host}
@@ -58,11 +52,7 @@ export function OptionsSheet() {
         <button type="button" className="btn btn-ghost" onClick={() => openSheet({ name: 'pars' })}>
           Set pars
         </button>
-        <button
-          type="button"
-          className="btn btn-dark"
-          onClick={closeSheet}
-        >
+        <button type="button" className="btn btn-dark" onClick={closeSheet}>
           Done
         </button>
       </div>

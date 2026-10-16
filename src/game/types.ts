@@ -160,5 +160,8 @@ export const LIMITS = {
   maxNameLength: 20,
   maxCourseLength: 40,
   minStrokes: 1,
-  maxStrokes: 20,
+  /** Casual pick-up: a hole counts no more than 10 strokes (product owner, Oct 2026). */
+  maxStrokes: 10,
+  /** Saved games from before the 10-stroke max may hold up to 20; they still load. */
+  maxSavedStrokes: 20,
 } as const;

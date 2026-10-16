@@ -75,9 +75,10 @@ function giveCard(game: Game, playerId: string, hole: number, cardId: string): G
 }
 
 describe('catalogue', () => {
-  it('has 15 cards per tier with unique stable ids', () => {
+  it('has unique stable ids and the deck v2 sizes (docs/GAME_BALANCE.md)', () => {
     expect(new Set(CARDS.map((c) => c.id)).size).toBe(CARDS.length);
-    for (const tier of TIER_ORDER) expect(CARDS.filter((c) => c.tier === tier)).toHaveLength(15);
+    const live = (tier: Tier) => CARDS.filter((c) => c.tier === tier && c.enabled).length;
+    expect([live('safe'), live('bold'), live('insane')]).toEqual([8, 5, 7]);
     for (const c of CARDS) {
       expect(c.title.trim()).not.toBe('');
       expect(c.pass.trim()).not.toBe('');
@@ -101,15 +102,15 @@ describe('catalogue', () => {
 
 describe('scoring (spec section 12)', () => {
   const cases: [Tier, 'made' | 'missed', number][] = [
-    ['safe', 'made', 3],
+    ['safe', 'made', 4],
     ['safe', 'missed', 6],
-    ['bold', 'made', 1],
+    ['bold', 'made', 3],
     ['bold', 'missed', 7],
-    ['insane', 'made', -1],
+    ['insane', 'made', -4],
     ['insane', 'missed', 8],
   ];
   // Cards the player has to call (not judged from strokes), one per tier.
-  const manualCard: Record<Tier, string> = { safe: 'S02', bold: 'B05', insane: 'I09' };
+  const manualCard: Record<Tier, string> = { safe: 'S02', bold: 'B18', insane: 'I20' };
 
   for (const [tier, outcome, expected] of cases) {
     it(`${tier} ${outcome} with 5 actual strokes gives ${expected}`, () => {
@@ -125,18 +126,18 @@ describe('scoring (spec section 12)', () => {
     });
   }
 
-  it("scores against par like the product owner's example: +2 then -7 is 5 under", () => {
+  it('scores against par: +3 then -10 is 7 under', () => {
     let g = run(newGame(['Sam'], [5, 4]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'S02'); // Safe
-    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 9, outcome: 'made' }); // 9 - 2 = 7 on a par 5
-    expect(holeResult(g, 'player00', 0)!.toPar).toBe(2);
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 9, outcome: 'made' }); // 9 - 1 = 8 on a par 5
+    expect(holeResult(g, 'player00', 0)!.toPar).toBe(3);
     g = run(g, { type: 'nextHole', from: 0 });
-    g = giveCard(g, 'player00', 1, 'I12'); // Insane: The Clean Birdie
-    g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 3, outcome: 'made' }); // 3 - 6 = -3 on a par 4
-    expect(holeResult(g, 'player00', 1)!.toPar).toBe(-7);
-    expect(standings(g)[0].totals.toPar).toBe(-5);
-    expect(formatToPar(-5)).toBe('\u22125');
-    expect(toParWords(-5)).toBe('5 under');
+    g = giveCard(g, 'player00', 1, 'I20'); // Insane: One and Done
+    g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 3, outcome: 'made' }); // 3 - 9 = -6 on a par 4
+    expect(holeResult(g, 'player00', 1)!.toPar).toBe(-10);
+    expect(standings(g)[0].totals.toPar).toBe(-7);
+    expect(formatToPar(-7)).toBe('\u22127');
+    expect(toParWords(-7)).toBe('7 under');
     expect(formatToPar(0)).toBe('E');
   });
 
@@ -144,16 +145,16 @@ describe('scoring (spec section 12)', () => {
     let g = run(newGame(['Sam'], [3]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'I01'); // Birdie Time
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 2 });
-    expect(holeResult(g, 'player00', 0)!.gameScore).toBe(-4);
+    expect(holeResult(g, 'player00', 0)!.gameScore).toBe(-7);
   });
 
   it('recalculates totals when strokes are corrected', () => {
     let g = run(newGame(['Sam'], [4]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'B05');
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
-    expect(standings(g)[0].totals).toMatchObject({ real: 5, game: 1 });
+    expect(standings(g)[0].totals).toMatchObject({ real: 5, game: 3 });
     g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 6, outcome: 'made' });
-    expect(standings(g)[0].totals).toMatchObject({ real: 6, game: 2 });
+    expect(standings(g)[0].totals).toMatchObject({ real: 6, game: 4 });
   });
 
   it('judges strokes-only cards automatically', () => {
@@ -202,6 +203,49 @@ describe('scoring (spec section 12)', () => {
   });
 });
 
+describe('cards judged against your own last hole', () => {
+  // B16 Hold the Line: match or beat last hole. I18 Bounce Back: beat it. I21 Big Improvement: beat it by 2.
+  function twoHoles(card: string, first: number, second: number): Game {
+    let g = run(newGame(['Sam'], [4, 4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: first, outcome: 'made' });
+    g = run(g, { type: 'nextHole', from: 0 });
+    g = giveCard(g, 'player00', 1, card);
+    return run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: second });
+  }
+
+  it('settles from strokes against the last hole, with no buttons to tap', () => {
+    expect(holeResult(twoHoles('B16', 6, 6), 'player00', 1)?.outcome).toBe('made');
+    expect(holeResult(twoHoles('B16', 5, 6), 'player00', 1)?.outcome).toBe('missed');
+    expect(holeResult(twoHoles('I18', 6, 5), 'player00', 1)?.outcome).toBe('made');
+    expect(holeResult(twoHoles('I18', 6, 6), 'player00', 1)?.outcome).toBe('missed');
+    expect(holeResult(twoHoles('I21', 7, 5), 'player00', 1)?.outcome).toBe('made');
+    expect(holeResult(twoHoles('I21', 7, 6), 'player00', 1)).toMatchObject({ outcome: 'missed', adjustment: 3 });
+  });
+
+  it('uses the first-hole target when there is no last hole', () => {
+    let g = run(newGame(['Sam'], [4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'I18'); // first hole: bogey or better
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5 });
+    expect(holeResult(g, 'player00', 0)).toMatchObject({ outcome: 'made', adjustment: -9 });
+  });
+
+  it('re-judges when the last hole is corrected', () => {
+    let g = twoHoles('I18', 6, 5);
+    expect(holeResult(g, 'player00', 1)?.outcome).toBe('made');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    expect(holeResult(g, 'player00', 1)?.outcome).toBe('missed');
+  });
+
+  it('caps a hole at 10 strokes, but saved games with more still load', () => {
+    let g = run(newGame(['Sam'], [4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    expect(applyAction(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 11, outcome: 'made' }, ctx()).ok).toBe(false);
+    g.entries[entryKey('player00', 0)].strokes = 12;
+    expect(sanitizeUpload(g, HOST, 5, seeded())!.entries[entryKey('player00', 0)].strokes).toBe(12);
+  });
+});
+
 describe('dealing cards', () => {
   it("never deals a card that doesn't fit the hole's par", () => {
     for (const par of [3, 4, 5] as Par[]) {
@@ -219,7 +263,7 @@ describe('dealing cards', () => {
 
   it('never deals a switched-off card', () => {
     const off = CARDS.filter((c) => !c.enabled).map((c) => c.id);
-    expect(off).toEqual(['S14', 'B15']);
+    expect(off).toEqual(expect.arrayContaining(['S14', 'B15', 'S03', 'S15', 'B01', 'I01']));
     const pars = Array.from({ length: 18 }, () => 5 as Par);
     let g = run(newGame(['Sam', 'Alex'], pars), { type: 'start' });
     const rng = seeded(11);
@@ -235,7 +279,8 @@ describe('dealing cards', () => {
   });
 
   it('gives players on the same hole different cards', () => {
-    const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+    // Bold has 4 cards that fit a par 4 in deck v2.
+    const names = ['A', 'B', 'C', 'D'];
     let g = run(newGame(names, [4]), { type: 'start' });
     const rng = seeded(7);
     for (const p of g.players) g = run(g, { type: 'pick', playerId: p.id, hole: 0, tier: 'bold' }, ctx(HOST, rng));
@@ -296,25 +341,25 @@ describe('dealing cards', () => {
 
   it('keeps a card the phone dealt offline when it fits', () => {
     let g = run(newGame(['Sam'], [4]), { type: 'start' });
-    const pick: Action = { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B01' };
+    const pick: Action = { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B16' };
     // The phone's own guess and the server agree on the card.
     const predicted = run(g, pick, { ...ctx(), predict: true });
-    expect(predicted.entries[entryKey('player00', 0)].cardId).toBe('B01');
+    expect(predicted.entries[entryKey('player00', 0)].cardId).toBe('B16');
     g = run(g, pick);
-    expect(g.entries[entryKey('player00', 0)].cardId).toBe('B01');
-    expect(g.decks?.bold ?? []).not.toContain('B01');
+    expect(g.entries[entryKey('player00', 0)].cardId).toBe('B16');
+    expect(g.decks?.bold ?? []).not.toContain('B16');
   });
 
   it('deals another card when the offline card is taken or the wrong tier', () => {
     let g = run(newGame(['Sam', 'Alex'], [4]), { type: 'start' });
-    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B01' });
-    g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold', cardId: 'B01' });
+    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold', cardId: 'B16' });
+    g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold', cardId: 'B16' });
     const alex = getCard(g.entries[entryKey('player01', 0)].cardId)!;
-    expect(alex.id).not.toBe('B01');
+    expect(alex.id).not.toBe('B16');
     expect(alex.tier).toBe('bold');
 
     let h = run(newGame(['Sam'], [4]), { type: 'start' });
-    h = run(h, { type: 'pick', playerId: 'player00', hole: 0, tier: 'safe', cardId: 'B01' });
+    h = run(h, { type: 'pick', playerId: 'player00', hole: 0, tier: 'safe', cardId: 'B16' });
     expect(getCard(h.entries[entryKey('player00', 0)].cardId)!.tier).toBe('safe');
   });
 
@@ -359,8 +404,8 @@ describe('round flow', () => {
     let g = run(newGame(['Sam', 'Alex'], [4]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'S02');
     g = giveCard(g, 'player01', 0, 'B05');
-    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' }); // 5 - 2 = 3
-    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 7, outcome: 'made' }); // 7 - 4 = 3
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' }); // 5 - 1 = 4
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'made' }); // 6 - 2 = 4
     expect(standings(g).map((r) => r.rank)).toEqual([1, 1]);
     g = run(g, { type: 'setSettings', settings: { tiebreakOnStrokes: true } });
     const rows = standings(g);
@@ -469,49 +514,33 @@ describe('double stakes, free shot, redraw and votes', () => {
   it('doubles the stakes on the last 3 holes of a round of 6 or more', () => {
     let g = midRound([4, 4, 4, 4, 4, 4], 5);
     g = parHunter(g, 'player00', 5, 4);
-    expect(holeResult(g, 'player00', 5)).toMatchObject({ adjustment: -8, doubled: true, toPar: -8 });
+    expect(holeResult(g, 'player00', 5)).toMatchObject({ adjustment: -4, doubled: true, toPar: -4 });
     g = parHunter(g, 'player01', 5, 5);
     expect(holeResult(g, 'player01', 5)).toMatchObject({ adjustment: 4, doubled: true });
 
     let early = midRound([4, 4, 4, 4, 4, 4], 2);
     early = parHunter(early, 'player00', 2, 4);
-    expect(holeResult(early, 'player00', 2)).toMatchObject({ adjustment: -4, doubled: false });
+    expect(holeResult(early, 'player00', 2)).toMatchObject({ adjustment: -2, doubled: false });
 
     // Short rounds stay at normal stakes.
     let short = midRound([4, 4, 4], 2);
     short = parHunter(short, 'player00', 2, 4);
-    expect(holeResult(short, 'player00', 2)?.adjustment).toBe(-4);
+    expect(holeResult(short, 'player00', 2)?.adjustment).toBe(-2);
   });
 
-  it('gives last place one free shot a round, where failing costs nothing', () => {
+  it('offers no free shot (same rules for everyone), but old free shots still score', () => {
     let g = midRound([4, 4, 4], 0);
     g = parHunter(g, 'player00', 0, 4); // Sam makes it
-    g = parHunter(g, 'player01', 0, 5); // Alex fails
+    g = parHunter(g, 'player01', 0, 5); // Alex fails, so is last
     g = run(g, { type: 'nextHole', from: 0 });
-    expect(freePassAvailable(g, 'player01')).toBe(true);
-    expect(freePassAvailable(g, 'player00')).toBe(false);
-    expect(applyAction(g, { type: 'pick', playerId: 'player00', hole: 1, tier: 'bold', freePass: true }, ctx()).ok).toBe(false);
+    expect(freePassAvailable(g, 'player01')).toBe(false);
+    expect(applyAction(g, { type: 'pick', playerId: 'player01', hole: 1, tier: 'insane', freePass: true }, ctx()).ok).toBe(false);
 
-    g = run(g, { type: 'pick', playerId: 'player01', hole: 1, tier: 'insane', freePass: true });
-    const key = entryKey('player01', 1);
+    // A saved game from before the change: the failed free shot still costs nothing.
     g = structuredClone(g);
-    g.entries[key].cardId = 'I01';
-    // I01 settles from strokes; a bogey is a fail.
+    g.entries[entryKey('player01', 1)] = { tier: 'insane', cardId: 'I01', pickedBy: HOST, freePass: true };
     g = run(g, { type: 'score', playerId: 'player01', hole: 1, strokes: 6, outcome: 'missed' });
-    const r = holeResult(g, 'player01', 1)!;
-    expect(r.outcome).toBe('missed');
-    expect(r).toMatchObject({ adjustment: 0, freePass: true });
-    // Used up.
-    expect(freePassAvailable(g, 'player01')).toBe(false);
-  });
-
-  it('nobody gets the free shot when everyone is tied', () => {
-    let g = midRound([4, 4, 4], 0);
-    g = parHunter(g, 'player00', 0, 4);
-    g = parHunter(g, 'player01', 0, 4);
-    g = run(g, { type: 'nextHole', from: 0 });
-    expect(freePassAvailable(g, 'player00')).toBe(false);
-    expect(freePassAvailable(g, 'player01')).toBe(false);
+    expect(holeResult(g, 'player01', 1)).toMatchObject({ outcome: 'missed', adjustment: 0, freePass: true });
   });
 
   it('allows one redraw per player per round, from the same tier', () => {
@@ -564,8 +593,8 @@ describe('double stakes, free shot, redraw and votes', () => {
     g = parHunter(g, 'player00', 0, 4);
     g = parHunter(g, 'player01', 0, 5);
     g = run(g, { type: 'nextHole', from: 0 });
-    expect(gapText(g, 'player01')).toBe("You're 7 strokes behind Sam");
-    expect(gapText(g, 'player00')).toBe('You lead Alex by 7 strokes');
+    expect(gapText(g, 'player01')).toBe("You're 5 strokes behind Sam");
+    expect(gapText(g, 'player00')).toBe('You lead Alex by 5 strokes');
     // Alex makes an Insane card, Sam fails: Alex takes the lead.
     g = structuredClone(g);
     g.entries[entryKey('player01', 1)] = { tier: 'insane', cardId: 'I01', pickedBy: HOST };

@@ -214,7 +214,7 @@ test('picking a course fills in the pars', async ({ page }) => {
   await shot(page, '26-course-recent');
 });
 
-test('late in the round: 2× stakes, the gap to the leader, free shot and redraw', async ({ page }) => {
+test('late in the round: 2× stakes, the gap to the leader, no free shot, and redraw', async ({ page }) => {
   await page.goto('/');
   const device = await page.evaluate(() => JSON.parse(localStorage.getItem('sendit.device') ?? '""'));
   const done = (tier: string, cardId: string, strokes: number, outcome: string) => ({ tier, cardId, pickedBy: device, strokes, outcome });
@@ -263,21 +263,18 @@ test('late in the round: 2× stakes, the gap to the leader, free shot and redraw
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
   await expect(page.getByText('You lead Alex by 1 stroke')).toBeVisible();
   await expect(page.locator('.double-banner')).toContainText('Double stakes');
-  await expect(page.getByRole('radio', { name: /Safe/ })).toContainText('Complete −4 · Fail +2');
+  await expect(page.getByRole('radio', { name: /Safe/ })).toContainText('Complete −2 · Fail +2');
   await expect(page.getByRole('switch', { name: /free shot/i })).toHaveCount(0);
   await pickAndReveal(page, 'Safe');
 
-  // Alex is last: the free shot is offered, and failing then costs nothing.
+  // Alex is last, but the same rules apply to everyone: no free shot (docs/GAME_BALANCE.md).
   await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();
   await expect(page.getByText("You're 1 stroke behind Sam")).toBeVisible();
-  const free = page.getByRole('switch', { name: /free shot/i });
-  await free.click();
-  await expect(free).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('radio', { name: /Insane/ })).toContainText('Complete −12 · Fail 0');
-  await shot(page, '35-pick-free-shot');
+  await expect(page.getByRole('switch', { name: /free shot/i })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: /Insane/ })).toContainText('Complete −18 · Fail +6');
+  await shot(page, '35-pick-insane-doubled');
   await page.getByRole('radio', { name: /Insane/ }).click();
   await page.getByRole('button', { name: 'Draw my Insane card' }).click();
-  await expect(page.getByText(/Free shot: failing this one costs nothing/)).toBeVisible();
 
   // One redraw a round.
   const first = await page.locator('.ccard-title').textContent();
@@ -286,7 +283,7 @@ test('late in the round: 2× stakes, the gap to the leader, free shot and redraw
   await expect(page.getByRole('button', { name: /Redraw/ })).toHaveCount(0);
   await shot(page, '36-redrawn');
   await page.getByRole('button', { name: /^Got it/ }).click();
-  await passGroupReveal(page, '37-group-reveal-free-shot');
+  await passGroupReveal(page, '37-group-reveal-late');
 });
 
 test('pick a picture: emoji and colour, remembered and changeable in the lobby', async ({ page }) => {

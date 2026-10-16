@@ -22,6 +22,21 @@ export interface ShotArt {
 }
 
 export const SHOT_ART: Record<string, ShotArt> = {
+  // Deck v2 (Oct 2026)
+  S16: { kind: 'drive', metres: 150 },
+  B16: { kind: 'score', toPar: 0, tag: 'match or beat your last hole' },
+  B17: { kind: 'putt', two: true, tag: '1st putt within 3 feet' },
+  B18: { kind: 'trouble', hazard: 'both', tag: 'no penalties · 2 putts max' },
+  B19: { kind: 'drive', tag: 'tee shot · fairway' },
+  B20: { kind: 'drive', tag: '2nd shot · fairway' },
+  I16: { kind: 'putt', feet: 4 },
+  I17: { kind: 'putt', feet: 3 },
+  I18: { kind: 'score', toPar: -1, tag: 'beat your last hole' },
+  I19: { kind: 'approach', feet: 30 },
+  I20: { kind: 'putt', feet: 10, tag: 'one putt · chip-in counts' },
+  I21: { kind: 'score', toPar: -2, tag: 'beat your last hole by 2' },
+  I22: { kind: 'putt', feet: 10, tag: 'one putt' },
+
   // Putting
   S04: { kind: 'putt', two: true, tag: '2 putts max' },
   B04: { kind: 'putt', feet: 6 },

@@ -57,11 +57,24 @@ export function eligibleCards(tier: Tier, par: Par, settings: Settings): CardDef
   return CARDS.filter((c) => c.tier === tier && isEligible(c, par, settings));
 }
 
+/** The player's score against par on the hole before this one, or null if there isn't one yet. */
+export function lastHoleToPar(game: Game, playerId: string, hole: number): number | null {
+  if (hole <= 0) return null;
+  const prev = getEntry(game, playerId, hole - 1);
+  const par = game.holes[hole - 1]?.par;
+  return prev?.strokes != null && par != null ? prev.strokes - par : null;
+}
+
 /**
  * What the strokes alone say about this card.
  * 'made' / 'missed' when the strokes settle it, null when a player has to call it.
+ * lastToPar: the player's score against par on their last hole (for cards judged against it).
  */
-export function judgeFromStrokes(card: CardDef, par: Par, strokes: number): 'made' | 'missed' | null {
+export function judgeFromStrokes(card: CardDef, par: Par, strokes: number, lastToPar: number | null = null): 'made' | 'missed' | null {
+  if (card.vsLastHole) {
+    const { by, first } = card.vsLastHole;
+    return strokes - par <= (lastToPar == null ? first : lastToPar - by) ? 'made' : 'missed';
+  }
   if (card.score && strokes - par > card.score.maxToPar) return 'missed';
   const within = card.doneWithin;
   if (within && ((within.strokes != null && strokes <= within.strokes) || (within.toPar != null && strokes - par <= within.toPar))) {
@@ -72,7 +85,7 @@ export function judgeFromStrokes(card: CardDef, par: Par, strokes: number): 'mad
 
 /** Outcomes a player can tap for this card. Empty when the strokes decide it. */
 export function outcomeChoices(card: CardDef): Outcome[] {
-  if (card.score?.decides) return [];
+  if (card.score?.decides || card.vsLastHole) return [];
   return card.situational ? ['made', 'missed', 'na'] : ['made', 'missed'];
 }
 
@@ -80,13 +93,13 @@ export function outcomeChoices(card: CardDef): Outcome[] {
  * The challenge result, worked out from the source fields every time
  * (so correcting strokes or par re-judges cards checked from strokes).
  */
-export function resolveOutcome(entry: Entry | undefined, par: Par | null): Outcome | null {
+export function resolveOutcome(entry: Entry | undefined, par: Par | null, lastToPar: number | null = null): Outcome | null {
   if (!entry || entry.strokes == null || par == null) return null;
   const card = getCard(entry.cardId);
   if (!card) return null;
   // "Didn't happen" beats a strokes check: the condition never applied.
   if (card.situational && entry.outcome === 'na') return 'na';
-  const auto = judgeFromStrokes(card, par, entry.strokes);
+  const auto = judgeFromStrokes(card, par, entry.strokes, lastToPar);
   if (auto) return auto;
   const claimed = entry.outcome ?? null;
   // A claim the group votes down (more "no way" than "fair") counts as failed.
@@ -145,7 +158,7 @@ export interface HoleResult {
 export function holeResult(game: Game, playerId: string, hole: number): HoleResult | null {
   const entry = getEntry(game, playerId, hole);
   const par = game.holes[hole]?.par ?? null;
-  const outcome = resolveOutcome(entry, par);
+  const outcome = resolveOutcome(entry, par, lastHoleToPar(game, playerId, hole));
   if (!entry || !entry.tier || !entry.cardId || entry.strokes == null || outcome == null) return null;
   const adjustment = stakeFor(game, hole, entry.tier, outcome, entry.freePass);
   return {

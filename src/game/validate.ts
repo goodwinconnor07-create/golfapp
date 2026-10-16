@@ -203,7 +203,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       if (!card || card.tier !== raw.tier) continue;
       const entry: Entry = { tier: raw.tier, cardId: card.id };
       if (isDeviceId(raw.pickedBy)) entry.pickedBy = raw.pickedBy;
-      if (isInt(raw.strokes, LIMITS.minStrokes, LIMITS.maxStrokes)) entry.strokes = raw.strokes;
+      if (isInt(raw.strokes, LIMITS.minStrokes, LIMITS.maxSavedStrokes)) entry.strokes = raw.strokes;
       if (isOutcome(raw.outcome) && (raw.outcome !== 'na' || card.situational)) entry.outcome = raw.outcome;
       if (raw.freePass === true) entry.freePass = true;
       if (raw.mulligan === true) entry.mulligan = true;

@@ -101,10 +101,17 @@ export function standings(game: Game, by: 'game' | 'real' = 'game', holes: reado
 }
 
 /**
+ * The free shot is switched off (Oct 2026): the same rules apply to the leader and to whoever
+ * is behind (docs/GAME_BALANCE.md). Old games that used one still score it (fail = 0).
+ */
+export const FREE_SHOT_ON = false;
+
+/**
  * Free shot: the player in last place (not a tie shared by everyone) can play one card
  * a round where failing costs nothing. Needs at least one finished hole to know who's last.
  */
 export function freePassAvailable(game: Game, playerId: string): boolean {
+  if (!FREE_SHOT_ON) return false;
   if (game.players.length < 2 || freePassUsed(game, playerId)) return false;
   const holes = completedHoles(game).filter((h) => h < game.current);
   if (holes.length === 0) return false;

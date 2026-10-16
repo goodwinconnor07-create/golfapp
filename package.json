@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "check": "npm run typecheck && npm run test && npm run build",
+    "balance": "esbuild scripts/balance/run.ts --bundle --platform=node --format=esm --log-level=warning --outfile=node_modules/.tmp/balance.mjs && node node_modules/.tmp/balance.mjs",
     "format": "prettier --write .",
     "build:ios": "VITE_SERVER_URL=${SERVER_URL:-https://send-it.kavishahtemu11.workers.dev} vite build && cap sync ios",
     "deploy": "npm run build && wrangler deploy",

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cardStakes, getCard, getEntry, judgeFromStrokes, outcomeChoices, type Game, type Outcome } from '../../game';
+import { cardStakes, getCard, getEntry, judgeFromStrokes, lastHoleToPar, outcomeChoices, type Game, type Outcome } from '../../game';
 import { dispatch, submitScore } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar, StrokePicker } from '../../ui/components';
@@ -15,7 +15,7 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
 
   if (!player || !card || !entry?.tier) return null;
 
-  const auto = judgeFromStrokes(card, par, strokes);
+  const auto = judgeFromStrokes(card, par, strokes, lastHoleToPar(game, playerId, h));
   const choices = outcomeChoices(card);
   // The strokes settle it either way (e.g. par on "Par Hunter" can only be completed), so there's nothing to tap.
   const settled = auto !== null;

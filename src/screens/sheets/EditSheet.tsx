@@ -6,6 +6,7 @@ import {
   isDoubleHole,
   getEntry,
   judgeFromStrokes,
+  lastHoleToPar,
   mulliganAllowance,
   mulligansLeft,
   newId,
@@ -35,7 +36,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const player = game?.players.find((p) => p.id === playerId);
   if (!game || !entry?.tier || !card || !player || par == null) return null;
 
-  const auto = judgeFromStrokes(card, par, strokes);
+  const auto = judgeFromStrokes(card, par, strokes, lastHoleToPar(game, playerId, hole));
   const choices = outcomeChoices(card);
   const effective: Outcome | undefined = card.situational && outcome === 'na' ? 'na' : (auto ?? outcome);
   const adjustment = effective ? stakeFor(game, hole, entry.tier, effective, entry.freePass) : null;

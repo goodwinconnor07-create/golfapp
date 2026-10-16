@@ -12,6 +12,7 @@ import {
   isLocked,
   isVoteable,
   judgeFromStrokes,
+  lastHoleToPar,
   outcomeChoices,
   ownsPlayer,
   redrawUsed,
@@ -141,7 +142,7 @@ function writeScore(
   // Store the result the strokes settle too, so it survives a later par correction.
   // "Didn't happen" on a situational card stands even if the strokes would rule it out.
   const requested = tapped ?? entry.outcome;
-  const auto = judgeFromStrokes(card, hole.par, strokes);
+  const auto = judgeFromStrokes(card, hole.par, strokes, lastHoleToPar(g, playerId, holeIdx));
   const outcome = card.situational && requested === 'na' ? 'na' : (auto ?? requested);
   if (outcome) entry.outcome = outcome;
   else delete entry.outcome;

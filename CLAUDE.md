@@ -1,6 +1,6 @@
 # CardShot: notes for Claude
 
-A golf party game: before each hole every player picks Safe, Bold or Insane, draws a random card from that level, plays the hole, then enters real strokes and whether they completed the card. Read `docs/SPEC.md` (the product spec) and `docs/DECISIONS.md` (what's been decided since) before changing game rules.
+A golf party game: before each hole every player picks Safe, Bold or Insane, draws a random card from that level, plays the hole, then enters real strokes and whether they completed the card. Read `docs/SPEC.md` (the product spec), `docs/DECISIONS.md` (what's been decided since) and `docs/GAME_BALANCE.md` (the balance rulebook) before changing game rules.
 
 ## Commands
 
@@ -9,6 +9,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 - `npm test`: Vitest unit tests for `src/game`
 - `npm run e2e`: Playwright, phone-sized Chromium, starts its own dev server on 5174. In the cloud sandbox, Chromium is at `/opt/pw-browsers` and `@playwright/test` is pinned to 1.56.1 to match it. Set `SHOTS_DIR=/some/dir` to save a screenshot of each screen.
 - `npm run check`: typecheck + unit tests + build. Run it before committing.
+- `npm run balance`: simulates thousands of rounds with the current deck and values and checks the balance targets in `docs/GAME_BALANCE.md`. Run it for any change to values, cards or scoring rules.
 - `npm run deploy`: build and `wrangler deploy` (needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`)
 - After editing `wrangler.jsonc`, run `npm run cf-typegen` and commit `worker-configuration.d.ts`.
 - `npm run build:ios`: build for the iPhone app (with the live server's address) and copy it into `ios/`. TestFlight builds run on GitHub Actions (`.github/workflows/ios.yml`). See `docs/IOS.md`.
@@ -24,9 +25,10 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 
 ## Rules that matter
 
-- Don't change the stroke modifiers in `tiers.ts` (Safe −2/+1, Bold −4/+2, Insane −6/+3) without the product owner asking. The last 3 holes of a 6+ hole round count double and a free shot makes a fail cost 0; both are applied in `stakeFor()` in `rules.ts`, never by editing the tier values.
+- Don't change the stroke modifiers in `tiers.ts` (Safe −1/+1, Bold −2/+2, Insane −9/+3) without the product owner asking, and never without passing `npm run balance`. They were tuned with the deck; see `docs/GAME_BALANCE.md`. The last 3 holes of a 6+ hole round count double, applied in `stakeFor()` in `rules.ts`, never by editing the tier values.
+- Same rules for everyone: no rule may depend on the standings (no catch-up help for whoever's behind), and cards are dealt at random, never matched to a player. The free shot is switched off (`FREE_SHOT_ON` in `selectors.ts`).
 - Never overwrite real strokes with game score. Game score is always derived from strokes + card result.
-- Keep pass-condition text exactly as approved. Card ids are permanent: retire a card with `enabled: false`, never delete or renumber it.
+- Keep pass-condition text exactly as approved. Card ids are permanent: retire a card with `enabled: false`, never delete, renumber or move it to another level (saved games check the level). To move one, retire it and add a copy under a new id. A new card also needs a scene in `src/ui/shotArt.ts` and a check in `scripts/balance/checks.ts`.
 - Anything arriving over the network goes through `parseAction()` / `sanitizeUpload()` in `validate.ts`.
 - When a rule is ambiguous, ask the product owner rather than inventing one, then record the answer in `docs/DECISIONS.md`.
 

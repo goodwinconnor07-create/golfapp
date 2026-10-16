@@ -2,11 +2,12 @@ import { expect, test } from '@playwright/test';
 
 // Cards show a short shot animation (see src/ui/shotArt.ts). The deck is stacked so the draw is known.
 const LABELS: Record<string, RegExp> = {
-  B12: /8 foot putt/,
+  I17: /3 foot putt/,
   S04: /lag putt and a tap-in, 2 putts max/,
-  B03: /170 metre drive/,
-  B02: /within 15 feet/,
-  I01: /scorecard marked birdie, birdie or better/,
+  S16: /150 metre drive/,
+  I19: /within 30 feet/,
+  I18: /scorecard marked birdie, beat your last hole/,
+  B17: /lag putt and a tap-in, 1st putt within 3 feet/,
 };
 
 for (const card of Object.keys(LABELS)) {
