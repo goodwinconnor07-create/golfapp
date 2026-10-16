@@ -43,7 +43,7 @@ import {
   type Look,
   type Session,
 } from './persist';
-import { freshUi, myPlayers, type HoleUi } from './view';
+import { freshUi, myPlayers, reactorFor, type HoleUi } from './view';
 
 export type Route =
   | { name: 'home' }
@@ -627,6 +627,16 @@ export function redrawCard(playerId: string): void {
 export function castVote(playerId: string, voterId: string, fair: boolean): void {
   const g = state.game;
   if (g && dispatch({ type: 'vote', playerId, hole: g.current, voterId, fair })) haptic(fair ? 'light' : 'medium');
+}
+
+/** One-tap reaction to someone's hole result. Tapping the same emoji again takes it back. */
+export function reactTo(playerId: string, emoji: string): void {
+  const g = state.game;
+  if (!g) return;
+  const from = reactorFor(g, state.deviceId, playerId);
+  if (!from) return;
+  const mine = getEntry(g, playerId, g.current)?.reactions?.[from];
+  if (dispatch({ type: 'react', playerId, hole: g.current, fromId: from, emoji: mine === emoji ? null : emoji })) haptic('light');
 }
 
 const REVEALED_KEY = 'sendit.revealed';

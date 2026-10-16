@@ -131,6 +131,50 @@ export function rankMoves(game: Game): Record<string, number> {
   return out;
 }
 
+/**
+ * Who passed whom on the last finished hole: `by` was behind `passed` before it and is
+ * ahead now. Ties don't count as a pass. Biggest climbs first.
+ */
+export function overtakes(game: Game): { by: Player; passed: Player }[] {
+  const holes = completedHoles(game);
+  if (holes.length < 2) return [];
+  const before = new Map(standings(game, 'game', holes.slice(0, -1)).map((r) => [r.player.id, r.rank]));
+  const now = new Map(standings(game, 'game', holes).map((r) => [r.player.id, r.rank]));
+  const out: { by: Player; passed: Player; climb: number }[] = [];
+  for (const a of game.players)
+    for (const b of game.players)
+      if (a.id !== b.id && before.get(a.id)! > before.get(b.id)! && now.get(a.id)! < now.get(b.id)!)
+        out.push({ by: a, passed: b, climb: before.get(a.id)! - now.get(a.id)! });
+  return out.sort((x, y) => y.climb - x.climb).map(({ by, passed }) => ({ by, passed }));
+}
+
+/** A skin: the hole's best game score, worth this hole plus any carried over from ties before it. */
+export interface Skin {
+  playerId: string;
+  worth: number;
+}
+
+/**
+ * Skins, a side game shown on the scorecard: the single best game score on a finished hole
+ * wins it. Ties roll the skin over to the next finished hole. Needs two or more players.
+ */
+export function skins(game: Game): Record<number, Skin> {
+  const out: Record<number, Skin> = {};
+  if (game.players.length < 2) return out;
+  let pot = 0;
+  for (const h of completedHoles(game)) {
+    pot++;
+    const scores = game.players.map((p) => ({ id: p.id, toPar: holeResult(game, p.id, h)!.toPar }));
+    const best = Math.min(...scores.map((s) => s.toPar));
+    const winners = scores.filter((s) => s.toPar === best);
+    if (winners.length === 1) {
+      out[h] = { playerId: winners[0].id, worth: pot };
+      pot = 0;
+    }
+  }
+  return out;
+}
+
 /** The new outright leader if this hole changed who leads, else null. */
 export function newLeader(game: Game, hole: number): Player | null {
   const holes = completedHoles(game).filter((h) => h <= hole);

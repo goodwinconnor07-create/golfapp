@@ -56,6 +56,16 @@ export function myPlayers(game: Game, deviceId: string, online: boolean): Player
   return game.players.filter((p) => p.deviceId === deviceId || (host && p.deviceId === null));
 }
 
+/**
+ * Who reacts from this phone to someone's result: the player this phone plays as. Only for
+ * players on another phone: heckling someone sharing your phone happens out loud, not in the app.
+ */
+export function reactorFor(game: Game, deviceId: string, targetId: string): string | null {
+  const target = game.players.find((p) => p.id === targetId);
+  if (!game.code || !target?.deviceId || target.deviceId === deviceId) return null;
+  return game.players.find((p) => p.deviceId === deviceId)?.id ?? null;
+}
+
 export function gameView(
   game: Game,
   deviceId: string,

@@ -45,6 +45,10 @@ export const PLAYER_COLORS = 8;
 
 /** The avatar emojis players can pick from. Anything else from the network is dropped. */
 export const AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🐐', '🍺', '🎯', '👑', '🌵'] as const;
+/** One-tap reactions and heckles on someone's hole result. */
+export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
+export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
+
 export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && (AVATAR_EMOJIS as readonly string[]).includes(v);
 
 /** The wanted colour if nobody else has it, else the first free one. */
@@ -381,6 +385,22 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[entryKey(action.playerId, action.hole)];
       if (entry.votes?.[action.voterId] === action.fair) return unchanged;
       entry.votes = { ...entry.votes, [action.voterId]: action.fair };
+      break;
+    }
+
+    case 'react': {
+      // Open while the hole is on screen, closed once the group moves on (like votes).
+      if (g.status !== 'playing' || action.hole !== g.current) return fail('Reactions have closed on that hole.');
+      if (!findPlayer(action.playerId) || !ownsPlayer(g, ctx.deviceId, action.fromId)) return fail('You can only react as yourself.');
+      if (action.fromId === action.playerId) return fail("You can't react to your own hole.");
+      const entry = g.entries[entryKey(action.playerId, action.hole)];
+      if (entry?.strokes == null) return fail('Nothing to react to yet.');
+      if ((entry.reactions?.[action.fromId] ?? null) === action.emoji) return unchanged;
+      const next = { ...entry.reactions };
+      if (action.emoji) next[action.fromId] = action.emoji;
+      else delete next[action.fromId];
+      if (Object.keys(next).length) entry.reactions = next;
+      else delete entry.reactions;
       break;
     }
 
