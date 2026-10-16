@@ -328,6 +328,28 @@
   gap: 16px;
 }
 
+.who-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.who-score b {
+  font-size: var(--fs-title);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.who-score small {
+  margin-top: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
 .who .h1 {
   overflow-wrap: anywhere;
 }
@@ -350,6 +372,8 @@
   width: 100%;
   min-height: 122px;
   padding: 16px 20px;
+  overflow: hidden;
+  isolation: isolate;
   border: 0;
   border-radius: var(--r-lg);
   color: var(--on-color);
@@ -363,6 +387,157 @@
     opacity 0.2s ease,
     filter 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+.tier-btn > :not(.tier-fx) {
+  position: relative;
+  z-index: 1;
+}
+
+.tier-btn > .tier-btn-check {
+  position: absolute;
+}
+
+/* Live shapes behind each level: decoration only, kept faint and to the right. */
+.tier-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--on-color);
+}
+
+.tier-fx-i {
+  position: absolute;
+  display: block;
+  opacity: 0.12;
+}
+
+.tier-fx-i0 {
+  right: 8px;
+  top: 12px;
+  width: 64px;
+  height: 64px;
+}
+.tier-fx-i1 {
+  right: 72px;
+  bottom: -12px;
+  width: 44px;
+  height: 44px;
+}
+.tier-fx-i2 {
+  right: 40%;
+  top: -16px;
+  width: 36px;
+  height: 36px;
+}
+
+.tier-fx-safe .tier-fx-i {
+  animation: fx-breathe 4s ease-in-out infinite;
+}
+.tier-fx-safe .tier-fx-i1 {
+  animation-delay: -1.3s;
+}
+.tier-fx-safe .tier-fx-i2 {
+  animation-delay: -2.6s;
+}
+
+.tier-fx-glint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-18deg);
+  animation: fx-glint 4.5s ease-in-out infinite;
+}
+
+.tier-fx-bold .tier-fx-i {
+  transform-origin: 50% 100%;
+  animation: fx-flicker 1.6s ease-in-out infinite;
+}
+.tier-fx-bold .tier-fx-i1 {
+  animation-delay: -0.5s;
+}
+.tier-fx-bold .tier-fx-i2 {
+  animation-delay: -1.1s;
+}
+
+.tier-fx-insane .tier-fx-i {
+  animation: fx-zap 3.2s linear infinite;
+}
+.tier-fx-insane .tier-fx-i1 {
+  animation-delay: -1.1s;
+}
+.tier-fx-insane .tier-fx-i2 {
+  animation-delay: -2.2s;
+}
+
+@keyframes fx-breathe {
+  0%,
+  100% {
+    opacity: 0.08;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.18;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes fx-glint {
+  0%,
+  55% {
+    left: -40%;
+  }
+  100% {
+    left: 130%;
+  }
+}
+
+@keyframes fx-flicker {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(1, 1) translateY(0);
+  }
+  30% {
+    opacity: 0.2;
+    transform: scale(0.94, 1.08) translateY(-3px);
+  }
+  60% {
+    opacity: 0.13;
+    transform: scale(1.04, 0.95) translateY(-1px);
+  }
+}
+
+@keyframes fx-zap {
+  0%,
+  88%,
+  100% {
+    opacity: 0.08;
+  }
+  90% {
+    opacity: 0.32;
+  }
+  92% {
+    opacity: 0.1;
+  }
+  94% {
+    opacity: 0.28;
+  }
+}
+
+/* Reduce Motion: keep the shapes, still and faint. */
+@media (prefers-reduced-motion: reduce) {
+  .tier-fx-i,
+  .tier-fx-glint {
+    animation: none !important;
+  }
+  .tier-fx-glint {
+    display: none;
+  }
 }
 
 .tier-btn-bold {
@@ -2386,23 +2561,25 @@
 /* The rank sits on the avatar's corner, like a notification badge. */
 .prow-rank {
   position: absolute;
-  left: -10px;
-  bottom: -8px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  left: -8px;
+  top: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  white-space: nowrap;
   border-radius: var(--r-pill);
   background: var(--contrast);
   color: var(--on-contrast);
   font-size: var(--fs-caption);
   font-weight: 900;
-  line-height: 20px;
+  line-height: 24px;
   text-align: center;
   box-shadow: 0 0 0 2.5px var(--bg-2);
   font-variant-numeric: tabular-nums;
 }
 
-.prow.first .prow-rank {
+.prow.first .prow-rank,
+.prow-avatar.first .prow-rank {
   background: var(--gold);
   color: var(--gold-ink-2);
   box-shadow: 0 0 0 2px var(--gold-bg);

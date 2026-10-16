@@ -186,7 +186,7 @@ function LeadDemo() {
       {/* The leaderboard's own reorder: Sam starts a place lower and climbs past Alex. */}
       <PlayerRow
         player={SAM}
-        rank="1"
+        rank="1st"
         className="board-row first reorder climbed"
         style={{ '--from': 1 } as React.CSSProperties}
         score="−4"
@@ -194,7 +194,7 @@ function LeadDemo() {
       />
       <PlayerRow
         player={ALEX}
-        rank="2"
+        rank="2nd"
         className="board-row reorder dropped"
         style={{ '--from': -1 } as React.CSSProperties}
         score="−1"

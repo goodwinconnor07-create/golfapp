@@ -1,6 +1,21 @@
 import type { ReactNode } from 'react';
-import { formatToPar, type Player, type StandingRow } from '../game';
+import { formatToPar, ordinal, type Player, type StandingRow } from '../game';
 import { Avatar, CountUp } from './components';
+
+/** "1st", or "=2nd" for a tie. */
+export function rankLabel(rank: number, tied = false): string {
+  return `${tied ? '=' : ''}${ordinal(rank)}`;
+}
+
+/** A player's picture with their place as a badge on the top-left corner. */
+export function RankedAvatar({ player, rank, size = 56, first }: { player: Player; rank?: string; size?: number; first?: boolean }) {
+  return (
+    <span className={`prow-avatar${first ? ' first' : ''}`}>
+      <Avatar player={player} size={size} />
+      {rank && <span className="prow-rank">{rank}</span>}
+    </span>
+  );
+}
 
 /**
  * The one row layout for standings and hole results, on a three-column grid:
@@ -20,7 +35,7 @@ export function PlayerRow({
   hidden,
 }: {
   player: Player;
-  /** "1", "=2"… shown as a badge on the avatar. */
+  /** "1st", "=2nd"… shown as a badge on the avatar's top corner. */
   rank?: string;
   /** What to show as the name (defaults to the player's name), e.g. with a 👑. */
   name?: ReactNode;
@@ -33,10 +48,7 @@ export function PlayerRow({
 }) {
   return (
     <div className={`prow ${className}`} style={style} aria-hidden={hidden}>
-      <span className="prow-avatar">
-        <Avatar player={player} size={44} />
-        {rank && <span className="prow-rank">{rank}</span>}
-      </span>
+      <RankedAvatar player={player} rank={rank} size={56} />
       <span className="prow-main">
         <span className="prow-name">{name ?? player.name}</span>
         {detail && <span className="prow-detail">{detail}</span>}
@@ -54,7 +66,7 @@ export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?
   return (
     <PlayerRow
       player={row.player}
-      rank={row.tied ? `=${row.rank}` : String(row.rank)}
+      rank={rankLabel(row.rank, row.tied)}
       // Rows that changed place slide from where they were (move places away) into their new spot.
       className={`board-row ${row.rank === 1 ? 'first' : ''} ${move !== 0 ? `reorder ${move > 0 ? 'climbed' : 'dropped'}` : delay != null ? 'rise' : ''}`}
       style={{

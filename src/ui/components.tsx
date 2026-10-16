@@ -36,6 +36,25 @@ export function TierIcon({ tier, size = 24 }: { tier: Tier; size?: number }) {
   return <Icon width={size} height={size} />;
 }
 
+/**
+ * Soft moving shapes behind a tier's colour, so the screen feels live: a slow glint across
+ * Safe's shields, flames flickering up behind Bold, lightning flashing behind Insane.
+ * Decoration only. They sit on the right, behind the text, and stop with Reduce Motion.
+ */
+export function TierFx({ tier }: { tier: Tier }) {
+  const { Icon } = TIER_LOOK[tier];
+  return (
+    <span className={`tier-fx tier-fx-${tier}`} aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={`tier-fx-i tier-fx-i${i}`}>
+          <Icon width="100%" height="100%" />
+        </span>
+      ))}
+      {tier === 'safe' && <span className="tier-fx-glint" />}
+    </span>
+  );
+}
+
 /** Coloured tier label, e.g. [⚡ INSANE]. Optional stakes: "−6 / +3". */
 export function TierChip({ tier, stakes = false, big = false }: { tier: Tier; stakes?: boolean; big?: boolean }) {
   const t = TIERS[tier];

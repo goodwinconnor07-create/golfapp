@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { cardStakes, formatDelta, freePassAvailable, gapText, isDoubleHole, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
+import { cardStakes, completedHoles, formatDelta, formatToPar, standings, freePassAvailable, gapText, isDoubleHole, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
 import { pickTier } from '../../state/store';
 import { haptic } from '../../ui/effects';
-import { Avatar, Pips, TierIcon, TIER_LOOK } from '../../ui/components';
+import { Pips, TierFx, TierIcon, TIER_LOOK } from '../../ui/components';
 import { CheckIcon } from '../../ui/Icons';
+import { RankedAvatar, rankLabel } from '../../ui/BoardRow';
 
 export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
   const [tier, setTier] = useState<Tier | null>(null);
@@ -14,18 +15,28 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
   const doubled = isDoubleHole(game, h);
   const gap = gapText(game, playerId);
   const canFree = freePassAvailable(game, playerId);
+  // Where you stand going into this hole. Only shown once a hole is in.
+  const played = completedHoles(game).filter((x) => x < h);
+  const me = played.length ? standings(game, 'game', played).find((r) => r.player.id === playerId) : undefined;
+  const ranked = me && game.players.length > 1;
 
   return (
     <>
       <div className="screen-body">
         <div className="who">
-          <Avatar player={player} size={58} />
-          <div style={{ minWidth: 0 }}>
+          <RankedAvatar player={player} size={72} rank={ranked ? rankLabel(me.rank, me.tied) : undefined} first={me?.rank === 1} />
+          <div style={{ minWidth: 0, flex: 1 }}>
             <h1 className="h1">{player.name}</h1>
             <p className="h3 muted" style={{ margin: '2px 0 0' }}>
               {gap ?? 'Pick your risk'}
             </p>
           </div>
+          {me && (
+            <div className="who-score">
+              <b>{formatToPar(me.totals.toPar)}</b>
+              <small>Score</small>
+            </div>
+          )}
         </div>
 
         {doubled && (
@@ -50,6 +61,7 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
                   haptic('medium');
                 }}
               >
+                <TierFx tier={t} />
                 <span className="tier-btn-icon">
                   <TierIcon tier={t} size={38} />
                 </span>

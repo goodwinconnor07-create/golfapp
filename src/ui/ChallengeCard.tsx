@@ -22,7 +22,7 @@ interface Props {
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
 export function flipDelay(tier: Tier): number {
   if (reducedMotion()) return 0;
-  return tier === 'insane' ? 460 : tier === 'bold' ? 160 : 90;
+  return tier === 'insane' ? 720 : tier === 'bold' ? 640 : 560;
 }
 
 /** About when the card face is showing, for timing confetti on the reveal screen. */
@@ -58,6 +58,19 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
     <div className={classes} onClick={() => card && setShown(true)}>
       <div className="ccard-inner">
         <div className="ccard-face ccard-back" aria-hidden={shown}>
+          {/* The wind-up: a glint for Safe, flames for Bold, lightning for Insane. */}
+          <span className="ccard-fx" aria-hidden>
+            {tier === 'safe' && <span className="ccard-glint" />}
+            {tier === 'bold' && [0, 1, 2, 3, 4].map((i) => <span key={i} className={`ccard-flame ccard-flame${i}`} />)}
+            {tier === 'insane' && (
+              <>
+                <span className="ccard-flash" />
+                <svg className="ccard-bolt" viewBox="0 0 100 300" preserveAspectRatio="none">
+                  <polyline points="55,0 35,90 62,110 30,200 58,215 40,300" />
+                </svg>
+              </>
+            )}
+          </span>
           <div className="ccard-back-art">
             <TierIcon tier={tier} size={compact ? 40 : 84} />
             <span className="ccard-back-label">{t.label}</span>
