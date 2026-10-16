@@ -3,6 +3,13 @@ import { mkdirSync } from 'node:fs';
 
 const SHOTS = process.env.SHOTS_DIR;
 
+/** Reads the join code from the invite tiles, waiting past the skeleton that shows while it's on its way. */
+export async function gameCode(page: Page, scope = ''): Promise<string> {
+  const tiles = page.locator(`${scope} .code-tiles[aria-label^="Game code"]`.trim());
+  await expect(tiles).toBeVisible();
+  return ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+}
+
 /** Saves a screenshot when SHOTS_DIR is set (used to review the design). */
 export async function shot(page: Page, name: string): Promise<void> {
   if (!SHOTS) return;

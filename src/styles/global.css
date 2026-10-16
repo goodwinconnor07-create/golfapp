@@ -96,6 +96,11 @@
   --gold-ink-2: #78350f;
   --slate: #334155;
   --slate-hi: #64748b;
+  /* Race places on the standings: 1st uses gold, then silver and bronze. */
+  --silver: #94a3b8;
+  --silver-ink: #1e293b;
+  --bronze: #c2410c;
+  --bronze-ink: #fff7ed;
 
   /* Tiers: teal / orange / violet, chosen to stay apart for colour-blind players
      (icons and 1-2-3 pips back the colour up). */

@@ -61,27 +61,34 @@ export function PlayerRow({
   );
 }
 
-/** One standings line. move: places gained (+) or lost (−) since the hole before. Ties show as "=2". */
+/**
+ * One standings line: the place as a badge on the picture, the row sliding from its old
+ * spot to the new one, and a ▲/▼ chip for places gained or lost on the last hole. Ties show as "=2nd".
+ * move: places gained (+) or lost (−) since the hole before.
+ */
 export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?: ReactNode; delay?: number; move?: number }) {
   return (
     <PlayerRow
       player={row.player}
       rank={rankLabel(row.rank, row.tied)}
+      name={
+        <>
+          {row.player.name}
+          {move !== 0 && (
+            <span className={`move-chip ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
+              {move > 0 ? '▲' : '▼'}
+              {Math.abs(move)}
+            </span>
+          )}
+        </>
+      }
       // Rows that changed place slide from where they were (move places away) into their new spot.
       className={`board-row ${row.rank === 1 ? 'first' : ''} ${move !== 0 ? `reorder ${move > 0 ? 'climbed' : 'dropped'}` : delay != null ? 'rise' : ''}`}
       style={{
         ...(delay != null ? { animationDelay: `${delay}ms` } : {}),
         ...(move !== 0 ? ({ '--from': move } as React.CSSProperties) : {}),
       }}
-      detail={
-        (sub || move !== 0) && (
-          <>
-            {sub}
-            {/* Movement shows as the row sliding and its green/red glow. */}
-            {move !== 0 && <span className="sr-only">{move > 0 ? `up ${move}` : `down ${-move}`}</span>}
-          </>
-        )
-      }
+      detail={sub}
       score={
         <span aria-label={formatToPar(row.totals.toPar)}>
           <CountUp value={row.totals.toPar} format={formatToPar} />

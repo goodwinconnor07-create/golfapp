@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { enterScore, holeDoneAndScore, newGame, passGroupReveal, passResultsReveal, pickAndReveal, shot } from './helpers';
+import { enterScore, gameCode, holeDoneAndScore, newGame, passGroupReveal, passResultsReveal, pickAndReveal, shot } from './helpers';
 
 async function phone(browser: Browser): Promise<Page> {
   const { viewport, deviceScaleFactor, isMobile, hasTouch, baseURL } = test.info().project.use;
@@ -13,9 +13,7 @@ test('a friend claims the name the host already typed in', async ({ browser }) =
 
   await host.goto('/');
   await newGame(host, ['Hana', 'Ollie']);
-  const tiles = host.locator('.invite-panel .code-tiles');
-  await expect(tiles).toBeVisible();
-  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  const code = await gameCode(host, '.invite-panel');
 
   // Typing the code by hand works too (lowercase and spaces are fine).
   await friend.goto('/');
@@ -41,9 +39,7 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   // Host sets up and goes online.
   await host.goto('/');
   await newGame(host, ['Hana']);
-  const tiles = host.locator('.invite-panel .code-tiles');
-  await expect(tiles).toBeVisible();
-  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  const code = await gameCode(host, '.invite-panel');
   expect(code).toMatch(/^[BCDFGHJKLMNPQRSTVWXZ]{5}$/);
   await shot(host, '20-invite');
 
@@ -107,6 +103,16 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await passResultsReveal(guest, '26b-results-reveal');
   await passResultsReveal(host);
   await expect(guest.locator('.board-row')).toHaveCount(2);
+  await expect(guest.locator('.prow-rank').first()).toContainText('1st');
+
+  // One-tap heckle: Gus reacts to Hana's hole, and Hana's phone shows it.
+  const hanaRow = guest.locator('.result-row', { hasText: 'Hana' });
+  await hanaRow.getByRole('button', { name: 'React 🤡' }).click();
+  await expect(hanaRow.getByRole('button', { name: 'React 🤡' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(host.locator('.result-row', { hasText: 'Hana' }).locator('.react-tally')).toHaveText('🤡');
+  // You can't heckle yourself.
+  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: /^React/ })).toHaveCount(0);
+  await shot(host, '26c-reactions');
 
   // Either phone can move everyone on. (Both tapping at once only moves one hole: see the engine tests.)
   await guest.getByRole('button', { name: /Next hole/ }).click();
@@ -214,9 +220,7 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   // Put it online and let Gus join on his own phone.
   await host.getByRole('button', { name: 'Menu' }).click();
   await host.getByRole('button', { name: 'Invite friends' }).click();
-  const tiles = host.locator('.code-tiles');
-  await expect(tiles).toBeVisible();
-  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  const code = await gameCode(host);
   await host.getByRole('button', { name: 'Close' }).click();
   await guest.goto(`/j/${code}`);
   await guest.locator('.player-row', { hasText: 'Gus' }).click();
@@ -251,9 +255,7 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   const guest = await phone(browser);
   await host.goto('/');
   await newGame(host, ['Hana']);
-  const tiles = host.locator('.invite-panel .code-tiles');
-  await expect(tiles).toBeVisible();
-  const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+  const code = await gameCode(host, '.invite-panel');
   await guest.goto(`/j/${code}`);
   await guest.getByLabel('Your name').fill('Gus');
   await guest.getByRole('button', { name: 'Join as Gus' }).click();

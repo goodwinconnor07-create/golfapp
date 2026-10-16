@@ -1,6 +1,7 @@
 # App Store cards
 
 Nine App Store screenshots for CardShot, at Apple's 6.9" iPhone size (1320 × 2868), in `out/`.
+There's also a header banner, `out/00-header.png` (1920 × 1080), for App Store event cards, featuring requests and the website.
 Every phone screen is the real app, captured from a seeded four-player round.
 
 | # | Card | Screen |

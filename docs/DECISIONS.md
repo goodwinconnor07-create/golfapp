@@ -192,3 +192,11 @@ Decided by the product owner after the balance simulations. The full rulebook, t
 - **No hidden dealing:** a skill-matched dealer was tested and made no difference once the deck was skill-flat.
 - **Tested and not adopted:** chaser's shield, leader can't pick Safe on 2× holes, bounce-back and momentum boosts, a Safe streak, per-card values, capping holes at bogey, players declaring a skill level. Reasons in GAME_BALANCE.md.
 - This answers the open questions about Green in Regulation, Par Three Sniper vs Master, Two-Shot Threat and The Chip-In Chance: all retired.
+
+## Race standings, skins and reactions (Oct 2026)
+
+Asked for by the product owner. None of these change the score or the rules (docs/GAME_BALANCE.md still holds).
+
+- **Race standings (Mario Kart style):** every standings row (hole results, the online results reveal, the leaderboard and the final screen) leads with a big place badge (1st gold, 2nd silver, 3rd bronze, "=2nd" for ties). After a hole, rows slide from their old place to the new one, the place pops, and a ▲2 / ▼1 chip shows places gained or lost. Under the hole's title, "🏎️ Sam overtakes Alex" lines name each pass (up to 3; the new leader keeps the existing "takes the lead" banner instead).
+- **Skins, scorecard only:** the single best game score on a finished hole wins its skin; ties roll it over to the next finished hole (a tie on the last hole means nobody wins it). The winning cell gets a frame and a ribbon in the winner's avatar colour with their emoji (or initial), and "×2", "×3"… when it carried over. No prize, no other screen, no setting. Worked out from the scores (`skins()` in `selectors.ts`), never stored.
+- **One-tap reactions and heckles:** 🔥 👏 😂 🫣 🤡 under other players' hole results, for players on another phone (heckling someone on your own phone happens out loud). One reaction per player per result; tap it again to take it back. Everyone sees the tallies. Open until the group moves on, like votes. Enforced in the reducer (`react` action), only listed emojis pass `parseAction()` / `sanitizeUpload()`. No push notifications for them.

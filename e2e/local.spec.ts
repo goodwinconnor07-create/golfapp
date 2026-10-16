@@ -256,7 +256,20 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
   await page.getByRole('button', { name: 'Leaderboard' }).click();
   await expect(page.locator('.board-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
   await expect(page.locator('.board-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
+  // Race style: big places, and a chip for places gained or lost.
+  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.prow-rank')).toContainText('1st');
+  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.move-chip.up')).toHaveText('▲1');
   await shot(page, '34-leaderboard-moves');
+  await page.getByRole('button', { name: 'Back' }).click();
+
+  // The scorecard marks skins in the winner's colour: hole 1 went to Alex, hole 2 tied and
+  // rolled over, so Sam's win on hole 3 is worth 2.
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Scorecard & fixes' }).click();
+  await expect(page.getByLabel('Alex, hole 1')).toHaveClass(/skin/);
+  await expect(page.getByLabel('Sam, hole 3').locator('.sc-skin')).toContainText('×2');
+  await expect(page.locator('.sc-cell.skin')).toHaveCount(2);
+  await shot(page, '34b-scorecard-skins');
   await page.getByRole('button', { name: 'Back' }).click();
 
   // Hole 4 of 6: double stakes, and Sam sees how far ahead he is.
