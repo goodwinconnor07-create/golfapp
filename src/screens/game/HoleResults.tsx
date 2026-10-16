@@ -28,7 +28,7 @@ export function HoleResults({ game }: { game: Game }) {
       <div className="screen-body">
         {/* Each row: this hole's working, then the running total. */}
         <div className="reveal-head">
-          <h1 className="h1">Hole {game.holes[h].number} done!</h1>
+          <h1 className="h1">Hole done!</h1>
           <span className="col-label" aria-hidden>
             Total
           </span>

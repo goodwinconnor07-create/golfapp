@@ -65,7 +65,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();
   await enterScore(page, 6, false, '11c-flash-missed');
 
-  await expect(page.getByText('Hole 1 done!')).toBeVisible();
+  await expect(page.getByText('Hole done!')).toBeVisible();
   await shot(page, '12-results');
   const rows = page.locator('.board-row');
   await expect(rows).toHaveCount(2);
