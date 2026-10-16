@@ -36,7 +36,7 @@ is in the App Store, the website can still start games. On launch day:
 ## One-time setup (you)
 
 1. **Apple Developer Program** ($99 a year): developer.apple.com/programs.
-2. **Team ID**: developer.apple.com → Account → Membership details. Then replace `TEAMID` in
+2. **Team ID**: developer.apple.com → Account → Membership details. Ours is `9FAJRHL979`, already set in
    `public/.well-known/apple-app-site-association` with it and deploy the website.
 3. **App record**: App Store Connect → Apps → + → New App. Platform iOS, name CardShot, bundle ID
    `app.cardshot.ios` (register it under Certificates, Identifiers & Profiles first, with
