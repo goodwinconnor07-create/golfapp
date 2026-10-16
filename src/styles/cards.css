@@ -27,14 +27,15 @@
   position: relative;
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 0.45s cubic-bezier(0.3, 1.25, 0.45, 1);
+  transition: transform 0.4s cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 .ccard.flipped .ccard-inner {
   transform: rotateY(180deg);
 }
 
-/* Only one face is ever drawn, swapped at the halfway point of the flip. Safari doesn't
+/* Only one face is ever drawn, swapped at the halfway point of the flip (the flip's easing is
+   symmetric, so halfway in time is exactly edge-on). Safari doesn't
    always respect backface-visibility while things animate, and showed the back mirrored
    through the front. */
 .ccard .ccard-front,
@@ -283,13 +284,6 @@
   opacity: 0;
 }
 
-.ccard-bold .ccard-inner {
-  transition-timing-function: cubic-bezier(0.25, 1.6, 0.4, 1);
-}
-
-.ccard-insane .ccard-inner {
-  transition: transform 0.42s cubic-bezier(0.2, 1.8, 0.4, 1);
-}
 
 /* Safe: a small shake and a glint. */
 .ccard-safe.winding {
@@ -346,7 +340,7 @@
 }
 
 .ccard-bold.winding .ccard-back {
-  animation: heat 0.36s ease-in forwards;
+  animation: heat 0.36s ease-in-out;
 }
 
 .ccard-flame {
@@ -402,13 +396,13 @@
   60% {
     transform: scale(0.9, 1) translateY(-8%);
   }
-  80% {
+  75% {
     opacity: 0.95;
     transform: scale(1.05, 0.9) translateY(-12%);
   }
   100% {
-    opacity: 0.7;
-    transform: scale(1, 1.1) translateY(-16%);
+    opacity: 0;
+    transform: scale(1, 1.1) translateY(-20%);
   }
 }
 
@@ -429,7 +423,11 @@
 }
 
 @keyframes heat {
-  to {
+  0%,
+  100% {
+    box-shadow: 0 22px 40px -22px var(--tier-lo);
+  }
+  60% {
     box-shadow:
       0 0 0 6px var(--bold-bg),
       0 0 48px 6px var(--bold-hi);
@@ -527,18 +525,19 @@
     transform: rotate(-4deg) scale(1.03);
   }
   60% {
-    transform: rotate(4deg) scale(1.04);
+    transform: rotate(3deg) scale(1.03);
   }
-  75% {
-    transform: rotate(-2deg) scale(1.05);
+  80% {
+    transform: rotate(-1deg) scale(1.01);
   }
 }
 
 @keyframes glow {
-  from {
+  0%,
+  100% {
     box-shadow: 0 22px 40px -22px var(--tier-lo);
   }
-  to {
+  60% {
     box-shadow:
       0 0 0 6px var(--tier-bg),
       0 0 48px 6px var(--tier);

@@ -26,7 +26,7 @@ export function flipDelay(tier: Tier): number {
 }
 
 /** About when the card face is showing, for timing confetti on the reveal screen. */
-export const FLIP_MS = 320;
+export const FLIP_MS = 400;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
 export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par }: Props) {
