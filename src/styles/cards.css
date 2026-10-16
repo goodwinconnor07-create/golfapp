@@ -27,7 +27,7 @@
   position: relative;
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 0.62s cubic-bezier(0.3, 1.25, 0.45, 1);
+  transition: transform 0.45s cubic-bezier(0.3, 1.25, 0.45, 1);
 }
 
 .ccard.flipped .ccard-inner {
@@ -288,12 +288,12 @@
 }
 
 .ccard-insane .ccard-inner {
-  transition: transform 0.55s cubic-bezier(0.2, 1.8, 0.4, 1);
+  transition: transform 0.42s cubic-bezier(0.2, 1.8, 0.4, 1);
 }
 
 /* Safe: a small shake and a glint. */
 .ccard-safe.winding {
-  animation: wind-safe 0.56s ease-in-out;
+  animation: wind-safe 0.3s ease-in-out;
 }
 
 .ccard-glint {
@@ -307,7 +307,7 @@
 }
 
 .ccard-safe.winding .ccard-glint {
-  animation: glint 0.56s ease-in-out;
+  animation: glint 0.3s ease-in-out;
 }
 
 @keyframes wind-safe {
@@ -342,11 +342,11 @@
 
 /* Bold: flames lick up from the bottom while the card heats up and swells. */
 .ccard-bold.winding {
-  animation: wind-bold 0.64s ease-in;
+  animation: wind-bold 0.36s ease-in;
 }
 
 .ccard-bold.winding .ccard-back {
-  animation: heat 0.64s ease-in forwards;
+  animation: heat 0.36s ease-in forwards;
 }
 
 .ccard-flame {
@@ -380,7 +380,7 @@
 }
 
 .ccard-bold.winding .ccard-flame {
-  animation: flame 0.64s ease-out both;
+  animation: flame 0.36s ease-out both;
 }
 .ccard-bold.winding .ccard-flame1,
 .ccard-bold.winding .ccard-flame3 {
@@ -438,11 +438,11 @@
 
 /* Insane: a hard shake, two lightning strikes and a white flash. */
 .ccard-insane.winding {
-  animation: wind-up 0.72s ease-in-out;
+  animation: wind-up 0.42s ease-in-out;
 }
 
 .ccard-insane.winding .ccard-back {
-  animation: glow 0.72s ease-in;
+  animation: glow 0.42s ease-in;
 }
 
 .ccard-flash {
@@ -465,11 +465,11 @@
 }
 
 .ccard-insane.winding .ccard-flash {
-  animation: strike-flash 0.72s linear;
+  animation: strike-flash 0.42s linear;
 }
 
 .ccard-insane.winding .ccard-bolt {
-  animation: strike 0.72s linear;
+  animation: strike 0.42s linear;
 }
 
 @keyframes strike {
