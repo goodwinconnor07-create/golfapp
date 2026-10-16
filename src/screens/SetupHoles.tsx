@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { makeHoles } from '../game';
 import { createLocalGame, useApp, withCoursePars } from '../state/store';
-import { BackBar, Stepper } from '../ui/components';
+import { BackBar } from '../ui/components';
 import { colourWipe } from '../ui/effects';
 
 const PRESETS = [
@@ -11,9 +10,6 @@ const PRESETS = [
 ];
 
 export function SetupHoles() {
-  const [custom, setCustom] = useState(false);
-  const [count, setCount] = useState(6);
-  const [start, setStart] = useState(1);
   const course = useApp((s) => s.draft.course);
   const hasPars = Boolean(course?.pars.length);
   // Total par for a preset, when the course gives us hole pars.
@@ -54,29 +50,6 @@ export function SetupHoles() {
             </span>
           </button>
         ))}
-        {!custom ? (
-          <button type="button" className="btn btn-outline" onClick={() => setCustom(true)}>
-            Something else
-          </button>
-        ) : (
-          <div className="tile steppers rise">
-            <div className="center">
-              <p className="label">Holes</p>
-              <Stepper value={count} min={1} max={18} onChange={setCount} label="holes" />
-            </div>
-            <div className="center">
-              <p className="label">Starting on hole</p>
-              <Stepper value={start} min={1} max={18} onChange={setStart} label="starting hole" />
-            </div>
-            <button
-              type="button"
-              className="btn btn-xl btn-dark"
-              onClick={(e) => colourWipe(e, () => createLocalGame(makeHoles(count, start)))}
-            >
-              Play {count} hole{count === 1 ? '' : 's'}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

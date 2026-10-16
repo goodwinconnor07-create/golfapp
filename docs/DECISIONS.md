@@ -16,6 +16,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 | Wording            | Challenges are **Completed** or **Failed** (not made/missed).                                                                                                                                                                                                                                               |
 | Settled by strokes | When the strokes already prove the result, the app sets it and doesn't offer the other button. This covers par-or-better cards at par, and reach-the-green cards when the hole was finished within that many strokes. Cards that also depend on something else (like "without a penalty stroke") still ask. |
 | Course search      | The host picks the course after entering their name, and hole pars fill in automatically. Recent courses are one tap. If a course has no hole pars, or setup is skipped, the app asks the par on each tee.                                                                                                  |
+| Hole choices       | Three choices only: Front 9, Back 9 and 18 holes. The "Something else" custom length is gone.                                                                                                                                                                                                              |
 
 ## Following the spec's recommended defaults
 
