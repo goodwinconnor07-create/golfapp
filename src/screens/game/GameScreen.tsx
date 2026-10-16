@@ -110,7 +110,6 @@ function GameTopBar({
         {game.status !== 'lobby' && !final && (
           <div className="hole-tag">
             <b>Hole {hole.number}</b>
-            {hole.par && <span className="par-chip">PAR {hole.par}</span>}
             {isDoubleHole(game, holeIdx) && (
               <span className="tag tag-double" aria-label="Double stakes">
                 2×
@@ -119,6 +118,12 @@ function GameTopBar({
           </div>
         )}
       </div>
+      {game.status !== 'lobby' && !final && hole.par && (
+        <div className="par-tile" role="img" aria-label={`Par ${hole.par}`}>
+          <small>PAR</small>
+          <b>{hole.par}</b>
+        </div>
+      )}
       {game.status === 'playing' && <RankPill game={game} online={online} />}
       {online && game.status !== 'lobby' && (
         <button

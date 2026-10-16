@@ -568,14 +568,32 @@ input {
   letter-spacing: -0.02em;
 }
 
-.par-chip {
-  font-size: var(--fs-body);
-  font-weight: 900;
-  padding: 4px 12px;
-  border-radius: var(--r-pill);
+/* Par sits in the button row as a square tile the same size as the icon buttons. */
+.par-tile {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
   background: var(--contrast);
   color: var(--on-contrast);
-  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.par-tile small {
+  font-size: var(--fs-nano);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.par-tile b {
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .topbar:has(.conn-pill) {
