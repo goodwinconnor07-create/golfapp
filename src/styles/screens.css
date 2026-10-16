@@ -661,10 +661,13 @@
 
 .auto-result {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 4px 12px;
   min-height: 60px;
+  padding: 8px 16px;
+  text-align: center;
   border-radius: var(--r-md);
   font-size: var(--fs-h3);
   font-weight: 900;
@@ -1717,16 +1720,6 @@
 
 .rank-move.down {
   color: var(--red);
-}
-
-.lead-banner {
-  padding: 12px 16px;
-  border-radius: var(--r-md);
-  background: linear-gradient(120deg, var(--gold-hi), var(--gold-line));
-  color: var(--gold-ink-2);
-  font-size: var(--fs-h3);
-  font-weight: 900;
-  text-align: center;
 }
 
 .tag-double {
@@ -3277,4 +3270,542 @@
   .react-tally {
     animation: none;
   }
+}
+
+/* ── Results reveal: one list (Oct 2026 review) ──────────────────────────── */
+
+.reveal-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* "Total" once over the score column, instead of "To par" under every number. */
+.col-label {
+  padding: 0 16px 4px 0;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.prow-name {
+  display: flex;
+  align-items: center;
+}
+
+/* Your own row: a blue edge, so you find yourself at a glance. */
+.prow.mine {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.prow.first.mine {
+  box-shadow:
+    0 0 0 3px var(--gold-line),
+    inset 0 0 0 2px var(--blue);
+}
+
+.result-row {
+  position: relative;
+}
+
+.result-row .prow-score {
+  gap: 4px;
+}
+
+/* The hole's score landing on the total while it counts. */
+.prow-score .tick {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-caption);
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.hidden-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--ink-3);
+  letter-spacing: 0.2em;
+}
+
+.best-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* With Reduce Motion the moment's fade would jump straight to its last (invisible) frame: just show it. */
+@media (prefers-reduced-motion: reduce) {
+  .moment {
+    animation: none;
+  }
+}
+
+/* ── Live hole screen and waiting room (Oct 2026 review) ──────────────────── */
+
+.group-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.group-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 32px auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.group-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.you-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: var(--on-color);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The level as a coloured disc with its icon (the icon carries it for colour-blind players). */
+.tier-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--on-color);
+}
+
+.tier-dot-safe {
+  background: var(--safe);
+}
+
+.tier-dot-bold {
+  background: var(--bold);
+}
+
+.tier-dot-insane {
+  background: var(--insane);
+}
+
+.group-st {
+  min-width: 88px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.group-st.st-done {
+  color: var(--blue-ink);
+}
+
+.group-st.st-scored {
+  color: var(--green-ink);
+}
+
+.group-act {
+  justify-self: end;
+}
+
+.play-who-static {
+  gap: 8px;
+}
+
+/* Your own result while you wait: the stamp lands here online. */
+.my-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.my-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.my-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.my-result-row b {
+  font-size: var(--fs-display-1);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.stamp-in {
+  animation: pop 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.room-note {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.group-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.group-card {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+/* ── Rank pill and standings sheet (Oct 2026 review) ─────────────────────── */
+
+.rank-pill {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.1;
+}
+
+.rank-pill b {
+  font-size: var(--fs-small);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-pill.lead {
+  background: var(--gold-bg);
+  box-shadow: inset 0 0 0 2px var(--gold-line);
+  color: var(--gold-ink-2);
+}
+
+.standings-sub {
+  margin: -8px 0 12px;
+  font-size: var(--fs-small);
+  font-weight: 800;
+}
+
+.you-line {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  text-align: center;
+}
+
+.standings-rows {
+  gap: 8px;
+}
+
+.standings-row {
+  display: block;
+  min-height: 0;
+  position: relative;
+  padding: 8px 16px 8px 12px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+}
+
+.standings-row.first {
+  background: linear-gradient(120deg, var(--gold-bg), var(--gold-bg-2));
+  box-shadow: 0 0 0 2px var(--gold-line);
+}
+
+.standings-row.mine {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.standings-row.first.mine {
+  box-shadow:
+    0 0 0 2px var(--gold-line),
+    inset 0 0 0 2px var(--blue);
+}
+
+.standings-line {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.standings-rank {
+  min-width: 44px;
+  text-align: center;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+}
+
+.standings-rank.p1 {
+  color: var(--gold-ink);
+}
+
+.standings-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.standings-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.standings-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.standings-total {
+  font-size: var(--fs-h1);
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Hole by hole: nine to a row, double-stakes holes marked 2×. */
+.hbh {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px 0 4px;
+}
+
+.hbh-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.hbh-cell small {
+  font-size: var(--fs-micro);
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.hbh-cell small.dbl {
+  color: var(--gold-ink);
+}
+
+.hbh-cell b {
+  font-size: var(--fs-small);
+  font-weight: 900;
+}
+
+.hbh-cell.now {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.hbh-card {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-micro);
+  font-weight: 900;
+}
+
+.hbh-cell.missed .hbh-card {
+  color: var(--red-ink);
+}
+
+.hbh-empty {
+  color: var(--ink-4);
+}
+
+.sum-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.sum-pill {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-small);
+}
+
+.sum-line b {
+  font-size: var(--fs-h3);
+  color: var(--ink);
+}
+
+/* ── Final podium (Oct 2026 review) ──────────────────────────────────────── */
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Laid out 2-1-3; read 1-2-3. */
+.pod-1 {
+  order: 2;
+}
+
+.pod-2 {
+  order: 1;
+}
+
+.pod-3 {
+  order: 3;
+}
+
+.pod {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pod.shown > :not(.pod-block) {
+  animation: rise 0.4s ease-out both;
+}
+
+.pod-crown {
+  font-size: var(--fs-h1);
+  line-height: 1;
+  margin-bottom: -8px;
+}
+
+.pod-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.pod-score {
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pod-q {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  color: var(--ink-3);
+  font-size: var(--fs-h2);
+  font-weight: 900;
+}
+
+.pod-block {
+  width: 100%;
+  margin-top: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-h1);
+  font-weight: 900;
+}
+
+.pod-1 .pod-block {
+  height: 120px;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  box-shadow: none;
+  color: var(--gold-ink-2);
+}
+
+.pod-2 .pod-block {
+  height: 84px;
+}
+
+.pod-3 .pod-block {
+  height: 60px;
 }

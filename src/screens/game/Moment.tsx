@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { isDoubleHole, newLeader, standings, type Game } from '../../game';
+import { completedHoles, isDoubleHole, newLeader, standings, type Game } from '../../game';
 import { useApp } from '../../state/store';
 import { Avatar } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
@@ -11,13 +11,13 @@ const SEEN_KEY = 'sendit.moment';
  * halfway through 18, or the double-stakes holes coming up. Once per hole, after the standings
  * have slid into place. It never blocks: taps go straight through, and it fades on its own.
  */
-export function Moment({ game, delay = 800 }: { game: Game; delay?: number }) {
-  const h = game.current;
+export function Moment({ game, hole = game.current, delay = 800 }: { game: Game; hole?: number; delay?: number }) {
+  const h = hole;
   const key = `${game.id}:${h}`;
   const [show, setShow] = useState(false);
   // Wait until the score splash is out of the way.
   const flash = useApp((st) => st.flash);
-  const moment = pick(game);
+  const moment = pick(game, h);
 
   useEffect(() => {
     if (!moment || flash || seen(key)) return;
@@ -56,10 +56,13 @@ export function Moment({ game, delay = 800 }: { game: Game; delay?: number }) {
 
 type Pick = { kind: 'lead' | 'tie' | 'half' | 'double'; title: string; sub?: string; emoji?: string; player?: Game['players'][number] };
 
-function pick(game: Game): Pick | null {
-  const h = game.current;
+function pick(game: Game, h: number): Pick | null {
   if (game.players.length < 2 || game.status !== 'playing') return null;
-  const rows = standings(game);
+  const rows = standings(
+    game,
+    'game',
+    completedHoles(game).filter((x) => x <= h),
+  );
   const top = rows.filter((r) => r.rank === 1);
   const lead = rows.length > 1 && top.length === 1 ? rows[0].totals.toPar - rows[1].totals.toPar : 0;
   const by = lead ? ` by ${Math.abs(lead)}` : '';

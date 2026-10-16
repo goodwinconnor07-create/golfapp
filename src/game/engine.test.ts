@@ -622,6 +622,49 @@ describe('hole done', () => {
     expect(g.entries[entryKey('player01', 0)].done).toBe(true);
     expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0 })).toEqual({ type: 'holeDone', playerId: 'player00', hole: 0 });
   });
+  it('takes back "Hole done" until a score is in', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'B01');
+    g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0 });
+    g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0, undo: true });
+    expect(holeStatus(g, 'player00', 0)).toBe('playing');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 4 });
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player00', hole: 0, undo: true }, ctx()).ok).toBe(false);
+    expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0, undo: true })).toEqual({
+      type: 'holeDone',
+      playerId: 'player00',
+      hole: 0,
+      undo: true,
+    });
+    expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0, undo: 'yes' })).toBeNull();
+  });
+});
+
+describe('acting for other players (online)', () => {
+  // Sam is the host; Alex and Jo are on their own phones.
+  const JO = 'jo-device-3';
+  function online(): Game {
+    let g = newGame(['Sam', 'Alex', 'Jo']);
+    const devices = [HOST, OTHER, JO];
+    g = { ...g, code: 'ABCDE', players: g.players.map((p, i) => ({ ...p, deviceId: devices[i] })) };
+    return run(g, { type: 'start' });
+  }
+
+  it("lets only the host pick a friend's level", () => {
+    const g = online();
+    const guest = applyAction(g, { type: 'pick', playerId: 'player02', hole: 0, tier: 'insane' }, ctx(OTHER));
+    expect(guest.ok).toBe(false);
+    expect(applyAction(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'safe' }, ctx(OTHER)).ok).toBe(true);
+    expect(applyAction(g, { type: 'pick', playerId: 'player02', hole: 0, tier: 'safe' }, ctx()).ok).toBe(true);
+  });
+
+  it("doesn't let a guest redraw, swap or finish someone else's hole", () => {
+    let g = giveCard(online(), 'player02', 0, 'S02');
+    expect(applyAction(g, { type: 'redraw', playerId: 'player02', hole: 0 }, ctx(OTHER)).ok).toBe(false);
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player02', hole: 0 }, ctx(OTHER)).ok).toBe(false);
+    g = run(g, { type: 'holeDone', playerId: 'player02', hole: 0 }, ctx(JO));
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player02', hole: 0, undo: true }, ctx(OTHER)).ok).toBe(false);
+  });
 });
 
 describe('player pictures', () => {

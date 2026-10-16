@@ -61,25 +61,45 @@ export function PlayerRow({
   );
 }
 
+/** Places gained or lost on the last hole, as a lasting ▲2 / ▼1 chip (not colour or motion alone). */
+export function Move({ n }: { n?: number }) {
+  if (!n) return null;
+  return (
+    <span className={`move-chip ${n > 0 ? 'up' : 'down'}`} role="img" aria-label={n > 0 ? `up ${n}` : `down ${-n}`}>
+      {n > 0 ? '▲' : '▼'}
+      {Math.abs(n)}
+    </span>
+  );
+}
+
 /**
  * One standings line: the place as a badge on the picture, the row sliding from its old
  * spot to the new one, and a ▲/▼ chip for places gained or lost on the last hole. Ties show as "=2nd".
  * move: places gained (+) or lost (−) since the hole before.
  */
-export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?: ReactNode; delay?: number; move?: number }) {
+export function BoardRow({
+  row,
+  sub,
+  delay,
+  move = 0,
+  scoreLabel,
+}: {
+  row: StandingRow;
+  sub?: ReactNode;
+  delay?: number;
+  move?: number;
+  /** Label under the big number; null when the list has one column heading instead. */
+  scoreLabel?: string | null;
+}) {
   return (
     <PlayerRow
+      scoreLabel={scoreLabel}
       player={row.player}
       rank={rankLabel(row.rank, row.tied)}
       name={
         <>
           {row.player.name}
-          {move !== 0 && (
-            <span className={`move-chip ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
-              {move > 0 ? '▲' : '▼'}
-              {Math.abs(move)}
-            </span>
-          )}
+          <Move n={move} />
         </>
       }
       // Rows that changed place slide from where they were (move places away) into their new spot.

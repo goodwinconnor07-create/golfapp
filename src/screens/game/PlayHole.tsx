@@ -1,13 +1,65 @@
 import { useState } from 'react';
 import { cardStakes, getCard, getEntry, holeResult, mulliganAllowance, mulligansLeft, ownsPlayer, type Game } from '../../game';
 import { dispatch, startScoring, useApp } from '../../state/store';
+import { myPlayers } from '../../state/view';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar, TierChip } from '../../ui/components';
 import { colourWipe, haptic } from '../../ui/effects';
+import { GroupList } from '../../ui/GroupList';
 import { BackIcon, FlagIcon } from '../../ui/Icons';
 
 /** Everyone has a card: put the phone away and play. */
 export function PlayHole({ game }: { game: Game }) {
+  const deviceId = useApp((s) => s.deviceId);
+  const online = useApp((s) => s.session?.mode === 'online');
+  const mine = myPlayers(game, deviceId, online);
+  // Friends on their own phones: your card, then the group live.
+  if (online && game.players.some((p) => !mine.includes(p))) return <LiveHole game={game} mine={mine} />;
+  return <SharedPhoneHole game={game} />;
+}
+
+/**
+ * Online: your card (the thing you need on the course), then everyone in the group with their
+ * level and whether they're still playing or have scored. The same list becomes the waiting room.
+ */
+function LiveHole({ game, mine }: { game: Game; mine: Game['players'] }) {
+  const h = game.current;
+  const deviceId = useApp((s) => s.deviceId);
+  return (
+    <>
+      <div className="screen-body">
+        <h1 className="sr-only">Go play!</h1>
+        {mine.map((p) => {
+          const e = getEntry(game, p.id, h);
+          if (!e?.tier) return null;
+          return (
+            <div key={p.id} className="stack rise" style={{ gap: 8 }}>
+              {mine.length > 1 && (
+                <span className="row play-who-static">
+                  <Avatar player={p} size={28} />
+                  <span className="h3">{p.name}</span>
+                </span>
+              )}
+              <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />
+              {mulliganAllowance(game) > 0 && (
+                <MulliganBar game={game} playerId={p.id} canTake={ownsPlayer(game, deviceId, p.id) || deviceId === game.hostDeviceId} />
+              )}
+            </div>
+          );
+        })}
+        <GroupList game={game} mineIds={new Set(mine.map((p) => p.id))} />
+      </div>
+      <div className="screen-foot">
+        <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startScoring)}>
+          <FlagIcon width={28} height={28} /> Hole done
+        </button>
+      </div>
+    </>
+  );
+}
+
+/** Everyone on this phone: each player's card, one open at a time. */
+function SharedPhoneHole({ game }: { game: Game }) {
   const h = game.current;
   const deviceId = useApp((s) => s.deviceId);
   // One card is open (your own, or the first on a shared phone); the rest are one-line rows that
@@ -54,7 +106,9 @@ export function PlayHole({ game }: { game: Game }) {
                 {!shown && e?.tier && <TierChip tier={e.tier} />}
                 {e?.tier && <BackIcon width={20} height={20} className={`play-chevron${shown ? ' open' : ''}`} aria-hidden />}
               </button>
-              {shown && e?.tier && <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />}
+              {shown && e?.tier && (
+                <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />
+              )}
               {shown && e?.tier && mulliganAllowance(game) > 0 && (
                 <MulliganBar
                   game={game}

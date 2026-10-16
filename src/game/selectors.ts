@@ -122,8 +122,7 @@ export function freePassAvailable(game: Game, playerId: string): boolean {
 }
 
 /** Places moved since the hole before the latest finished one: +2 = up two places. */
-export function rankMoves(game: Game): Record<string, number> {
-  const holes = completedHoles(game);
+export function rankMoves(game: Game, holes: readonly number[] = completedHoles(game)): Record<string, number> {
   if (holes.length < 2) return {};
   const before = new Map(standings(game, 'game', holes.slice(0, -1)).map((r) => [r.player.id, r.rank]));
   const out: Record<string, number> = {};
@@ -135,8 +134,8 @@ export function rankMoves(game: Game): Record<string, number> {
  * Who passed whom on the last finished hole: `by` was behind `passed` before it and is
  * ahead now. Ties don't count as a pass. Biggest climbs first.
  */
-export function overtakes(game: Game): { by: Player; passed: Player }[] {
-  const holes = completedHoles(game);
+export function overtakes(game: Game, hole?: number): { by: Player; passed: Player }[] {
+  const holes = completedHoles(game).filter((h) => hole == null || h <= hole);
   if (holes.length < 2) return [];
   const before = new Map(standings(game, 'game', holes.slice(0, -1)).map((r) => [r.player.id, r.rank]));
   const now = new Map(standings(game, 'game', holes).map((r) => [r.player.id, r.rank]));
@@ -197,8 +196,8 @@ export function gapText(game: Game, playerId: string): string | null {
   const n = (v: number) => `${v} stroke${v === 1 ? '' : 's'}`;
   if (me.rank === 1) {
     if (leaders.length > 1) {
-      const other = leaders.find((r) => r !== me)!;
-      return `Tied for the lead with ${other.player.name}`;
+      const others = leaders.filter((r) => r !== me).map((r) => r.player.name);
+      return `Tied for the lead with ${others.length > 1 ? `${others.slice(0, -1).join(', ')} and ${others.at(-1)}` : others[0]}`;
     }
     const next = rows[1];
     return `You lead ${next.player.name} by ${n(next.totals.toPar - me.totals.toPar)}`;

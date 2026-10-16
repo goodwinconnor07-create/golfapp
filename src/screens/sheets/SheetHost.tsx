@@ -20,6 +20,7 @@ import { OptionsSheet, ParsSheet } from './OptionsSheet';
 import { LookSheet } from './LookSheet';
 import { NotificationsSheet } from './NotificationsSheet';
 import { PlayerSheet } from './PlayerSheet';
+import { StandingsSheet } from './StandingsSheet';
 
 export function SheetHost({ sheet }: { sheet: SheetSpec }) {
   switch (sheet.name) {
@@ -33,6 +34,8 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
       return <MenuSheet />;
     case 'notifications':
       return <NotificationsSheet />;
+    case 'standings':
+      return <StandingsSheet />;
     case 'look':
       return <LookSheet />;
     case 'player':
@@ -87,7 +90,7 @@ function MenuSheet() {
 
   const items: Item[] = [];
   if (started) {
-    items.push({ label: 'Leaderboard', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => navigate({ name: 'leaderboard' }) });
+    items.push({ label: 'Standings', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => openSheet({ name: 'standings' }) });
     items.push({ label: 'Scorecard & fixes', Icon: ListIcon, color: 'var(--blue)', onClick: () => navigate({ name: 'scorecard' }) });
   }
   if (host || online)

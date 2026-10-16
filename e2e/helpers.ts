@@ -98,10 +98,11 @@ export async function holeDoneAndScore(page: Page, strokes: number, made: boolea
   await enterScore(page, strokes, made, undefined, false);
 }
 
-/** Everyone has scored: results flip over one by one, then the standings and Next hole appear. */
+/** Everyone has scored: results flip over one by one, then the rows re-sort into the standings. */
 export async function passResultsReveal(page: Page, shotName?: string) {
-  await expect(page.getByRole('heading', { name: /results$/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeEnabled({ timeout: 8_000 });
-  await expect(page.locator('.board-row').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+  // Settled: the list is no longer hidden from screen readers.
+  await expect(page.locator('.reveal-list')).toHaveAttribute('aria-hidden', 'false', { timeout: 8_000 });
+  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeVisible();
   if (shotName) await shot(page, shotName);
 }
