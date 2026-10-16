@@ -201,7 +201,7 @@ test('picking a course fills in the pars', async ({ page }) => {
   await page.getByRole('button', { name: "Let's go!" }).click();
   await page.getByRole('button', { name: 'Start anyway' }).click();
   // No par question: hole 1's par came from the course.
-  await expect(page.locator('.par-chip')).toHaveText('PAR 4');
+  await expect(page.locator('.par-tile')).toHaveAccessibleName('Par 4');
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
 
   // The course is remembered for next time.

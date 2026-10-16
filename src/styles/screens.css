@@ -2048,7 +2048,8 @@
   gap: 8px;
 }
 
-.topbar:has(.bell-btn) .icon-btn {
+.topbar:has(.bell-btn) .icon-btn,
+.topbar:has(.bell-btn) .par-tile {
   width: 48px;
   height: 48px;
   border-radius: var(--r-md);
@@ -2270,11 +2271,6 @@
   .result-row .tier-chip {
     padding: 8px;
   }
-}
-
-/* The par chip never breaks "PAR 4" over two lines. */
-.par-chip {
-  white-space: nowrap;
 }
 
 /* Dark mode: a hairline ring keeps dark avatars and swatches visible against the page. */
