@@ -1,4 +1,4 @@
-import { isDoubleHole, ordinal, standings, type Game } from '../../game';
+import { ordinal, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { groupRevealSeen, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, myPlayers, type GameView } from '../../state/view';
@@ -117,12 +117,6 @@ function GameTopBar({
         <div className="par-tile" role="img" aria-label={`Par ${hole.par}`}>
           <small>PAR</small>
           <b>{hole.par}</b>
-        </div>
-      )}
-      {game.status !== 'lobby' && !final && isDoubleHole(game, holeIdx) && (
-        <div className="par-tile double" role="img" aria-label="Double stakes">
-          <small>STAKES</small>
-          <b>2×</b>
         </div>
       )}
       {game.status === 'playing' && <RankPill game={game} online={online} />}

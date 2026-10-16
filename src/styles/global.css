@@ -587,17 +587,6 @@ input {
   line-height: 1;
 }
 
-/* Double-stakes holes: same tile, with the brand gradient. */
-.par-tile.double {
-  background: linear-gradient(120deg, var(--brand-1), var(--brand-2));
-  box-shadow: var(--shadow-sm);
-  color: var(--on-color);
-}
-
-.par-tile.double small {
-  letter-spacing: 0.04em;
-}
-
 .par-tile small {
   font-size: var(--fs-nano);
   font-weight: 900;
@@ -1382,7 +1371,7 @@ input {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .screen > .topbar:first-child,
   .icon-btn,
-  .par-tile:not(.double),
+  .par-tile,
   .screen-foot,
   .sheet {
     background: var(--surface);
