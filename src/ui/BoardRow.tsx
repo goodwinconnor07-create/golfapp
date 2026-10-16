@@ -11,6 +11,7 @@ import { Avatar, CountUp } from './components';
 export function PlayerRow({
   player,
   rank,
+  place,
   name,
   detail,
   score,
@@ -22,6 +23,8 @@ export function PlayerRow({
   player: Player;
   /** "1", "=2"… shown as a badge on the avatar. */
   rank?: string;
+  /** Race-style place in front of the avatar (standings): 1st, 2nd, =3rd… Replaces the avatar badge. */
+  place?: { n: number; tied: boolean };
   /** What to show as the name (defaults to the player's name), e.g. with a 👑. */
   name?: ReactNode;
   detail?: ReactNode;
@@ -32,10 +35,17 @@ export function PlayerRow({
   hidden?: boolean;
 }) {
   return (
-    <div className={`prow ${className}`} style={style} aria-hidden={hidden}>
+    <div className={`prow ${place ? 'race' : ''} ${className}`} style={style} aria-hidden={hidden}>
+      {place && (
+        <span className={`race-place p${place.n}`} aria-label={`${place.tied ? 'tied ' : ''}${ordinal(place.n)}`}>
+          {place.tied ? '=' : ''}
+          {place.n}
+          <sup>{suffix(place.n)}</sup>
+        </span>
+      )}
       <span className="prow-avatar">
-        <Avatar player={player} size={44} />
-        {rank && <span className="prow-rank">{rank}</span>}
+        <Avatar player={player} size={place ? 40 : 44} />
+        {rank && !place && <span className="prow-rank">{rank}</span>}
       </span>
       <span className="prow-main">
         <span className="prow-name">{name ?? player.name}</span>
@@ -49,27 +59,37 @@ export function PlayerRow({
   );
 }
 
-/** One standings line. move: places gained (+) or lost (−) since the hole before. Ties show as "=2". */
+const suffix = (n: number) => (n % 100 >= 11 && n % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'));
+const ordinal = (n: number) => `${n}${suffix(n)}`;
+
+/**
+ * One standings line, race style: a big place (gold, silver, bronze), the row sliding from its old
+ * spot to the new one, and a ▲/▼ chip for places gained or lost on the last hole. Ties show as "=2nd".
+ * move: places gained (+) or lost (−) since the hole before.
+ */
 export function BoardRow({ row, sub, delay, move = 0 }: { row: StandingRow; sub?: ReactNode; delay?: number; move?: number }) {
   return (
     <PlayerRow
       player={row.player}
-      rank={row.tied ? `=${row.rank}` : String(row.rank)}
+      place={{ n: row.rank, tied: row.tied }}
+      name={
+        <>
+          {row.player.name}
+          {move !== 0 && (
+            <span className={`move-chip ${move > 0 ? 'up' : 'down'}`} aria-label={move > 0 ? `up ${move}` : `down ${-move}`}>
+              {move > 0 ? '▲' : '▼'}
+              {Math.abs(move)}
+            </span>
+          )}
+        </>
+      }
       // Rows that changed place slide from where they were (move places away) into their new spot.
       className={`board-row ${row.rank === 1 ? 'first' : ''} ${move !== 0 ? `reorder ${move > 0 ? 'climbed' : 'dropped'}` : delay != null ? 'rise' : ''}`}
       style={{
         ...(delay != null ? { animationDelay: `${delay}ms` } : {}),
         ...(move !== 0 ? ({ '--from': move } as React.CSSProperties) : {}),
       }}
-      detail={
-        (sub || move !== 0) && (
-          <>
-            {sub}
-            {/* Movement shows as the row sliding and its green/red glow. */}
-            {move !== 0 && <span className="sr-only">{move > 0 ? `up ${move}` : `down ${-move}`}</span>}
-          </>
-        )
-      }
+      detail={sub}
       score={
         <span aria-label={formatToPar(row.totals.toPar)}>
           <CountUp value={row.totals.toPar} format={formatToPar} />

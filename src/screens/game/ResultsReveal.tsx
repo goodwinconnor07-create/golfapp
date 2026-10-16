@@ -6,6 +6,8 @@ import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { VoteTag } from './HoleResults';
 import { Moment } from './Moment';
+import { Overtakes } from './Overtakes';
+import { Reactions } from '../../ui/Reactions';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 
 const GAP_MS = 520;
@@ -92,6 +94,7 @@ export function ResultsReveal({ game }: { game: Game }) {
                       />
                       <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
                       <VoteTag game={game} playerId={player.id} hole={h} />
+                      {done && <Reactions game={game} playerId={player.id} hole={h} />}
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
@@ -114,6 +117,7 @@ export function ResultsReveal({ game }: { game: Game }) {
             <p className="section-title" style={{ margin: '6px 0 0' }}>
               Standings
             </p>
+            <Overtakes game={game} />
             <div className="board">
               {board.map((row, i) => (
                 <BoardRow key={row.player.id} row={row} delay={150 + i * 70} move={moves[row.player.id]} />

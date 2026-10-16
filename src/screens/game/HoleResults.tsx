@@ -6,6 +6,8 @@ import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 import { Moment } from './Moment';
+import { Overtakes } from './Overtakes';
+import { Reactions } from '../../ui/Reactions';
 
 export function HoleResults({ game }: { game: Game }) {
   const h = game.current;
@@ -31,6 +33,7 @@ export function HoleResults({ game }: { game: Game }) {
             👑 {leader.name} takes the lead!
           </div>
         )}
+        <Overtakes game={game} />
         <div className="board">
           {rows.map((row, i) => {
             const r = holeResult(game, row.player.id, h);
@@ -53,6 +56,7 @@ export function HoleResults({ game }: { game: Game }) {
                       />
                       <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
                       <VoteTag game={game} playerId={row.player.id} hole={h} />
+                      <Reactions game={game} playerId={row.player.id} hole={h} />
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )

@@ -103,6 +103,16 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await passResultsReveal(guest, '26b-results-reveal');
   await passResultsReveal(host);
   await expect(guest.locator('.board-row')).toHaveCount(2);
+  await expect(guest.locator('.race-place').first()).toContainText('1st');
+
+  // One-tap heckle: Gus reacts to Hana's hole, and Hana's phone shows it.
+  const hanaRow = guest.locator('.result-row', { hasText: 'Hana' });
+  await hanaRow.getByRole('button', { name: 'React 🤡' }).click();
+  await expect(hanaRow.getByRole('button', { name: 'React 🤡' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(host.locator('.result-row', { hasText: 'Hana' }).locator('.react-tally')).toHaveText('🤡');
+  // You can't heckle yourself.
+  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: /^React/ })).toHaveCount(0);
+  await shot(host, '26c-reactions');
 
   // Either phone can move everyone on. (Both tapping at once only moves one hole: see the engine tests.)
   await guest.getByRole('button', { name: /Next hole/ }).click();

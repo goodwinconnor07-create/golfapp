@@ -1,8 +1,8 @@
-import { completedHoles, getEntry, holeResult, playerTotals, formatToPar, scoreAccess } from '../game';
+import { completedHoles, getEntry, holeResult, playerTotals, formatToPar, scoreAccess, skins } from '../game';
 import { EditList } from './game/EditList';
 import { openSheet, useApp } from '../state/store';
 import { isHost } from '../state/view';
-import { Avatar, BackBar, TIER_LOOK } from '../ui/components';
+import { Avatar, BackBar, playerColor, TIER_LOOK } from '../ui/components';
 
 export function Scorecard() {
   const game = useApp((s) => s.game);
@@ -12,6 +12,7 @@ export function Scorecard() {
   const host = isHost(game, deviceId);
   const holes = completedHoles(game);
   const totals = game.players.map((p) => playerTotals(game, p.id, holes));
+  const won = skins(game);
   const lastPlayed = game.status === 'finished' ? game.holes.length - 1 : game.current;
 
   return (
@@ -78,11 +79,19 @@ export function Scorecard() {
                       scoreAccess(game, deviceId, p.id, i) !== 'none';
                     const edited = game.edits?.some((e) => e.playerId === p.id && e.hole === i);
                     const value = r ? formatToPar(r.toPar) : '·';
-                    const cls = `${r ? r.outcome : 'empty'}${edited ? ' edited' : ''}${r?.mulligan ? ' mulligan' : ''}`;
+                    const skin = won[i]?.playerId === p.id ? won[i] : null;
+                    const cls = `${r ? r.outcome : 'empty'}${edited ? ' edited' : ''}${r?.mulligan ? ' mulligan' : ''}${skin ? ' skin' : ''}`;
+                    const skinStyle = skin ? ({ '--skin': playerColor(p.color) } as React.CSSProperties) : undefined;
                     const inner = (
                       <>
                         {r && <span className="dot" style={{ background: TIER_LOOK[r.tier].color }} />}
                         {value}
+                        {skin && (
+                          <span className="sc-skin" aria-label={skin.worth > 1 ? `won the skin, worth ${skin.worth}` : 'won the skin'}>
+                            {p.emoji ?? [...p.name.trim()][0]}
+                            {skin.worth > 1 && <small>×{skin.worth}</small>}
+                          </span>
+                        )}
                       </>
                     );
                     return (
@@ -91,6 +100,7 @@ export function Scorecard() {
                           <button
                             type="button"
                             className={`sc-cell press ${cls}`}
+                            style={skinStyle}
                             aria-label={`${p.name}, hole ${hole.number}`}
                             onClick={() =>
                               openSheet({
@@ -103,7 +113,9 @@ export function Scorecard() {
                             {inner}
                           </button>
                         ) : (
-                          <span className={`sc-cell ${cls}`}>{inner}</span>
+                          <span className={`sc-cell ${cls}`} style={skinStyle}>
+                            {inner}
+                          </span>
                         )}
                       </td>
                     );
@@ -125,6 +137,8 @@ export function Scorecard() {
         <p className="note">
           Green = challenge completed, red = failed. The dot shows the level.{game.settings.mulligans ? ' M = mulligan used.' : ''} Lowest
           score wins.
+          {game.players.length > 1 &&
+            ' A coloured box with a face = won the skin: the best score on that hole (ties roll over, ×2 = worth 2).'}
         </p>
         <EditList game={game} />
         <p className="note">

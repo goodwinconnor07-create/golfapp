@@ -2851,7 +2851,9 @@
   margin: auto;
   border-radius: 5px;
   background: var(--line);
-  transition: width 0.2s ease, background 0.2s ease;
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
 }
 
 .howto-dots button.on::before {
@@ -2877,4 +2879,224 @@
 .howto-links a {
   color: var(--blue);
   text-decoration: none;
+}
+
+/* ── Race standings (Mario Kart style): big place, movement chip, overtakes ──── */
+.prow.race {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  column-gap: 8px;
+  padding-left: 12px;
+}
+
+.race-place {
+  display: inline-grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 4px;
+  border-radius: var(--r-sm);
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  transform: skewX(-8deg);
+  font-variant-numeric: tabular-nums;
+}
+
+.race-place sup {
+  font-size: 0.5em;
+  margin-left: 1px;
+  vertical-align: super;
+}
+
+.race-place.p1 {
+  background: linear-gradient(160deg, var(--gold-hi), var(--gold));
+  color: var(--gold-ink-2);
+  box-shadow: 0 3px 0 var(--gold-lo);
+}
+
+.race-place.p2 {
+  background: linear-gradient(160deg, var(--bg-2), var(--silver));
+  color: var(--silver-ink);
+  box-shadow: 0 3px 0 var(--slate-hi);
+}
+
+.race-place.p3 {
+  background: linear-gradient(160deg, var(--gold-line), var(--bronze));
+  color: var(--bronze-ink);
+  box-shadow: 0 3px 0 var(--red-ink-2);
+}
+
+/* The place pops after the row has slid into its new spot. */
+.board-row.reorder .race-place {
+  animation: place-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 0.95s both;
+}
+
+@keyframes place-pop {
+  0% {
+    transform: skewX(-8deg) scale(0.6);
+  }
+  100% {
+    transform: skewX(-8deg) scale(1);
+  }
+}
+
+.move-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  font-style: normal;
+  vertical-align: middle;
+  animation: place-chip 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) 1s both;
+}
+
+.move-chip.up {
+  background: var(--green-bg);
+  color: var(--green-ink);
+}
+
+.move-chip.down {
+  background: var(--red-bg);
+  color: var(--red-ink);
+}
+
+@keyframes place-chip {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.board-row.climbed {
+  animation-name: reorder, climb-lift;
+  animation-duration: 0.7s, 0.7s;
+  animation-delay: 0.25s, 0.25s;
+}
+
+@keyframes climb-lift {
+  50% {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+    scale: 1.03;
+  }
+}
+
+.overtakes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overtake {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  animation: overtake-in 0.45s cubic-bezier(0.25, 0.9, 0.3, 1) both;
+}
+
+.overtake b {
+  color: var(--green-ink);
+}
+
+@keyframes overtake-in {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+/* ── One-tap reactions on a hole result ───────────────────────────────────── */
+.react-line {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.react-tally {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--ink);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  animation: place-chip 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.react-btn {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  min-width: 0;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-size: var(--fs-body);
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.react-btn.on {
+  opacity: 1;
+  background: var(--bg-3);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+/* ── Skins on the scorecard: the winner's colour and emoji on the hole ──────── */
+.sc-cell.skin {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 16px;
+  box-shadow: inset 0 0 0 3px var(--skin);
+}
+
+/* A ribbon along the bottom in the winner's colour, with their face (×2 when ties rolled over). */
+.sc-skin {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 18px;
+  background: var(--skin);
+  color: var(--on-color);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  line-height: 18px;
+}
+
+.sc-skin small {
+  font-size: 1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .race-place,
+  .board-row.reorder .race-place,
+  .move-chip,
+  .overtake,
+  .react-tally {
+    animation: none;
+  }
 }
