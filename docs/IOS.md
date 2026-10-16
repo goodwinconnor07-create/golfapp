@@ -45,7 +45,7 @@ is in the App Store, the website can still start games. On launch day:
    paid app can go live, and approval can take a few days. Also apply for the App Store Small
    Business Program (15% commission instead of 30%).
 5. **API key for the build**: App Store Connect → Users and Access → Integrations → App Store
-   Connect API → Team Keys → +, access "App Manager". Download the `.p8` file (only once).
+   Connect API → Team Keys → +, access **Admin** (App Manager can't use Apple's cloud signing, and the upload fails with "Cloud signing permission error"). Download the `.p8` file (only once).
 6. **Register one iPhone**: developer.apple.com → Devices → +, with the phone's UDID. The build
    signs with automatic signing, and Apple won't make a signing profile for a team with no devices.
    Get the UDID by plugging the phone into a Mac (Finder → the phone → click the line under its
