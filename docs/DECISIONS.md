@@ -223,3 +223,7 @@ The panel's calls (easy to change):
 - **One-phone hole results.** One "Total" heading over the score column instead of "To par" under each number. The note that said the pills add up to the big number is gone (only true on hole 1).
 - **Final results.** With 2 or more players a podium builds: 3rd, then 2nd, then 1st (about 3.5 seconds, once per game, tap to skip). 4th and below show as rows. Share is the only footer button; Scorecard and New game sit at the end, so nothing covers the awards.
 - **Not done:** a course map (patchy data, little use on the course), a chat box, an always-on standings strip, and sound.
+
+## Liquid Glass (Oct 2026)
+
+Asked for by the product owner. Apple's Liquid Glass look on the layer that floats over content: the top bar (now stays put while the screen scrolls under it), the round icon buttons and rank pill, the footer button shelf, sheets and pop-up messages. Each is a clear fill that blurs and brightens what's behind it, with a bright rim and a shine along the top. Content cards, rows and the challenge cards stay solid, so the page keeps its white look and text stays sharp in sunlight. Values are the `--glass-*` tokens in `global.css`. Reduce Transparency, or a browser without blur, gets plain solid fills.
