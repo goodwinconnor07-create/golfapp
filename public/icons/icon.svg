@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0" stop-color="#2F7BE0"/>
-      <stop offset="0.6" stop-color="#5FA8F2"/>
-      <stop offset="1" stop-color="#A9D6FF"/>
+      <stop offset="0" stop-color="#0F766E"/>
+      <stop offset="0.55" stop-color="#5B4FD6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
     </linearGradient>
     <radialGradient id="glow" cx="0.86" cy="0.12" r="0.55">
-      <stop offset="0" stop-color="#FFF6C8" stop-opacity="0.8"/>
-      <stop offset="0.35" stop-color="#FFE38A" stop-opacity="0.3"/>
-      <stop offset="1" stop-color="#FFE38A" stop-opacity="0"/>
+      <stop offset="0" stop-color="#FDBA74" stop-opacity="0.8"/>
+      <stop offset="0.35" stop-color="#EA580C" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#EA580C" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2FA35A"/>
-      <stop offset="1" stop-color="#0F5A2E"/>
+      <stop offset="0" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#115E59"/>
     </linearGradient>
     <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
       <stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>
@@ -25,8 +25,8 @@
       <stop offset="1" stop-color="#E3E7EF"/>
     </linearGradient>
     <linearGradient id="flag" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FF4D6A"/>
-      <stop offset="1" stop-color="#C8102E"/>
+      <stop offset="0" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#C2410C"/>
     </linearGradient>
     <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#5DD36A"/>
@@ -54,8 +54,8 @@
     <!-- Sky light where the card is heading. -->
     <rect width="512" height="512" fill="url(#glow)"/>
     <!-- Sun in the top corner. -->
-    <circle cx="452" cy="58" r="44" fill="#FFE27A"/>
-    <circle cx="452" cy="58" r="34" fill="#FFF3B8"/>
+    <circle cx="452" cy="58" r="44" fill="#EA580C"/>
+    <circle cx="452" cy="58" r="34" fill="#FB923C"/>
     <!-- Clouds. -->
     <g fill="#FFFFFF">
       <g opacity="0.95"><ellipse cx="96" cy="112" rx="56" ry="22"/><circle cx="78" cy="100" r="24"/><circle cx="112" cy="92" r="30"/></g>
@@ -65,7 +65,7 @@
 
     <!-- The fairway at the bottom, curving away. -->
     <path d="M-20 452 C 120 410, 300 404, 540 436 L 540 540 L -20 540 Z" fill="url(#turf)"/>
-    <path d="M-20 452 C 120 410, 300 404, 540 436" fill="none" stroke="#6EE08F" stroke-width="3" opacity="0.5"/>
+    <path d="M-20 452 C 120 410, 300 404, 540 436" fill="none" stroke="#5EEAD4" stroke-width="3" opacity="0.5"/>
     <g stroke="#0B4723" stroke-width="2" opacity="0.35" stroke-linecap="round">
       <path d="M40 486 L 30 512"/><path d="M130 470 L 124 500"/><path d="M230 466 L 228 498"/><path d="M330 468 L 334 500"/><path d="M430 476 L 440 506"/>
     </g>
@@ -95,7 +95,7 @@
     <g transform="translate(360 166) rotate(24) scale(1.28)" filter="url(#cardShadow)">
       <rect x="-62" y="-86" width="124" height="172" rx="16" fill="url(#card)"/>
       <rect x="-62" y="-86" width="124" height="172" rx="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
-      <rect x="-52" y="-76" width="104" height="152" rx="10" fill="none" stroke="#1E3A6E" stroke-width="2.5" opacity="0.3"/>
+      <rect x="-52" y="-76" width="104" height="152" rx="10" fill="none" stroke="#7C3AED" stroke-width="2.5" opacity="0.3"/>
       <!-- Middle: a flag on a green. -->
       <ellipse cx="0" cy="44" rx="42" ry="14" fill="url(#hill)"/>
       <ellipse cx="0" cy="40" rx="9" ry="3.5" fill="#0B1A10"/>
@@ -103,7 +103,7 @@
       <path d="M2.5 -40 C 18 -36, 26 -42, 40 -32 C 28 -24, 18 -26, 2.5 -14 Z" fill="url(#flag)"/>
       <circle cx="0" cy="-41" r="4" fill="#FFFFFF" stroke="#C9CFDA" stroke-width="1"/>
       <!-- Corner pips. -->
-      <g fill="#C8102E">
+      <g fill="#C2410C">
         <path d="M-44 -66 h4 v20 h-4 Z"/>
         <path d="M-40 -66 l 14 5 l -14 5 Z"/>
         <g transform="rotate(180)">

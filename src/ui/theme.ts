@@ -24,4 +24,4 @@ export const CONFETTI_COLORS = {
 export const TILE_COLORS = ['var(--brand-1)', 'var(--brand-2)', 'var(--brand-3)', 'var(--blue)', 'var(--safe)'];
 
 /** Soft colour blobs behind the home screen. */
-export const BLOB_COLORS = ['#ff4d8d', '#ffcf33', '#8b5cf6'];
+export const BLOB_COLORS = ['#14b8a6', '#f97316', '#8b5cf6'];

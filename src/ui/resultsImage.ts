@@ -59,8 +59,9 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
 
   // Header: logo word and the round.
   const brand = ctx.createLinearGradient(80, 0, 560, 0);
-  brand.addColorStop(0, '#c41d5a');
-  brand.addColorStop(1, '#ff4d8d');
+  brand.addColorStop(0, '#0f766e');
+  brand.addColorStop(0.5, '#c2410c');
+  brand.addColorStop(1, '#7c3aed');
   ctx.fillStyle = brand;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';

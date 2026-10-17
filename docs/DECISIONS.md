@@ -261,10 +261,11 @@ Asked for by the product owner, then simplified at their request (the first vers
 - **Tried and dropped:** a greeting, a "How you play" stats panel, a live game card with a progress ring, and an animated demo for first-time hosts. Too much for a party game.
 - **Development:** `sendit.appHome` set to `true` in local storage shows the app's Home in a browser (dev builds only). The e2e tests set it; tests that need a friend on the website leave it out.
 
-## Colours: party pink (Oct 2026)
+## Colours: the three levels (Oct 2026)
 
-Replaces the Clubhouse navy. Asked for by the product owner: not basic, not loud, gives the idea of a party.
+Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the product owner: the app's own colours are the Safe, Bold and Insane colours.
 
-- **Brand:** pink (`--brand-1` #ff4d8d to `--brand-3` #c41d5a) for New game, the CARDSHOT wordmark, text links and the results picture. `--brand-bg` / `--brand-ink` for tinted rows like "Back to your game". `--pop` yellow (#ffcf33) is there for small highlights.
+- **Brand:** `--brand` runs Safe teal into Bold orange into Insane purple. It's on New game, the CARDSHOT wordmark and the results picture. Text links and tinted rows like "Back to your game" use the Insane purple (`--brand-ink`, `--brand-bg`).
+- **Icon:** the same card flying off a tee, recoloured: a teal-to-purple sky, an orange sun and flag, and a teal fairway. PNGs, the iPhone icon and the launch screen are regenerated with `npm run icons`.
 - **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
-- **Unchanged:** the Safe, Bold and Insane colours, green for go buttons, blue for Share, and the app icon.
+- **Unchanged:** green for go buttons and blue for Share.
