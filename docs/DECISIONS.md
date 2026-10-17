@@ -166,7 +166,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 - Logo: the driver knocking the card off a tee (not the cannon). It's the app icon and launch screen.
 - The iPhone app is the web app wrapped with Capacitor (details in `docs/IOS.md`). It adds real haptics, the iOS share sheet, invite links that open the app and a native backup of saved games.
-- **The host pays** for the app (planned $4.99). Friends join free on the website with the link or code. Once the app is in the App Store, the website stops starting games (`VITE_WEB_HOSTING=off`): Home shows Join a game first, and "Host · get the app" goes to the App Store.
+- **The host pays** for the app (planned $4.99). Friends join free on the website with the link or code. Once the app is in the App Store, the website stops starting games (`VITE_WEB_HOSTING=off`): the "Hosting?" link on the website's Home (the join screen) goes to the App Store.
 
 ## Names, lobby wording, privacy and support (Oct 2026)
 
@@ -250,3 +250,14 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 - Picture choices: your letter, ⛳️ 🏌️‍♂️ 🏌️‍♀️ 😈 ⭐️ 😀 😤 🥱 🤫 🫪 🐐 👑 🍀. The earlier emojis are retired: they're not offered, but players who picked one keep it.
 - Colours: blue, red, yellow, green, orange, purple, then pink and black so a full table of 8 players each gets their own. Colours are saved by position, so games already in progress show the new colours in the same slots. Yellow gets dark lettering.
 - "What's your name?" and the join screen both show a big floating picture, with the name box above the button.
+
+## Home: the app and the website split (Oct 2026)
+
+Asked for by the product owner.
+
+- **The website opens on the join screen.** Under the icon's sky: "Join the game", the code box, Find game, and a small How to play button top right. While the website can still host (`VITE_WEB_HOSTING` isn't `off`), a quiet "Hosting? Start a game" link sits at the bottom. Once it's off, the link goes to the App Store instead.
+- **The iPhone app's Home is for the host.** Nearly everyone using the app is hosting, so it leads with New game, and joining someone else's game is a small link under it. From the top: a greeting and the icon on the sky, the round in progress as a big navy card (hole, how far through, your place, the players' pictures), "How you play", "Play again with…", then New game.
+- **How you play** counts only rounds this phone hosted, and only the host's own player in them: the mix of Safe, Bold and Insane picks ("Mostly Bold" once a level is at least 45% of picks), Insane cards made (or all cards made, if no Insane yet), and the best card (made most often, drawn at least twice). Each finished round now saves those numbers with it (`mine` in `GameRecord`). Rounds saved before this have none, so they don't count.
+- **Play again** starts a new game with last round's group already on the list (the newest round this phone hosted with other people). Friends tap their name when they join. With the host's name known it skips the name screen.
+- **Until a first round is finished**, Home shows a 17-second picture of a round instead: everyone picks a level, Jo draws a Bold card, Sam hits to the flag, the card comes off the score, and a podium for the winner. Players are picture bubbles, not drawn golfers. With Reduce Motion it's a slideshow of the finished scenes. How to play keeps its own slides; the demo isn't repeated there.
+- **Development:** `sendit.appHome` set to `true` in local storage shows the app's Home in a browser (dev builds only). The e2e tests set it; tests that need a friend on the website leave it out.

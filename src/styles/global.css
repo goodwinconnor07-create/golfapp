@@ -71,6 +71,23 @@
   --sky-1: #2f7be0;
   --sky-2: #4a9cf0;
   --logo: linear-gradient(100deg, var(--sky-1) 0%, var(--sky-2) 100%);
+  /* The rest of the icon's scene, for Home's header and the game demo. */
+  --sky-3: #5fa8f2;
+  --sky-4: #a9d6ff;
+  --sky: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-3) 55%, var(--sky-4) 100%);
+  --sun: #ffe27a;
+  --sun-hi: #fff3b8;
+  --cloud: rgba(255, 255, 255, 0.85);
+  --turf: #2fa35a;
+  --turf-lo: #0f5a2e;
+  --turf-hi: #5dd36a;
+  --flag: #c8102e;
+  --pole: #e8ecf2;
+  /* Soft white fills on the sky: glass buttons, the cursor on a card. */
+  --on-sky: rgba(255, 255, 255, 0.25);
+  --on-sky-text: rgba(255, 255, 255, 0.92);
+  --shadow-sky: 0 6px 14px rgba(11, 42, 92, 0.3);
+  --shadow-sky-text: 0 1px 2px rgba(11, 42, 92, 0.35);
 
   /* ── States. -lo shades are for gradients under white text; -ink is text on a tinted -bg. */
   --green: #15803d;

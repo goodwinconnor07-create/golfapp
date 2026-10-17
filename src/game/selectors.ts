@@ -406,3 +406,25 @@ export function redactForDevice(game: Game, deviceId: string): Game {
   }
   return view;
 }
+
+/** How one player played a round: which levels they picked, and how often each card came off. */
+export interface PlayStats {
+  picks: Record<Tier, number>;
+  made: Record<Tier, number>;
+  /** Card id → [times drawn, times made]. Situational cards whose situation never came up don't count. */
+  cards: Record<string, [number, number]>;
+}
+
+export function playStats(game: Game, playerId: string, holes: readonly number[] = completedHoles(game)): PlayStats {
+  const stats: PlayStats = { picks: { safe: 0, bold: 0, insane: 0 }, made: { safe: 0, bold: 0, insane: 0 }, cards: {} };
+  for (const h of holes) {
+    const r = holeResult(game, playerId, h);
+    if (!r || r.outcome === 'na') continue;
+    const made = r.outcome === 'made';
+    stats.picks[r.tier]++;
+    if (made) stats.made[r.tier]++;
+    const [drawn, done] = stats.cards[r.cardId] ?? [0, 0];
+    stats.cards[r.cardId] = [drawn + 1, done + (made ? 1 : 0)];
+  }
+  return stats;
+}
