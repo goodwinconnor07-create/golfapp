@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0" stop-color="#2B4F8F"/>
-      <stop offset="0.55" stop-color="#1E3A6E"/>
-      <stop offset="1" stop-color="#0B1D3F"/>
+      <stop offset="0" stop-color="#2F7BE0"/>
+      <stop offset="0.6" stop-color="#5FA8F2"/>
+      <stop offset="1" stop-color="#A9D6FF"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.68" cy="0.3" r="0.6">
-      <stop offset="0" stop-color="#9CC2FF" stop-opacity="0.55"/>
-      <stop offset="0.4" stop-color="#5B8BDB" stop-opacity="0.2"/>
-      <stop offset="1" stop-color="#5B8BDB" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.86" cy="0.12" r="0.55">
+      <stop offset="0" stop-color="#FFF6C8" stop-opacity="0.8"/>
+      <stop offset="0.35" stop-color="#FFE38A" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FFE38A" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="turf" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2FA35A"/>
@@ -38,10 +38,10 @@
       <stop offset="1" stop-color="#8D95A6"/>
     </linearGradient>
     <filter id="cardShadow" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="-8" dy="18" stdDeviation="12" flood-color="#030B1C" flood-opacity="0.55"/>
+      <feDropShadow dx="-8" dy="18" stdDeviation="12" flood-color="#0B2A5C" flood-opacity="0.4"/>
     </filter>
     <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#030B1C" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0B2A5C" flood-opacity="0.3"/>
     </filter>
     <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
     <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
@@ -53,13 +53,14 @@
   <g clip-path="url(#tile)">
     <!-- Sky light where the card is heading. -->
     <rect width="512" height="512" fill="url(#glow)"/>
-    <!-- Faint stars for height. -->
+    <!-- Sun in the top corner. -->
+    <circle cx="452" cy="58" r="44" fill="#FFE27A"/>
+    <circle cx="452" cy="58" r="34" fill="#FFF3B8"/>
+    <!-- Clouds. -->
     <g fill="#FFFFFF">
-      <circle cx="72" cy="88" r="2.4" opacity="0.5"/>
-      <circle cx="150" cy="54" r="1.8" opacity="0.4"/>
-      <circle cx="226" cy="118" r="2" opacity="0.35"/>
-      <circle cx="446" cy="404" r="2.2" opacity="0.35"/>
-      <circle cx="108" cy="196" r="1.6" opacity="0.3"/>
+      <g opacity="0.95"><ellipse cx="96" cy="112" rx="56" ry="22"/><circle cx="78" cy="100" r="24"/><circle cx="112" cy="92" r="30"/></g>
+      <g opacity="0.8"><ellipse cx="262" cy="392" rx="46" ry="16"/><circle cx="250" cy="382" r="18"/><circle cx="276" cy="376" r="22"/></g>
+      <g opacity="0.7"><ellipse cx="470" cy="372" rx="52" ry="18"/><circle cx="458" cy="360" r="22"/></g>
     </g>
 
     <!-- The fairway at the bottom, curving away. -->
@@ -118,7 +119,7 @@
     <g fill="#FFFFFF">
       <path d="M190 150 l 4 12 l 12 4 l -12 4 l -4 12 l -4 -12 l -12 -4 l 12 -4 Z" opacity="0.9"/>
       <path d="M262 98 l 3 8 l 8 3 l -8 3 l -3 8 l -3 -8 l -8 -3 l 8 -3 Z" opacity="0.7"/>
-      <circle cx="446" cy="250" r="3.5" opacity="0.7"/>
+      
     </g>
   </g>
 </svg>
