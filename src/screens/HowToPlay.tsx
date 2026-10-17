@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDelta, TIER_ORDER, TIERS, type Player, type Tier } from '../game';
+import { markHowToSeen } from '../state/persist';
 import { publicOrigin } from '../state/platform';
 import { back } from '../state/store';
 import { ChallengeCard } from '../ui/ChallengeCard';
@@ -51,7 +52,8 @@ const SLIDES: { title: string; text: string; demo: () => ReactNode }[] = [
   },
 ];
 
-export function HowToPlay() {
+/** `intro`: shown once to a first-time host before they start, so it offers a Skip. */
+export function HowToPlay({ intro = false }: { intro?: boolean }) {
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   // Each slide's example remounts (and replays) every time you arrive on it.
@@ -68,9 +70,21 @@ export function HowToPlay() {
     setVisits((v) => v.map((n, i) => (i === index ? n + 1 : n)));
   }, [index]);
 
+  // Opening it once is enough: it won't be offered again.
+  useEffect(markHowToSeen, []);
+
   return (
     <div className="screen">
-      <BackBar title="How to play" />
+      <BackBar
+        title="How to play"
+        right={
+          intro && !last ? (
+            <button type="button" className="btn-link-small" onClick={back}>
+              Skip
+            </button>
+          ) : undefined
+        }
+      />
       <div
         ref={track}
         className="howto-track"

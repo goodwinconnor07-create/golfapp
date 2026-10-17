@@ -25,7 +25,7 @@ export function App() {
       screen = <Home />;
       break;
     case 'howto':
-      screen = <HowToPlay />;
+      screen = <HowToPlay intro={route.intro} />;
       break;
     case 'setupPlayers':
       screen = <SetupPlayers />;

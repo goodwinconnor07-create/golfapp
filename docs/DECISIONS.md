@@ -227,3 +227,9 @@ The panel's calls (easy to change):
 ## Liquid Glass (Oct 2026)
 
 Asked for by the product owner. Apple's Liquid Glass look on the layer that floats over content: the top bar (now stays put while the screen scrolls under it), the round icon buttons and rank pill, the footer button shelf, sheets and pop-up messages. Each is a clear fill that blurs and brightens what's behind it, with a bright rim and a shine along the top. Content cards, rows and the challenge cards stay solid, so the page keeps its white look and text stays sharp in sunlight. Values are the `--glass-*` tokens in `global.css`. Reduce Transparency, or a browser without blur, gets plain solid fills.
+
+## First launch and crashes (Oct 2026)
+
+- **How to play on first host.** The first time a phone taps New game, How to play shows first, with a Skip button on every slide but the last. Finishing or skipping lands on the name screen. It's marked seen as soon as How to play opens (from anywhere), so it's never forced twice, and a phone that already has past games never sees it. Guests joining by code don't get it, so the join link stays quick. Stored under `sendit.howto`.
+- **Crash screen.** If a screen crashes while drawing, an error boundary (`src/ui/ErrorBoundary.tsx`) shows "Something went wrong" with Reload and Go to Home, instead of a blank page. The game is saved on the phone, so Reload picks the round back up. It doesn't catch errors in button handlers or network calls.
+- **Tests start as if How to play was seen.** `playwright.config.ts` seeds `sendit.howto`; the first-time tests in `e2e/home.spec.ts` clear it.

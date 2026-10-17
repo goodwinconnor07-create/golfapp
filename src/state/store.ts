@@ -37,6 +37,7 @@ import {
   loadLook,
   loadName,
   loadSession,
+  needsHowTo,
   saveLook,
   saveName,
   saveRecord,
@@ -48,7 +49,7 @@ import { freshUi, myPlayers, reactorFor, type HoleUi } from './view';
 
 export type Route =
   | { name: 'home' }
-  | { name: 'howto' }
+  | { name: 'howto'; intro?: boolean }
   | { name: 'setupPlayers' }
   | { name: 'setupCourse' }
   | { name: 'setupHoles' }
@@ -447,7 +448,9 @@ export function setDraftNames(names: string[]): void {
 export function startNewGame(): void {
   const begin = () => {
     set({ draft: { names: [state.profileName], course: null } });
-    resetTo({ name: 'setupPlayers' });
+    // A first-time host sees the rules once, ahead of the name screen. Finishing or skipping lands on it.
+    if (needsHowTo()) resetTo({ name: 'setupPlayers' }, { name: 'howto', intro: true });
+    else resetTo({ name: 'setupPlayers' });
   };
   const g = state.game;
   if (g && g.status !== 'finished') {
