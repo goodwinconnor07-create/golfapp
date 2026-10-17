@@ -60,7 +60,12 @@ export function Lobby({ game }: { game: Game }) {
                   <button type="button" className="btn btn-blue" onClick={() => void shareInvite(game.code!)}>
                     <ShareIcon width={24} height={24} /> Share invite
                   </button>
-                  <button type="button" className="btn btn-ghost icon-only" aria-label="Show QR code" onClick={() => openSheet({ name: 'invite' })}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost icon-only"
+                    aria-label="Show QR code"
+                    onClick={() => openSheet({ name: 'invite' })}
+                  >
                     <QrIcon width={26} height={26} />
                   </button>
                 </div>
@@ -109,10 +114,10 @@ export function Lobby({ game }: { game: Game }) {
                   {/* The float (and the shadow and glow) move together, so nothing is left behind. */}
                   <span className={`roster-float${isHostPlayer ? ' is-host' : ''}`}>
                     <Avatar player={p} size={72} />
+                    {you && <span className="tag tag-you">You</span>}
                   </span>
                 </span>
                 <span className="roster-name">{p.name}</span>
-                {you && <span className="tag tag-you">You</span>}
               </>
             );
             return host || you ? (

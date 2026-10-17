@@ -86,7 +86,7 @@ function HostHome() {
         )}
       </div>
       <div className="screen-foot home-foot">
-        <button type="button" className="btn btn-xl btn-dark" onClick={(e) => colourWipe(e, () => startNewGame())}>
+        <button type="button" className="btn btn-dark" onClick={(e) => colourWipe(e, () => startNewGame())}>
           New game
         </button>
         <div className="home-links">

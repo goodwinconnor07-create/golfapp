@@ -271,3 +271,10 @@ Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the pro
 - **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
 - **Unchanged:** green for go buttons and blue for Share.
 - **Moving background:** the three level colours, blurred, drift slowly behind Home (the app's Home and the website's join screen). Reduce Motion stops them.
+
+## Polish from the first TestFlight round (Oct 2026)
+
+- **Home:** room under Play again so it clears the footer, and a shorter footer (normal-height New game button).
+- **Name screen:** the picture is a bit smaller (164px) so emojis stay crisp. The name pill and pencil sit inside the floating part, so they move with the picture. Same for the "You" tag in the lobby.
+- **Pick your risk:** Safe's whole-card shimmer is gone; light now glances off the shields one by one, like the flashes behind Insane.
+- **Score screen:** "Completed · your strokes prove it" is a slim banner above the stroke counter, only on cards the strokes settle. Footer buttons are normal height. "Not done yet" (or Cancel, when the host scores for someone else) is a back arrow in the header next to Par; the standings trophy steps aside while scoring.

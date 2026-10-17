@@ -1,9 +1,9 @@
-import { ordinal, standings, type Game } from '../../game';
+import { getEntry, ordinal, ownsPlayer, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
-import { groupRevealSeen, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
+import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
-import { BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
+import { BackIcon, BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
@@ -46,10 +46,17 @@ export function GameScreen() {
   // The hole on screen: a phone still showing the last hole's results stays on that hole.
   const holeIdx = view.kind === 'resultsReveal' ? view.hole : game.current;
   const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${holeIdx}`;
+  // Scoring: a back button by the par. The host scoring for someone on another phone cancels;
+  // anyone else goes back to playing ("Not done yet") until a score is saved.
+  let back: { label: string; run: () => void } | undefined;
+  if (view.kind === 'score') {
+    if (game.code && !ownsPlayer(game, deviceId, view.playerId)) back = { label: 'Cancel', run: cancelScoreFor };
+    else if (getEntry(game, view.playerId, game.current)?.strokes == null) back = { label: 'Not done yet', run: notDoneYet };
+  }
 
   return (
     <div className="screen">
-      <GameTopBar game={game} online={online} conn={conn} holeIdx={holeIdx} final={view.kind === 'final'} />
+      <GameTopBar game={game} online={online} conn={conn} holeIdx={holeIdx} final={view.kind === 'final'} back={back} />
       {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
@@ -91,18 +98,23 @@ function GameTopBar({
   conn,
   holeIdx,
   final,
+  back,
 }: {
   game: Game;
   online: boolean;
   conn: ConnStatus | 'none';
   holeIdx: number;
   final: boolean;
+  back?: { label: string; run: () => void };
 }) {
   // Changes made with no signal, saved on this phone until they reach the server.
   const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
   const hole = game.holes[holeIdx];
   const asks = useFixCount(game);
-  const host = isHost(game, useApp((s) => s.deviceId));
+  const host = isHost(
+    game,
+    useApp((s) => s.deviceId),
+  );
   return (
     <div className="topbar">
       <div className="topbar-title">
@@ -114,13 +126,19 @@ function GameTopBar({
           </div>
         )}
       </div>
+      {back && (
+        <button type="button" className="icon-btn press" aria-label={back.label} onClick={back.run}>
+          <BackIcon />
+        </button>
+      )}
       {game.status !== 'lobby' && !final && hole.par && (
         <div className="par-tile" role="img" aria-label={`Par ${hole.par}`}>
           <small>PAR</small>
           <b>{hole.par}</b>
         </div>
       )}
-      {game.status === 'playing' && <RankPill game={game} online={online} />}
+      {/* While scoring, the back button takes the trophy's place so the hole number keeps its room. */}
+      {game.status === 'playing' && !back && <RankPill game={game} online={online} />}
       {game.status === 'lobby' && host && (
         <button type="button" className="icon-btn press" aria-label="Game options" onClick={() => openSheet({ name: 'options' })}>
           <GearIcon />

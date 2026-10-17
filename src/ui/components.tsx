@@ -48,7 +48,7 @@ export function TierIcon({ tier, size = 24 }: { tier: Tier; size?: number }) {
 }
 
 /**
- * Soft moving shapes behind a tier's colour, so the screen feels live: a slow glint across
+ * Soft moving shapes behind a tier's colour, so the screen feels live: light glancing off
  * Safe's shields, flames flickering up behind Bold, lightning flashing behind Insane.
  * Decoration only. They sit on the right, behind the text, and stop with Reduce Motion.
  */
@@ -61,7 +61,6 @@ export function TierFx({ tier }: { tier: Tier }) {
           <Icon width="100%" height="100%" />
         </span>
       ))}
-      {tier === 'safe' && <span className="tier-fx-glint" />}
     </span>
   );
 }
@@ -137,15 +136,16 @@ export function HeroPicture({
           onClick={onChange}
         >
           <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+            {/* The pill and pencil ride inside the float, so they bob with the picture. */}
             <span className="hero-float">
-              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={200} />
+              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={164} />
+              <span className="hero-edit-badge" aria-hidden>
+                <PencilIcon width={20} height={20} />
+              </span>
+              <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
+                <span className="hero-name-text">{shown || 'Add your name'}</span>
+              </span>
             </span>
-          </span>
-          <span className="hero-edit-badge" aria-hidden>
-            <PencilIcon width={22} height={22} />
-          </span>
-          <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
-            <span className="hero-name-text">{shown || 'Add your name'}</span>
           </span>
         </button>
       </div>
