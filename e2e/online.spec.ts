@@ -114,13 +114,19 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(guest.locator('.board-row')).toHaveCount(2);
   await expect(guest.locator('.prow-rank').first()).toContainText('1st');
 
-  // One-tap heckle: Gus reacts to Hana's hole, and Hana's phone shows it.
+  // Heckle: Gus taps React, picks 🤡, and Hana's phone fills with it.
   const hanaRow = guest.locator('.result-row', { hasText: 'Hana' });
+  await hanaRow.getByRole('button', { name: 'React', exact: true }).click();
   await hanaRow.getByRole('button', { name: 'React 🤡' }).click();
-  await expect(hanaRow.getByRole('button', { name: 'React 🤡' })).toHaveAttribute('aria-pressed', 'true');
+  // The picker closes and Gus's pick shows once, as his outlined tally.
+  await expect(hanaRow.locator('.react-picker')).toHaveCount(0);
+  await expect(hanaRow.locator('.react-tally.mine')).toHaveText('🤡');
+  await expect(host.locator('.flood')).toBeVisible();
+  await expect(host.locator('.flood-tag')).toContainText('Gus 🤡');
+  await shot(host, '26d-reaction-flood');
   await expect(host.locator('.result-row', { hasText: 'Hana' }).locator('.react-tally')).toHaveText('🤡');
   // You can't heckle yourself.
-  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: /^React/ })).toHaveCount(0);
+  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: 'React', exact: true })).toHaveCount(0);
   await shot(host, '26c-reactions');
 
   // Either phone moves the group on, but the other phone keeps its results until its player moves on.

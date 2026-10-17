@@ -46,7 +46,7 @@ import {
   type Look,
   type Session,
 } from './persist';
-import { freshUi, myPlayers, reactorFor, type HoleUi } from './view';
+import { freshUi, myPlayers, reactionTarget, reactorFor, type HoleUi } from './view';
 
 export type Route =
   | { name: 'home' }
@@ -114,6 +114,8 @@ export interface AppState {
   ui: HoleUi;
   toasts: Toast[];
   flash: Flash | null;
+  /** An emoji flood: someone just reacted to this phone's hole. */
+  flood: { key: number; emoji: string; name: string } | null;
   /** Setup in progress: player names and the chosen course (null = no course picked). */
   draft: { names: string[]; course: CourseDetail | null };
   busy: string | null;
@@ -156,6 +158,7 @@ let state: AppState = {
   ui: freshUi(bootGame),
   toasts: [],
   flash: null,
+  flood: null,
   draft: { names: [''], course: null },
   busy: null,
   results: { shown: readMark('sendit.resultsRevealed'), done: readMark('sendit.resultsDone') },
@@ -336,6 +339,7 @@ function onServerMessage(msg: ServerMessage): void {
     const pending = msg.ack ? s.pending.filter((p) => p.id !== msg.ack) : s.pending;
     announceMulligans(s.game, msg.game);
     announceScoredForMe(s.game, msg.game, s.pending);
+    announceReactions(s.game, msg.game);
     setSession({ ...s, game: msg.game, pending });
   } else if (msg.t === 'reject') {
     setSession({ ...s, pending: s.pending.filter((p) => p.id !== msg.id) });
@@ -659,13 +663,32 @@ export function castVote(playerId: string, voterId: string, fair: boolean): void
 }
 
 /** One-tap reaction to someone's hole result. Tapping the same emoji again takes it back. */
-export function reactTo(playerId: string, emoji: string): void {
+export function reactTo(rowId: string, emoji: string): void {
   const g = state.game;
   if (!g) return;
-  const from = reactorFor(g, state.deviceId, playerId);
+  const from = reactorFor(g, state.deviceId, rowId);
   if (!from) return;
-  const mine = getEntry(g, playerId, g.current)?.reactions?.[from];
-  if (dispatch({ type: 'react', playerId, hole: g.current, fromId: from, emoji: mine === emoji ? null : emoji })) haptic('light');
+  const target = reactionTarget(g, rowId);
+  const mine = getEntry(g, target, g.current)?.reactions?.[from];
+  if (dispatch({ type: 'react', playerId: target, hole: g.current, fromId: from, emoji: mine === emoji ? null : emoji })) haptic('light');
+}
+
+/** Someone reacted to this phone's player (or their team): flood the screen with that emoji. */
+function announceReactions(before: Game | null, after: Game): void {
+  if (!before || before.id !== after.id || after.status !== 'playing') return;
+  const h = after.current;
+  for (const p of myPlayers(after, state.deviceId, true)) {
+    const target = after.teams ? (after.teams.find((t) => t.players.includes(p.id))?.players[0] ?? p.id) : p.id;
+    const was = getEntry(before, target, h)?.reactions ?? {};
+    const now = getEntry(after, target, h)?.reactions ?? {};
+    for (const [fromId, emoji] of Object.entries(now)) {
+      if (was[fromId] === emoji || ownsPlayer(after, state.deviceId, fromId)) continue;
+      const name = after.players.find((x) => x.id === fromId)?.name ?? 'Someone';
+      set({ flood: { key: Date.now(), emoji, name } });
+      haptic('medium');
+      return;
+    }
+  }
 }
 
 const REVEALED_KEY = 'sendit.revealed';
@@ -905,4 +928,8 @@ async function recheckServer(): Promise<void> {
   set({ server: ok ? 'up' : 'down' });
   const s = state.session;
   if (ok && was !== 'up' && s?.mode === 'local' && s.game?.status === 'lobby') void goOnline(true);
+}
+
+export function clearFlood(): void {
+  set({ flood: null });
 }

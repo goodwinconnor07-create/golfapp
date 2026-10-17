@@ -288,5 +288,13 @@ Asked for by the product owner, built to match the last simulation. Optional, 4 
 - **Scoring:** each player still enters their own real strokes. The team's hole score is the **average of both partners' golf scores** plus the card result **once**. **Either partner completing the card completes it for the team**; it only fails when both have scored and neither completed it. Scores can land on half points (−2½).
 - **Team values:** Safe −3/+2, Bold −4/+3, Insane −12/+4 (in `TEAM_TIERS`, `tiers.ts`). The solo values are unchanged. The 2× finish on the last 3 holes applies as usual.
 - **Standings:** teams are ranked against each other (lowest average wins). Skins on the scorecard stay per player.
-- **Left out for now:** one-tap reactions don't show in team games.
+- **Reactions:** you react to the other team's row, never your own (stored on the team's first partner). Both partners' phones get the flood.
 - Team values and the either-completes rule came from the simulation only. `npm run balance` doesn't check team games yet.
+
+## Reactions: React button and emoji flood (Oct 2026)
+
+Asked for by the product owner.
+
+- **One React button** under each result instead of five emoji buttons. Tapping it opens the five emojis; picking one closes it. The button then reads "Change".
+- **Your pick shows once**, as an outlined tally (tap it to take it back), instead of both a pressed button and a tally.
+- **Emoji flood:** when someone reacts to your hole, your phone fills with that emoji rising up the screen for about 2 seconds, with "Gus 🤡" in the middle. It never blocks taps. Reduce Motion shows just the name tag.

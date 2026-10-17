@@ -946,6 +946,16 @@ describe('2v2 teams', () => {
   const score = (g: Game, id: string, hole: number, strokes: number, outcome?: 'made' | 'missed') =>
     run(g, { type: 'score', playerId: id, hole, strokes, ...(outcome ? { outcome } : {}) });
 
+  it('lets a player react to the other team, never their own', () => {
+    let g = teamGame();
+    g = giveCard(g, TEAMS[0][0], 0, 'S02');
+    g = score(g, TEAMS[0][0], 0, 4, 'made');
+    // The host owns every player here, so react as the other team's first player, then as a teammate.
+    const as = (fromId: string) => applyAction(g, { type: 'react', playerId: TEAMS[0][0], hole: 0, fromId, emoji: '🔥' }, ctx());
+    expect(as(TEAMS[1][0]).ok).toBe(true);
+    expect(as(TEAMS[0][1]).ok).toBe(false);
+  });
+
   it('lets only the host set teams, in the lobby, for exactly four players', () => {
     const g = newGame(NAMES);
     expect(applyAction(g, { type: 'setTeams', teams: TEAMS }, ctx(OTHER)).ok).toBe(false);

@@ -3432,6 +3432,36 @@
   opacity: 0.55;
 }
 
+.react-tally.mine {
+  border: 0;
+  background: var(--brand-bg);
+  box-shadow: inset 0 0 0 2px var(--brand-ink);
+}
+
+/* One small button; the five emojis only show once it's tapped. */
+.react-open {
+  padding: 4px 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+}
+
+.react-picker {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  animation: place-chip 0.25s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.react-picker .react-btn {
+  opacity: 1;
+}
+
 .react-btn.on {
   opacity: 1;
   background: var(--bg-3);
@@ -4319,4 +4349,72 @@ button.roster-item:active {
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.15;
+}
+
+/* Someone reacted to your hole: their emoji pours up the screen. Taps go straight through. */
+.flood {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flood-drop {
+  position: absolute;
+  bottom: -64px;
+  line-height: 1;
+  animation: flood-rise 1.9s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+}
+
+@keyframes flood-rise {
+  from {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--drift), -110vh) rotate(var(--spin));
+    opacity: 0;
+  }
+}
+
+.flood-tag {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  animation: flood-tag 2.6s ease both;
+}
+
+@keyframes flood-tag {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-picker,
+  .flood-tag {
+    animation: none;
+  }
 }

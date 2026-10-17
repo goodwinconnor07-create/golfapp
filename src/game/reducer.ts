@@ -450,6 +450,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.status !== 'playing' || action.hole !== g.current) return fail('Reactions have closed on that hole.');
       if (!findPlayer(action.playerId) || !ownsPlayer(g, ctx.deviceId, action.fromId)) return fail('You can only react as yourself.');
       if (action.fromId === action.playerId) return fail("You can't react to your own hole.");
+      if (g.teams && mateOf(g, action.fromId) === action.playerId) return fail("You can't react to your own team.");
       const entry = g.entries[entryKey(action.playerId, action.hole)];
       if (entry?.strokes == null) return fail('Nothing to react to yet.');
       if ((entry.reactions?.[action.fromId] ?? null) === action.emoji) return unchanged;
