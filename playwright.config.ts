@@ -6,14 +6,22 @@ const external = process.env.BASE_URL;
 
 // End-to-end tests run against the Vite dev server, which also runs the Worker
 // and Durable Object locally, so online games are tested without a Cloudflare account.
+const baseURL = external ?? `http://localhost:${PORT}`;
+
 export default defineConfig({
   testDir: 'e2e',
   timeout: 90_000,
   workers: 1,
   reporter: [['list']],
   use: {
-    baseURL: external ?? `http://localhost:${PORT}`,
-    browserName: 'chromium',
+    baseURL,
+    browserName: (process.env.BROWSER as 'webkit') ?? 'chromium',
+    // A first-time host is shown How to play before the name screen. Tests start as if they've seen it;
+    // the first-time test clears this.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: new URL(baseURL).origin, localStorage: [{ name: 'sendit.howto', value: 'true' }] }],
+    },
     // SMALL=1 checks a small phone (360×740) instead of a typical one.
     viewport: process.env.SMALL ? { width: 360, height: 740 } : { width: 390, height: 844 },
     deviceScaleFactor: 2,

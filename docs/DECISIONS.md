@@ -38,7 +38,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **No Bunker Visit** stays in the deck. If the hole has no bunker in play, the player can swap it once for a card that doesn't need one.
 - **Cards the strokes decide** are judged by the app: Bogey Buffer, No Triple Bogey, Par Hunter and Birdie Time. Cards with a strokes condition plus something else (like The Clean Birdie) are marked missed automatically when the strokes rule them out; otherwise the player taps Completed or Failed.
 - **Decks:** one shuffled pile per level for the whole round, so cards don't repeat until the pile runs out.
-- **Who can do what online:** you enter your own score (and any guests' on your phone). See "Changing scores" below. Only the host can start, end early, change options, add guests, remove players, or change a par once cards are out.
+- **Who can do what online:** you enter your own score (and any guests' on your phone). See "Changing scores" below. Only the host can start, end early, change options, add guests, remove players, or change a par once cards are out. Only the host can pick, redraw or finish a hole for someone on another phone (see "After the card is drawn").
 - **Joining late:** new players can join until the first hole is finished. Anyone can claim a name the host typed in at any time.
 - **Ending early:** only holes everyone finished count towards totals.
 - **Join codes:** 5 consonants, so a code can never spell a word. Online games are deleted 14 days after their last change.
@@ -87,14 +87,14 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **Group vote.** On cards judged by eye (distance cards), when a player says they completed it, everyone else in an online game gets 👍 Fair / 👎 No way on their own phone. More 👎 than 👍 turns it into a fail. Ties and no votes leave the claim standing. Voting is open while the hole is being played and closes when the group moves on. Players without their own phone don't vote. One-phone games have no vote.
 - **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once.
 - **Standings while picking.** The pick screen says how far you are behind the leader (or ahead of second).
-- **Leaderboard movement.** Places gained or lost on the last hole show as ▲/▼, and the hole results say when someone takes the lead.
+- **Leaderboard movement.** Places gained or lost on the last hole show as a lasting ▲2 / ▼1 chip by the name, and a new leader gets one "takes the lead" moment.
 
 ## Finishing a hole online (waiting room)
 
 - "Hole done" plays the colour fill. In an online game where some players are on other phones, it marks this phone's players as done (everyone sees it) and goes straight to entering this phone's score(s).
-- After scoring you're in the waiting room, which lists each player as Still playing, Done · scoring or Scored. Other players' numbers aren't shown there. Players who've finished but not scored can be scored from the room ("Enter for them"), in case their phone has died.
+- After scoring you're in the waiting room (the same group list as while playing; see "After the card is drawn"). It shows your own result, each player as Playing, Scoring or Scored, and the next hole. Other players' numbers aren't shown there. The host can score anyone on another phone from the room ("Enter for them"), in case their phone has died; for someone still playing it asks first.
 - No result splash online: the shared reveal shows everyone's result instead.
-- When everyone has scored, each phone flips the hole's results over one player at a time, worst first, so the best score on the hole lands last with a 👑. The standings (with rank arrows and any lead change) then appear on the same screen, with Next hole. Votes can still be cast there until the group moves on.
+- When everyone has scored, each phone plays the results as one list (see "After the card is drawn"). Votes can still be cast there until the group moves on.
 - Hiding scores in the room is a screen choice, not a server secret: phones do receive the numbers.
 - With everyone on one phone, there's no room: scoring works as before, with the splash.
 
@@ -139,7 +139,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 ## Standings drama (Oct 2026)
 
-- Every hole: standings rows slide from their old place to the new one, with a green glow for a climb and red for a drop; scores count up.
+- Every hole: standings rows slide from their old place to the new one, with a green glow for a climb and red for a drop, and a ▲/▼ chip that stays; scores count up.
 - Big moments only, once per hole, after the standings settle: a new leader (crown and confetti), a tie for the lead, halfway in an 18-hole round, and the double-stakes holes coming up. It fades on its own after about 2.5 seconds and never blocks taps (Next hole works straight through). No extra screen per hole.
 
 ## Small-phone layout (Oct 2026)
@@ -154,7 +154,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - The course is set once, at the start (New game → Where are you playing?, which also fills in the pars). The free-text course name is gone from Game options.
 - The par screen no longer repeats "Hole 1" under the top bar.
 - Standings say "1 of 3 cards made" instead of "1/3 cards".
-- The trophy and Past games stay as icons with no labels (product owner's call).
+- Past games stays an icon with no label (product owner's call). The trophy became the rank pill in Oct 2026 (see "After the card is drawn").
 
 ## Rebrand to CardShot (Oct 2026)
 
@@ -172,7 +172,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 - Player names go through a light filter (`src/game/names.ts`): slurs and obvious sexual or abusive words are refused with "Pick a different name.", including l33t and spaced-out spellings, without blocking real names like Dickson or Scunthorpe. Enforced in the reducer and on upload. Hosts can still remove players in the lobby.
 - The host's lobby heading is "Ready to tee off?" (was the old brand's "Ready to send it?").
-- `/privacy` and `/support` are plain pages on the website, linked from the last How to play slide (so they're one tap away in the app, as Apple asks). The contact email is a placeholder (`SUPPORT_EMAIL`) until the product owner picks one.
+- `/privacy` and `/support` are plain pages on the website, linked from the last How to play slide (so they're one tap away in the app, as Apple asks). The contact email is support@cardshot.link, forwarded by Cloudflare Email Routing to the owner's inbox.
 
 ## Push notifications (Oct 2026)
 
@@ -193,6 +193,46 @@ Decided by the product owner after the balance simulations. The full rulebook, t
 - **Tested and not adopted:** chaser's shield, leader can't pick Safe on 2× holes, bounce-back and momentum boosts, a Safe streak, per-card values, capping holes at bogey, players declaring a skill level. Reasons in GAME_BALANCE.md.
 - This answers the open questions about Green in Regulation, Par Three Sniper vs Master, Two-Shot Threat and The Chip-In Chance: all retired.
 
+## Race standings, skins and reactions (Oct 2026)
+
+Asked for by the product owner. None of these change the score or the rules (docs/GAME_BALANCE.md still holds).
+
+- **Race standings (Mario Kart style):** every standings row (hole results, the online results reveal and the final screen) leads with a big place badge (1st gold, 2nd silver, 3rd bronze, "=2nd" for ties). After a hole, rows slide from their old place to the new one, the place pops, and a ▲2 / ▼1 chip shows places gained or lost. Under the hole's title, "🏎️ Sam overtakes Alex" lines name each pass (up to 3), led by "👑 Sam takes the lead" when the lead changes (this line replaced the old banner in the Oct 2026 review below).
+- **Skins, scorecard only:** the single best game score on a finished hole wins its skin; ties roll it over to the next finished hole (a tie on the last hole means nobody wins it). The winning cell gets a frame and a ribbon in the winner's avatar colour with their emoji (or initial), and "×2", "×3"… when it carried over. No prize, no other screen, no setting. Worked out from the scores (`skins()` in `selectors.ts`), never stored.
+- **One-tap reactions and heckles:** 🔥 👏 😂 🫣 🤡 under other players' hole results, for players on another phone (heckling someone on your own phone happens out loud). One reaction per player per result; tap it again to take it back. Everyone sees the tallies. Open until the group moves on, like votes. Enforced in the reducer (`react` action), only listed emojis pass `parseAction()` / `sanitizeUpload()`. No push notifications for them.
+
+## After the card is drawn (Oct 2026 review)
+
+A panel review (researchers, specialist judges and a 4-phone play-through) of everything after a card is drawn. Prototypes were scored in two rounds; these are what won.
+
+Decided by the product owner:
+
+- **Each phone finishes its own reveal.** Anyone can still tap Next hole and move the group on, but every other phone keeps showing that hole's results until its player taps Next hole too. (Before, one tap jumped every phone on, often before the others had seen the results.)
+- **"Pick for them" is host only.** Online, only the host (stepping in for a dead phone) can pick, redraw, swap or finish a hole for a player on another phone. Enforced in the reducer.
+- **The rank pill replaces the leaderboard page.** The trophy in the top bar shows your place ("2nd", "=2nd" for a tie) and turns gold when you lead. It opens the Standings sheet over any screen. With everyone on one phone it's just the trophy. The menu item is "Standings".
+
+The panel's calls (easy to change):
+
+- **Live hole screen (online).** Go play! shows your card, then the whole group: level (as an icon disc), each friend's card title, any mulligan, and Playing, Scoring or Scored. No scores before the reveal. With everyone on one phone, Go play! is unchanged.
+- **Waiting room.** Same group list. Adds your own result (the online stand-in for the result splash), "Next: Hole 6 · Par 3", and who took a mulligan. The heading names only players still on the course.
+- **Not done yet.** Hole done can be taken back until a score is in (`holeDone` with `undo`). Shown on the score screen and in the waiting room.
+- **Host scoring for someone.** A Cancel link backs out. If the host enters a score for a player on another phone, that phone gets a note ("The host entered your score: 6").
+- **Results as one list.** Rows start in the old standings order; each hole flips over worst first (with a short hold before the best), its score ticks into the total, then the rows re-sort into the new standings with ▲/▼ chips. About 3 seconds for 4 players; any tap skips, and Next hole's first tap only skips. Buzzes only for your own row. Screen readers get the settled standings once. "Best hole" marks the hole's best score (more than one if tied); the gold row is the leader. Overtakes show under the title once the rows settle. The lead change is one line there plus the existing moment between holes (the inline banner is gone).
+- **Reactions.** The one-tap reactions and heckles above show on the settled results, once the reveal ends. Free chat was ruled out (moderation and App Store rules for under-18s).
+- **Standings sheet.** "After 4 of 9 holes · holes 7–9 count 2×", your gap to the player just ahead ("2nd · 3 behind Jay"), and one row per player: place ("1st", "=2nd"), ▲/▼, name (You on yours), then what they're doing now (online) or strokes and cards made. Tap a row for the round hole by hole (level, ✓/✗, 2× marked) and Golf + Cards = total. The pill and sheet only count a hole once this phone has seen its results.
+- **One-phone hole results.** One "Total" heading over the score column instead of "To par" under each number. The note that said the pills add up to the big number is gone (only true on hole 1).
+- **Final results.** With 2 or more players a podium builds: 3rd, then 2nd, then 1st (about 3.5 seconds, once per game, tap to skip). 4th and below show as rows. Share is the only footer button; Scorecard and New game sit at the end, so nothing covers the awards.
+- **Not done:** a course map (patchy data, little use on the course), a chat box, an always-on standings strip, and sound.
+
+## Liquid Glass (Oct 2026)
+
+Asked for by the product owner. Apple's Liquid Glass look on the layer that floats over content: the top bar (now stays put while the screen scrolls under it), the round icon buttons and rank pill, the footer button shelf, sheets and pop-up messages. Each is a clear fill that blurs and brightens what's behind it, with a bright rim and a shine along the top. Content cards, rows and the challenge cards stay solid, so the page keeps its white look and text stays sharp in sunlight. Values are the `--glass-*` tokens in `global.css`. Reduce Transparency, or a browser without blur, gets plain solid fills.
+
+## First launch and crashes (Oct 2026)
+
+- **How to play on first host.** The first time a phone taps New game, How to play shows first, with a Skip button on every slide but the last. Finishing or skipping lands on the name screen. It's marked seen as soon as How to play opens (from anywhere), so it's never forced twice, and a phone that already has past games never sees it. Guests joining by code don't get it, so the join link stays quick. Stored under `sendit.howto`.
+- **Crash screen.** If a screen crashes while drawing, an error boundary (`src/ui/ErrorBoundary.tsx`) shows "Something went wrong" with Reload and Go to Home, instead of a blank page. The game is saved on the phone, so Reload picks the round back up. It doesn't catch errors in button handlers or network calls.
+- **Tests start as if How to play was seen.** `playwright.config.ts` seeds `sendit.howto`; the first-time tests in `e2e/home.spec.ts` clear it.
 ## Lobby layout and short join link (Oct 2026)
 
 - The host's lobby is one screen with no scrolling: join code tiles, the link `cardshot.link/CODE` (tap to copy), Share and QR buttons, then the list of who's in, then Let's go!

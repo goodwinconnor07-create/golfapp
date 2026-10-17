@@ -8,6 +8,8 @@ import { CheckIcon } from '../../ui/Icons';
 export function WaitPicks({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
   const h = game.current;
+  // Stepping in for a dead phone is the host's job; guests can't pick a friend's level.
+  const host = deviceId === game.hostDeviceId;
   const mineWithCards = game.players.filter((p) => {
     const e = getEntry(game, p.id, h);
     return e?.cardId && e.pickedBy === deviceId;
@@ -32,10 +34,12 @@ export function WaitPicks({ game }: { game: Game }) {
                 <span className="tag tag-done">
                   <CheckIcon width={14} height={14} style={{ verticalAlign: -2 }} /> Locked in
                 </span>
-              ) : (
+              ) : host ? (
                 <button type="button" className="btn btn-sm btn-ghost btn-auto step-in" onClick={() => stepIn(p.id)}>
                   Pick for them
                 </button>
+              ) : (
+                <span className="tag tag-waiting">Picking…</span>
               )}
             </div>
           );

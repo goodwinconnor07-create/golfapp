@@ -271,7 +271,7 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
 
       </svg>
       {/* The card's extra condition, once the ball is in. */}
-      {tag && <SceneTag key={run} text={tag} at={still ? 0 : total + 0.35} />}
+      {tag && <SceneTag key={`tag-${run}`} text={tag} at={still ? 0 : total + 0.35} />}
     </button>
   );
 }

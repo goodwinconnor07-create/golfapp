@@ -7,7 +7,6 @@ import { SetupHoles } from './screens/SetupHoles';
 import { SetupCourse } from './screens/SetupCourse';
 import { Join, JoinWho } from './screens/Join';
 import { GameScreen } from './screens/game/GameScreen';
-import { Leaderboard } from './screens/Leaderboard';
 import { Scorecard } from './screens/Scorecard';
 import { History } from './screens/History';
 import { SheetHost } from './screens/sheets/SheetHost';
@@ -26,7 +25,7 @@ export function App() {
       screen = <Home />;
       break;
     case 'howto':
-      screen = <HowToPlay />;
+      screen = <HowToPlay intro={route.intro} />;
       break;
     case 'setupPlayers':
       screen = <SetupPlayers />;
@@ -45,9 +44,6 @@ export function App() {
       break;
     case 'game':
       screen = <GameScreen />;
-      break;
-    case 'leaderboard':
-      screen = <Leaderboard />;
       break;
     case 'scorecard':
       screen = <Scorecard />;

@@ -52,7 +52,7 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
         <Defs id={id} />
         {plan.draw(ctx)}
       </svg>
-      {art.tag && <SceneTag key={run} text={art.tag} at={still ? 0 : start + plan.duration + 0.2} />}
+      {art.tag && <SceneTag key={`tag-${run}`} text={art.tag} at={still ? 0 : start + plan.duration + 0.2} />}
     </button>
   );
 }

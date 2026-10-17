@@ -96,6 +96,11 @@
   --gold-ink-2: #78350f;
   --slate: #334155;
   --slate-hi: #64748b;
+  /* Race places on the standings: 1st uses gold, then silver and bronze. */
+  --silver: #94a3b8;
+  --silver-ink: #1e293b;
+  --bronze: #c2410c;
+  --bronze-ink: #fff7ed;
 
   /* Tiers: teal / orange / violet, chosen to stay apart for colour-blind players
      (icons and 1-2-3 pips back the colour up). */
@@ -119,6 +124,17 @@
   --shadow: 0 12px 28px -14px rgba(18, 18, 40, 0.45);
   --shadow-press: 0 4px 10px -6px rgba(18, 18, 40, 0.45);
 
+  /* ── Liquid Glass: the floating layer (top bar, buttons, footer, sheets, toasts).
+     A clear fill that blurs and brightens what's behind it, a bright rim and a top shine. */
+  --glass-fill: rgba(255, 255, 255, 0.62);
+  --glass-fill-strong: rgba(255, 255, 255, 0.8);
+  --glass-tint-dark: rgba(20, 20, 32, 0.72);
+  --glass-rim: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(18, 18, 40, 0.08);
+  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(18, 18, 40, 0.05);
+  --glass-shadow: 0 8px 24px -12px rgba(18, 18, 40, 0.28);
+  --glass-blur: blur(20px) saturate(180%);
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -130,6 +146,11 @@
    and in screens.css, set color-scheme to "light dark", and add back the dark theme-color tag. */
 @media (prefers-color-scheme: dark) {
   :root[data-theme='dark'] {
+    --glass-fill: rgba(27, 28, 36, 0.58);
+    --glass-fill-strong: rgba(27, 28, 36, 0.78);
+    --glass-rim: rgba(255, 255, 255, 0.14);
+    --glass-edge: rgba(0, 0, 0, 0.3);
+    --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
     --ink: #f4f4f8;
     --ink-2: #d0d0da;
     --ink-3: #a3a3b2;
@@ -547,14 +568,36 @@ input {
   letter-spacing: -0.02em;
 }
 
-.par-chip {
-  font-size: var(--fs-body);
+/* Par sits in the button row as a square tile the same size as the icon buttons. */
+.par-tile {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  background: var(--glass-fill);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-edge),
+    var(--shadow-sm);
+  color: var(--ink);
+  line-height: 1;
+}
+
+.par-tile small {
+  font-size: var(--fs-nano);
   font-weight: 900;
-  padding: 4px 12px;
-  border-radius: var(--r-pill);
-  background: var(--contrast);
-  color: var(--on-contrast);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.par-tile b {
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .topbar:has(.conn-pill) {
@@ -1256,4 +1299,106 @@ input {
 
 .look-picker .section-title {
   margin: 0 0 -4px;
+}
+
+/* ── Liquid Glass ────────────────────────────────────────────────────────────
+   Only on the layer that floats over content, where there's something to see through.
+   Content cards stay solid. Reduce Transparency (or no blur support) gets solid fills. */
+
+.topbar,
+.icon-btn,
+.screen-foot,
+.sheet,
+.toast {
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* The top bar stays put and content slides under it. */
+.screen:has(> .topbar:first-child) {
+  padding-top: 0;
+}
+
+.screen > .topbar:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 -16px 8px;
+  padding: calc(var(--safe-top) + 12px) 16px 8px;
+  background: var(--glass-fill);
+  box-shadow: 0 1px 0 var(--glass-edge);
+}
+
+/* Buttons are drops of glass: clear fill, bright rim, a shine along the top. */
+.icon-btn {
+  background: var(--glass-fill);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-edge),
+    var(--shadow-sm);
+}
+
+/* The footer is a glass shelf: the list scrolls under it, blurred. */
+.screen-foot {
+  margin: -20px -16px 0;
+  padding: 16px 16px calc(var(--safe-bottom) + 16px);
+  background: var(--glass-fill);
+  box-shadow:
+    0 -1px 0 var(--glass-edge),
+    inset 0 1px 0 var(--glass-rim);
+}
+
+.screen-foot.clear {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.sheet {
+  background: var(--glass-fill-strong);
+  box-shadow:
+    var(--glass-shine),
+    var(--glass-shadow);
+}
+
+.toast {
+  background: var(--glass-tint-dark);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    var(--glass-shadow);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .screen > .topbar:first-child,
+  .icon-btn,
+  .par-tile,
+  .screen-foot,
+  .sheet {
+    background: var(--surface);
+  }
+  .toast {
+    background: var(--contrast);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .screen > .topbar:first-child,
+  .icon-btn,
+  .screen-foot,
+  .sheet,
+  .toast {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .screen > .topbar:first-child,
+  .screen-foot,
+  .sheet {
+    background: var(--surface);
+  }
+  .icon-btn {
+    background: var(--bg-2);
+  }
+  .toast {
+    background: var(--contrast);
+  }
 }

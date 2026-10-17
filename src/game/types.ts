@@ -49,6 +49,8 @@ export interface Entry {
   mulligan?: boolean;
   /** Group vote on an honour-system claim: voter's player id → true if they call it fair. */
   votes?: Record<string, boolean>;
+  /** One-tap reactions to this result: reacting player's id → emoji (one of REACTIONS). */
+  reactions?: Record<string, string>;
 }
 
 export interface Settings {
@@ -129,10 +131,12 @@ export type Action =
   | { type: 'redraw'; playerId: string; hole: number; cardId?: string }
   /** Take (or undo) a mulligan on the hole being played. */
   | { type: 'mulligan'; playerId: string; hole: number; on: boolean }
-  /** The player has finished playing the hole and is ready to score it. */
-  | { type: 'holeDone'; playerId: string; hole: number }
+  /** The player has finished playing the hole and is ready to score it. undo: "Not done yet", back to playing. */
+  | { type: 'holeDone'; playerId: string; hole: number; undo?: boolean }
   /** voterId calls playerId's honour-system claim on this hole fair (or not). */
   | { type: 'vote'; playerId: string; hole: number; voterId: string; fair: boolean }
+  /** fromId reacts to playerId's result on this hole with an emoji (null takes it back). */
+  | { type: 'react'; playerId: string; hole: number; fromId: string; emoji: string | null }
   | { type: 'swap'; playerId: string; hole: number; cardId?: string }
   | { type: 'score'; playerId: string; hole: number; strokes: number; outcome?: Outcome; mulligan?: boolean }
   /** Ask to change a locked-in score. The player whose score it is approves (the host, if you're asking about your own). */

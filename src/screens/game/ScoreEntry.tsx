@@ -1,6 +1,16 @@
 import { useState } from 'react';
-import { cardStakes, getCard, getEntry, judgeFromStrokes, lastHoleToPar, outcomeChoices, type Game, type Outcome } from '../../game';
-import { dispatch, submitScore } from '../../state/store';
+import {
+  cardStakes,
+  getCard,
+  getEntry,
+  judgeFromStrokes,
+  lastHoleToPar,
+  outcomeChoices,
+  ownsPlayer,
+  type Game,
+  type Outcome,
+} from '../../game';
+import { cancelScoreFor, dispatch, notDoneYet, submitScore, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
 import { Avatar, StrokePicker } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
@@ -12,6 +22,9 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
   const card = getCard(entry?.cardId);
   const player = game.players.find((p) => p.id === playerId);
   const [strokes, setStrokes] = useState(entry?.strokes ?? par);
+  const deviceId = useApp((st) => st.deviceId);
+  // The host entering a score for someone on another phone (say it died) can back out.
+  const forSomeoneElse = Boolean(game.code) && !ownsPlayer(game, deviceId, playerId);
 
   if (!player || !card || !entry?.tier) return null;
 
@@ -81,6 +94,17 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
               </button>
             )}
           </>
+        )}
+        {forSomeoneElse ? (
+          <button type="button" className="btn btn-link" onClick={cancelScoreFor}>
+            Cancel
+          </button>
+        ) : (
+          entry.strokes == null && (
+            <button type="button" className="btn btn-link" onClick={notDoneYet}>
+              Not done yet
+            </button>
+          )
         )}
       </div>
     </>

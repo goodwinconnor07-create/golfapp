@@ -71,12 +71,15 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await expect(rows).toHaveCount(2);
 
   // Leaderboard and scorecard keep real strokes separate from game score.
-  await page.getByRole('button', { name: 'Leaderboard' }).click();
+  await page.getByRole('button', { name: /^Standings/ }).click();
   await shot(page, '13-leaderboard');
   // One golf-style leaderboard; strokes taken show as a detail line.
   await expect(page.getByRole('tab')).toHaveCount(0);
-  await expect(page.locator('.board-row', { hasText: 'Sam' })).toContainText('5 strokes');
-  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' })).toContainText('5 strokes');
+  // Tap a row: the round hole by hole, and how golf and cards add up.
+  await page.locator('.standings-row', { hasText: 'Sam' }).getByRole('button').click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.sum-line')).toContainText('Golf +1');
+  await page.getByRole('button', { name: 'Close' }).click();
 
   await page.getByRole('button', { name: 'Fix a score' }).click();
   await expect(page.getByRole('heading', { name: 'Scorecard' }).or(page.getByText('Scorecard'))).toBeVisible();
@@ -198,7 +201,7 @@ test('picking a course fills in the pars', async ({ page }) => {
   await page.getByRole('button', { name: "Let's go!" }).click();
   await page.getByRole('button', { name: 'Start anyway' }).click();
   // No par question: hole 1's par came from the course.
-  await expect(page.locator('.par-chip')).toHaveText('PAR 4');
+  await expect(page.locator('.par-tile')).toHaveAccessibleName('Par 4');
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
 
   // The course is remembered for next time.
@@ -253,10 +256,23 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
 
   // The leaderboard shows who moved after the last hole.
   await page.reload();
-  await page.getByRole('button', { name: 'Leaderboard' }).click();
-  await expect(page.locator('.board-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
-  await expect(page.locator('.board-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
+  await page.getByRole('button', { name: /^Standings/ }).click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.move-chip')).toHaveText('▲1');
+  await expect(page.locator('.standings-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
+  // Race style: places as "1st", and a chip for places gained or lost.
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.standings-rank')).toContainText('1st');
   await shot(page, '34-leaderboard-moves');
+  await page.getByRole('button', { name: 'Close' }).click();
+
+  // The scorecard marks skins in the winner's colour: hole 1 went to Alex, hole 2 tied and
+  // rolled over, so Sam's win on hole 3 is worth 2.
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Scorecard & fixes' }).click();
+  await expect(page.getByLabel('Alex, hole 1')).toHaveClass(/skin/);
+  await expect(page.getByLabel('Sam, hole 3').locator('.sc-skin')).toContainText('×2');
+  await expect(page.locator('.sc-cell.skin')).toHaveCount(2);
+  await shot(page, '34b-scorecard-skins');
   await page.getByRole('button', { name: 'Back' }).click();
 
   // Hole 4 of 6: double stakes, and Sam sees how far ahead he is.

@@ -22,11 +22,11 @@ interface Props {
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
 export function flipDelay(tier: Tier): number {
   if (reducedMotion()) return 0;
-  return tier === 'insane' ? 460 : tier === 'bold' ? 160 : 90;
+  return tier === 'insane' ? 420 : tier === 'bold' ? 360 : 300;
 }
 
 /** About when the card face is showing, for timing confetti on the reveal screen. */
-export const FLIP_MS = 420;
+export const FLIP_MS = 400;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
 export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par }: Props) {
@@ -79,7 +79,7 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
           </div>
           {card && !compact && shown && SHOT_ART[card.id] && (
             // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
-            <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 320) / 1000 : 0.3} />
+            <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 120) / 1000 : 0.3} />
           )}
           {card && (
             <div className="ccard-body">
@@ -91,6 +91,19 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
           )}
         </div>
       </div>
+      {/* The wind-up: a glint for Safe, flames for Bold, lightning for Insane. Kept outside the 3D flip: inside it, Safari shows the back through the front. */}
+      <span className="ccard-fx" aria-hidden>
+        {tier === 'safe' && <span className="ccard-glint" />}
+        {tier === 'bold' && [0, 1, 2, 3, 4].map((i) => <span key={i} className={`ccard-flame ccard-flame${i}`} />)}
+        {tier === 'insane' && (
+          <>
+            <span className="ccard-flash" />
+            <svg className="ccard-bolt" viewBox="0 0 100 300" preserveAspectRatio="none">
+              <polyline points="55,0 35,90 62,110 30,200 58,215 40,300" />
+            </svg>
+          </>
+        )}
+      </span>
     </div>
   );
 }

@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
-import { getCard, getEntry, holeResult, isVoteable, newLeader, rankMoves, standings, voteTally, type Game } from '../../game';
+import { getCard, getEntry, holeResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { HoleMeta, Working } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 import { Moment } from './Moment';
+import { Overtakes } from './Overtakes';
+import { Reactions } from '../../ui/Reactions';
 
 export function HoleResults({ game }: { game: Game }) {
   const h = game.current;
   const rows = standings(game);
   const moves = rankMoves(game);
-  const leader = newLeader(game, h);
   const last = h === game.holes.length - 1;
   const insaneMade = game.players.some((p) => {
     const r = holeResult(game, p.id, h);
@@ -25,12 +26,14 @@ export function HoleResults({ game }: { game: Game }) {
   return (
     <>
       <div className="screen-body">
-        <h1 className="h1">Hole {game.holes[h].number} done!</h1>
-        {leader && (
-          <div className="lead-banner pop" role="status">
-            👑 {leader.name} takes the lead!
-          </div>
-        )}
+        {/* Each row: this hole's working, then the running total. */}
+        <div className="reveal-head">
+          <h1 className="h1">Hole {game.holes[h].number} done!</h1>
+          <span className="col-label" aria-hidden>
+            Total
+          </span>
+        </div>
+        <Overtakes game={game} />
         <div className="board">
           {rows.map((row, i) => {
             const r = holeResult(game, row.player.id, h);
@@ -40,6 +43,7 @@ export function HoleResults({ game }: { game: Game }) {
                 row={row}
                 delay={i * 70}
                 move={moves[row.player.id]}
+                scoreLabel={null}
                 sub={
                   r && (
                     <>
@@ -53,6 +57,7 @@ export function HoleResults({ game }: { game: Game }) {
                       />
                       <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
                       <VoteTag game={game} playerId={row.player.id} hole={h} />
+                      <Reactions game={game} playerId={row.player.id} hole={h} />
                       <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
@@ -62,7 +67,6 @@ export function HoleResults({ game }: { game: Game }) {
           })}
         </div>
         <Moment game={game} />
-        <p className="note">Your golf score plus your card = the big number. Lowest wins.</p>
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" onClick={nextHole}>

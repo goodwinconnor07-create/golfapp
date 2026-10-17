@@ -5,6 +5,8 @@ import {
   freePassAvailable,
   gapText,
   newLeader,
+  overtakes,
+  skins,
   rankMoves,
   createGame,
   eligibleCards,
@@ -620,6 +622,49 @@ describe('hole done', () => {
     expect(g.entries[entryKey('player01', 0)].done).toBe(true);
     expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0 })).toEqual({ type: 'holeDone', playerId: 'player00', hole: 0 });
   });
+  it('takes back "Hole done" until a score is in', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'B01');
+    g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0 });
+    g = run(g, { type: 'holeDone', playerId: 'player00', hole: 0, undo: true });
+    expect(holeStatus(g, 'player00', 0)).toBe('playing');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 4 });
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player00', hole: 0, undo: true }, ctx()).ok).toBe(false);
+    expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0, undo: true })).toEqual({
+      type: 'holeDone',
+      playerId: 'player00',
+      hole: 0,
+      undo: true,
+    });
+    expect(parseAction({ type: 'holeDone', playerId: 'player00', hole: 0, undo: 'yes' })).toBeNull();
+  });
+});
+
+describe('acting for other players (online)', () => {
+  // Sam is the host; Alex and Jo are on their own phones.
+  const JO = 'jo-device-3';
+  function online(): Game {
+    let g = newGame(['Sam', 'Alex', 'Jo']);
+    const devices = [HOST, OTHER, JO];
+    g = { ...g, code: 'ABCDE', players: g.players.map((p, i) => ({ ...p, deviceId: devices[i] })) };
+    return run(g, { type: 'start' });
+  }
+
+  it("lets only the host pick a friend's level", () => {
+    const g = online();
+    const guest = applyAction(g, { type: 'pick', playerId: 'player02', hole: 0, tier: 'insane' }, ctx(OTHER));
+    expect(guest.ok).toBe(false);
+    expect(applyAction(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'safe' }, ctx(OTHER)).ok).toBe(true);
+    expect(applyAction(g, { type: 'pick', playerId: 'player02', hole: 0, tier: 'safe' }, ctx()).ok).toBe(true);
+  });
+
+  it("doesn't let a guest redraw, swap or finish someone else's hole", () => {
+    let g = giveCard(online(), 'player02', 0, 'S02');
+    expect(applyAction(g, { type: 'redraw', playerId: 'player02', hole: 0 }, ctx(OTHER)).ok).toBe(false);
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player02', hole: 0 }, ctx(OTHER)).ok).toBe(false);
+    g = run(g, { type: 'holeDone', playerId: 'player02', hole: 0 }, ctx(JO));
+    expect(applyAction(g, { type: 'holeDone', playerId: 'player02', hole: 0, undo: true }, ctx(OTHER)).ok).toBe(false);
+  });
 });
 
 describe('player pictures', () => {
@@ -806,5 +851,77 @@ describe('taking a mulligan during the hole', () => {
     expect(mulligansLeft(g, 'player01')).toBe(2);
     // Only on the hole being played.
     expect(applyAction(g, { type: 'mulligan', playerId: 'player01', hole: 1, on: true }, ctx(OTHER)).ok).toBe(false);
+  });
+});
+
+describe('skins, overtakes and reactions', () => {
+  function scored(pars: Par[], strokes: number[][]): Game {
+    // strokes[hole][player]; every card is S02 (Penalty-Free) and completed, so scores differ only by strokes.
+    let g = run(newGame(['Sam', 'Alex', 'Kim'], pars), { type: 'start' });
+    strokes.forEach((row, h) => {
+      row.forEach((s, i) => {
+        g = giveCard(g, `player0${i}`, h, 'S02');
+        g = run(g, { type: 'score', playerId: `player0${i}`, hole: h, strokes: s, outcome: 'made' });
+      });
+      if (h < pars.length - 1) g = run(g, { type: 'nextHole', from: h });
+    });
+    return g;
+  }
+
+  it('gives each hole to its single best score, rolling ties over', () => {
+    const g = scored(
+      [4, 4, 4, 4],
+      [
+        [4, 5, 6], // Sam wins hole 1
+        [5, 5, 6], // tie: rolls over
+        [6, 6, 4], // Kim wins hole 3, worth 2
+        [5, 5, 5], // tie on the last hole: nobody wins it
+      ],
+    );
+    expect(skins(g)).toEqual({ 0: { playerId: 'player00', worth: 1 }, 2: { playerId: 'player02', worth: 2 } });
+  });
+
+  it('names who passed whom on the last hole', () => {
+    const g = scored(
+      [4, 4],
+      [
+        [4, 5, 6],
+        [7, 4, 4], // Alex and Kim both pass Sam
+      ],
+    );
+    const names = overtakes(g).map((o) => `${o.by.name}>${o.passed.name}`);
+    expect(names).toEqual(expect.arrayContaining(['Alex>Sam', 'Kim>Sam']));
+    expect(names).toHaveLength(2);
+  });
+
+  it('lets other players react once each, and closes when the group moves on', () => {
+    let g = newGame(['Sam', 'Alex'], [4, 4]);
+    g = { ...g, code: 'BCDFG' };
+    g = run(g, { type: 'start' });
+    g = run(g, { type: 'claimPlayer', playerId: 'player01' }, ctx(OTHER));
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 7, outcome: 'missed' });
+    const react = (emoji: string | null, from = 'player01', dev = OTHER) =>
+      applyAction(g, { type: 'react', playerId: 'player00', hole: 0, fromId: from, emoji }, ctx(dev));
+
+    // Not as someone else, not to yourself.
+    expect(react('🤡', 'player01', HOST).ok).toBe(false);
+    expect(applyAction(g, { type: 'react', playerId: 'player01', hole: 0, fromId: 'player01', emoji: '🔥' }, ctx(OTHER)).ok).toBe(false);
+
+    let r = react('🤡');
+    expect(r.ok).toBe(true);
+    g = (r as { game: Game }).game;
+    expect(getEntry(g, 'player00', 0)?.reactions).toEqual({ player01: '🤡' });
+    r = react(null);
+    g = (r as { game: Game }).game;
+    expect(getEntry(g, 'player00', 0)?.reactions).toBeUndefined();
+
+    // Only emojis from the list get through the network.
+    expect(parseAction({ type: 'react', playerId: 'player00', hole: 0, fromId: 'player01', emoji: '💩' })).toBeNull();
+    expect(parseAction({ type: 'react', playerId: 'player00', hole: 0, fromId: 'player01', emoji: '🔥' })).toMatchObject({ emoji: '🔥' });
+
+    // Kept on upload, minus anything not on the list.
+    g.entries[entryKey('player00', 0)].reactions = { player01: '😂', nobody99: '🔥' };
+    expect(sanitizeUpload(g, HOST, 5, seeded())!.entries[entryKey('player00', 0)].reactions).toEqual({ player01: '😂' });
   });
 });

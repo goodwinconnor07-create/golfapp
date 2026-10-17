@@ -2,7 +2,7 @@
 // Nothing here is stored: the screen always follows the data, so every phone in an
 // online game lands in the right place after a reconnect.
 
-import { allPicked, getEntry, hasPicked, holeComplete, holeResult, type Game, type Player } from '../game';
+import { allPicked, completedHoles, getEntry, hasPicked, holeComplete, holeResult, type Game, type Player } from '../game';
 
 export interface HoleUi {
   gameId: string;
@@ -42,7 +42,7 @@ export type GameView =
   | { kind: 'play' }
   | { kind: 'score'; playerId: string }
   | { kind: 'scoreRoom' }
-  | { kind: 'resultsReveal' }
+  | { kind: 'resultsReveal'; hole: number }
   | { kind: 'results' };
 
 export function isHost(game: Game, deviceId: string): boolean {
@@ -56,30 +56,48 @@ export function myPlayers(game: Game, deviceId: string, online: boolean): Player
   return game.players.filter((p) => p.deviceId === deviceId || (host && p.deviceId === null));
 }
 
+/**
+ * Who reacts from this phone to someone's result: the player this phone plays as. Only for
+ * players on another phone: heckling someone sharing your phone happens out loud, not in the app.
+ */
+export function reactorFor(game: Game, deviceId: string, targetId: string): string | null {
+  const target = game.players.find((p) => p.id === targetId);
+  if (!game.code || !target?.deviceId || target.deviceId === deviceId) return null;
+  return game.players.find((p) => p.deviceId === deviceId)?.id ?? null;
+}
+
 export function gameView(
   game: Game,
   deviceId: string,
   online: boolean,
   ui: HoleUi,
   groupSeen: (gameId: string, hole: number) => boolean = () => false,
+  resultsDone: (gameId: string, hole: number) => boolean = () => true,
 ): GameView {
   if (game.status === 'lobby') return { kind: 'lobby' };
+
+  const mine = myPlayers(game, deviceId, online);
+  // Online with friends on other phones: everyone waits in a room after "Hole done",
+  // then results are revealed together. (With everyone on this phone there's no one to wait for.)
+  const room = online && game.players.some((p) => !mine.includes(p));
+  // Whoever taps Next hole first moves the group on, but every phone still plays the last
+  // hole's results until its own player moves on from them.
+  if (room) {
+    const last = game.status === 'finished' ? completedHoles(game).at(-1) : game.current - 1;
+    if (last != null && last >= 0 && holeComplete(game, last) && !resultsDone(game.id, last)) return { kind: 'resultsReveal', hole: last };
+  }
   if (game.status === 'finished') return { kind: 'final' };
 
   const hole = game.current;
   if (ui.reveal && getEntry(game, ui.reveal, hole)?.tier) return { kind: 'reveal', playerId: ui.reveal };
   if (game.holes[hole]?.par == null) return { kind: 'par' };
 
-  const mine = myPlayers(game, deviceId, online);
   const pickers = [...mine, ...game.players.filter((p) => ui.extraPick.includes(p.id) && !mine.includes(p))];
   const toPick = pickers.find((p) => !hasPicked(getEntry(game, p.id, hole)));
   if (toPick) return { kind: 'pick', playerId: toPick.id };
   if (!allPicked(game, hole)) return { kind: 'waitPicks' };
-  // Online with friends on other phones: everyone waits in a room after "Hole done",
-  // then results are revealed together. (With everyone on this phone there's no one to wait for.)
-  const room = online && game.players.some((p) => !mine.includes(p));
   if (holeComplete(game, hole)) {
-    return room ? { kind: 'resultsReveal' } : { kind: 'results' };
+    return room ? { kind: 'resultsReveal', hole } : { kind: 'results' };
   }
   // Everyone's in: flip all the tiers over at once, before anyone tees off.
   const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);

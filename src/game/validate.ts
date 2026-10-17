@@ -5,7 +5,7 @@ import { CARDS, getCard } from './cards';
 import { shuffle } from './deck';
 import { isDeviceId } from './ids';
 import { isNameBlocked } from './names';
-import { cleanCourse, cleanName, DEFAULT_SETTINGS, isAvatarEmoji, PLAYER_COLORS } from './reducer';
+import { cleanCourse, cleanName, DEFAULT_SETTINGS, isAvatarEmoji, isReaction, PLAYER_COLORS } from './reducer';
 import { isTier, TIER_ORDER } from './tiers';
 import { LIMITS, type Action, type Entry, type Game, type Hole, type Outcome, type Par, type Player, type Settings } from './types';
 
@@ -82,7 +82,8 @@ export function parseAction(input: unknown): Action | null {
       };
     case 'holeDone':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
-      return { type: 'holeDone', playerId: a.playerId, hole: a.hole };
+      if (a.undo !== undefined && typeof a.undo !== 'boolean') return null;
+      return { type: 'holeDone', playerId: a.playerId, hole: a.hole, ...(a.undo ? { undo: true } : {}) };
     case 'redraw':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
@@ -92,6 +93,10 @@ export function parseAction(input: unknown): Action | null {
     case 'vote':
       if (!isPlayerId(a.playerId) || !isPlayerId(a.voterId) || !isInt(a.hole, 0, maxHole) || typeof a.fair !== 'boolean') return null;
       return { type: 'vote', playerId: a.playerId, hole: a.hole, voterId: a.voterId, fair: a.fair };
+    case 'react':
+      if (!isPlayerId(a.playerId) || !isPlayerId(a.fromId) || !isInt(a.hole, 0, maxHole) || !(a.emoji === null || isReaction(a.emoji)))
+        return null;
+      return { type: 'react', playerId: a.playerId, hole: a.hole, fromId: a.fromId, emoji: a.emoji };
     case 'swap':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
@@ -214,6 +219,12 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
         for (const [voter, fair] of Object.entries(raw.votes))
           if (ids.has(voter) && voter !== pid && typeof fair === 'boolean') votes[voter] = fair;
         if (Object.keys(votes).length) entry.votes = votes;
+      }
+      if (isObj(raw.reactions)) {
+        const reactions: Record<string, string> = {};
+        for (const [from, emoji] of Object.entries(raw.reactions))
+          if (ids.has(from) && from !== pid && isReaction(emoji)) reactions[from] = emoji;
+        if (Object.keys(reactions).length) entry.reactions = reactions;
       }
       entries[key] = entry;
     }

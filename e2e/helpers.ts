@@ -3,6 +3,13 @@ import { mkdirSync } from 'node:fs';
 
 const SHOTS = process.env.SHOTS_DIR;
 
+/** Reads the join code from the invite tiles, waiting past the skeleton that shows while it's on its way. */
+export async function gameCode(page: Page, scope = ''): Promise<string> {
+  const tiles = page.locator(`${scope} .code-tiles[aria-label^="Game code"]`.trim());
+  await expect(tiles).toBeVisible();
+  return ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+}
+
 /** Saves a screenshot when SHOTS_DIR is set (used to review the design). */
 export async function shot(page: Page, name: string): Promise<void> {
   if (!SHOTS) return;
@@ -91,10 +98,11 @@ export async function holeDoneAndScore(page: Page, strokes: number, made: boolea
   await enterScore(page, strokes, made, undefined, false);
 }
 
-/** Everyone has scored: results flip over one by one, then the standings and Next hole appear. */
+/** Everyone has scored: results flip over one by one, then the rows re-sort into the standings. */
 export async function passResultsReveal(page: Page, shotName?: string) {
-  await expect(page.getByRole('heading', { name: /results$/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeEnabled({ timeout: 8_000 });
-  await expect(page.locator('.board-row').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+  // Settled: the list is no longer hidden from screen readers.
+  await expect(page.locator('.reveal-list')).toHaveAttribute('aria-hidden', 'false', { timeout: 8_000 });
+  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeVisible();
   if (shotName) await shot(page, shotName);
 }
