@@ -43,7 +43,7 @@ function HostHome() {
         {group && <PlayAgain group={group} />}
       </div>
       <div className="screen-foot home-foot">
-        <button type="button" className="btn btn-xl btn-brand" onClick={(e) => colourWipe(e, () => startNewGame())}>
+        <button type="button" className="btn btn-xl btn-pine" onClick={(e) => colourWipe(e, () => startNewGame())}>
           New game
         </button>
         <button type="button" className="btn btn-link home-join" onClick={() => navigate({ name: 'join' })}>
@@ -238,7 +238,7 @@ function FirstHome() {
         <p className="first-home-tag">Golf, but riskier.</p>
       </div>
       <div className="screen-foot clear first-home-foot">
-        <button type="button" className="btn btn-xl btn-brand" onClick={(e) => colourWipe(e, () => startNewGame())}>
+        <button type="button" className="btn btn-xl btn-pine" onClick={(e) => colourWipe(e, () => startNewGame())}>
           Start your first game
         </button>
         <div className="first-home-links">

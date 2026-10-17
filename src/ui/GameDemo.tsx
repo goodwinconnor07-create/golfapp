@@ -32,8 +32,6 @@ export function GameDemo() {
   return (
     <div className="demo-wrap">
       <div className="demo" role="img" aria-label="How a round works: everyone picks a level, draws a card, plays the hole for real, makes the card to take strokes off, and the lowest game score wins.">
-        <span className="demo-sun" aria-hidden />
-        <span className="demo-cloud" aria-hidden />
         <span className="demo-turf" aria-hidden />
         <div key={step} className="demo-scene" aria-hidden>
           <p className="demo-caption">{SCENES[step]}</p>
