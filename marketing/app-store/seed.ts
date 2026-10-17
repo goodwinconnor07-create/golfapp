@@ -14,7 +14,7 @@ function act(g: Game, a: Action): Game {
 }
 
 const players = [
-  { id: 'maya000001', name: 'Maya', emoji: '🦈', color: 0 },
+  { id: 'maya000001', name: 'Maya', emoji: '🐐', color: 0 },
   { id: 'jake000001', name: 'Jake', emoji: '🔥', color: 1 },
   { id: 'priya00001', name: 'Priya', emoji: '😎', color: 4 },
   { id: 'leo0000001', name: 'Leo', emoji: '🐐', color: 6 },

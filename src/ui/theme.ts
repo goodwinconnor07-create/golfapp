@@ -1,8 +1,16 @@
 // Colours used from code. Everything the stylesheets use lives as tokens in global.css;
 // these are the few that need a real value (canvas drawing, confetti) or a per-item pick.
 
-/** Avatar backgrounds. Kept away from the tier colours (teal, orange, violet) and from pass/fail green and red. */
-export const PLAYER_COLORS = ['#2563eb', '#9d174d', '#475569', '#92400e', '#1e3a8a', '#0284c7', '#18181b', '#a16207'];
+/**
+ * Avatar backgrounds: the primary and secondary colours (blue, red, yellow, green, orange, purple),
+ * then pink and black so a full table of 8 each gets their own. Order matters: games save the index.
+ */
+export const PLAYER_COLORS = ['#2563eb', '#dc2626', '#eab308', '#16a34a', '#f97316', '#9333ea', '#ec4899', '#18181b'];
+
+/** Yellow is too light for white lettering. */
+const DARK_INK_ON = new Set(['#eab308']);
+export const AVATAR_INK_DARK = '#18181b';
+export const avatarInk = (background: string): string => (DARK_INK_ON.has(background) ? AVATAR_INK_DARK : '#fff');
 
 /** Confetti, per moment. */
 export const CONFETTI_COLORS = {

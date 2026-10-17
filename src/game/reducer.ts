@@ -44,12 +44,14 @@ export const DEFAULT_SETTINGS: Settings = {
 export const PLAYER_COLORS = 8;
 
 /** The avatar emojis players can pick from. Anything else from the network is dropped. */
-export const AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🐐', '🍺', '🎯', '👑', '🌵'] as const;
+export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '🫪', '🐐', '👑', '🍀'] as const;
+/** The earlier set. No longer offered, but players who already picked one keep it. */
+const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🍺', '🎯', '🌵'];
 /** One-tap reactions and heckles on someone's hole result. */
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
 
-export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && (AVATAR_EMOJIS as readonly string[]).includes(v);
+export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
 function freeColor(players: Player[], want?: number, exceptId?: string): number {

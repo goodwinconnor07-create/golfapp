@@ -1186,7 +1186,7 @@ input {
 
 .look-grid {
   display: grid;
-  /* 13 options: 7 + 6, so none sits alone on a row. */
+  /* 14 options (the letter and 13 pictures): two even rows of 7. */
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
 }

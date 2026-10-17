@@ -307,20 +307,20 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
   await page.getByRole('button', { name: 'New game' }).click();
   await page.getByLabel('Your name').fill('Sam');
   await page.getByRole('button', { name: 'Pick a picture' }).click();
-  await page.getByRole('radio', { name: '🦈' }).click();
+  await page.getByRole('radio', { name: '🐐' }).click();
   await page.getByRole('radio', { name: 'Colour 4' }).click();
-  await expect(page.locator('.look-preview .avatar')).toHaveText('🦈');
+  await expect(page.locator('.look-preview .avatar')).toHaveText('🐐');
   await shot(page, '40-pick-picture');
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(page.locator('.hero-pic .avatar')).toHaveText('🦈');
+  await expect(page.locator('.hero-pic .avatar')).toHaveText('🐐');
   await shot(page, '41-name-with-picture');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: /Front 9/ }).click();
 
   const sam = page.locator('.roster-item', { hasText: 'Sam' });
-  await expect(sam.locator('.avatar')).toHaveText('🦈');
+  await expect(sam.locator('.avatar')).toHaveText('🐐');
 
   // Change it from the lobby: back to the letter, new colour.
   await sam.click();

@@ -88,7 +88,7 @@ async function phone(browser: Browser, look: { emoji: string; color: number }): 
 
 test('lobby', async ({ browser }) => {
   test.setTimeout(120_000);
-  const host = await phone(browser, { emoji: '🦈', color: 0 });
+  const host = await phone(browser, { emoji: '🐐', color: 0 });
   await newGame(host, ['Maya']);
   const tiles = host.locator('.invite-panel .code-tiles');
   const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');

@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { AVATAR_EMOJIS, CODE_LENGTH, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
 import { haptic, reducedMotion } from './effects';
-import { BLOB_COLORS, PLAYER_COLORS } from './theme';
+import { avatarInk, BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
 import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
 
@@ -85,11 +85,30 @@ export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'c
   return (
     <span
       className={`avatar${player.emoji ? ' avatar-emoji' : ''}`}
-      style={{ width: size, height: size, fontSize: size * (player.emoji ? 0.56 : 0.46), background: playerColor(player.color) }}
+      style={{ width: size, height: size, fontSize: size * (player.emoji ? 0.56 : 0.46), background: playerColor(player.color), color: avatarInk(playerColor(player.color)) }}
       aria-hidden
     >
       {player.emoji ?? initial}
     </span>
+  );
+}
+
+/** A big picture of you with "Change your picture" under it. It pops when the look changes, then floats. */
+export function HeroPicture({ name, look, onChange }: { name: string; look: { emoji: string | null; color: number }; onChange: () => void }) {
+  const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
+  return (
+    <div className="hero-pic">
+      <button type="button" className="avatar-button hero-button" aria-label="Change your picture" onClick={onChange}>
+        <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+          <span className="hero-float">
+            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+          </span>
+        </span>
+      </button>
+      <button type="button" className="btn-link-small" onClick={onChange}>
+        {look.emoji ? 'Change your picture' : 'Pick a picture'}
+      </button>
+    </div>
   );
 }
 

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { cleanName, CODE_LENGTH, isNameBlocked, LIMITS, NAME_BLOCKED, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
-import { confirm, joinGame, navigate, resetTo, useApp } from '../state/store';
+import { confirm, joinGame, navigate, openSheet, resetTo, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar } from '../ui/components';
+import { Avatar, BackBar, HeroPicture } from '../ui/components';
 
 /** Step 1: type (or arrive with) the 5-letter code. */
 export function Join({ initialCode }: { initialCode?: string }) {
@@ -97,6 +97,7 @@ export function Join({ initialCode }: { initialCode?: string }) {
 export function JoinWho({ info }: { info: GameInfo }) {
   const profileName = useApp((s) => s.profileName);
   const [name, setName] = useState(profileName);
+  const look = useApp((s) => s.profileLook);
   const free = info.players.filter((p) => !p.claimed);
   const taken = info.players.filter((p) => p.claimed);
 
@@ -141,30 +142,7 @@ export function JoinWho({ info }: { info: GameInfo }) {
         </div>
 
         {info.canJoinAsNew ? (
-          <div className="tile stack">
-            <h2 className="h3">{info.players.length ? 'Not on the list?' : 'Your name'}</h2>
-            <input
-              className="field"
-              value={name}
-              placeholder="Your name"
-              maxLength={LIMITS.maxNameLength}
-              autoCapitalize="words"
-              autoComplete="off"
-              aria-label="Your name"
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && cleanName(name) && !isNameBlocked(name)) joinGame(info, { name });
-              }}
-            />
-            {isNameBlocked(name) && (
-              <p className="field-error" role="alert">
-                {NAME_BLOCKED}
-              </p>
-            )}
-            <button type="button" className="btn btn-blue" disabled={!cleanName(name) || isNameBlocked(name)} onClick={() => joinGame(info, { name })}>
-              Join as {cleanName(name) || 'me'}
-            </button>
-          </div>
+          <HeroPicture name={name} look={look} onChange={() => openSheet({ name: 'look' })} />
         ) : (
           free.length === 0 && (
             <p className="tile-flat" style={{ margin: 0 }}>
@@ -173,6 +151,33 @@ export function JoinWho({ info }: { info: GameInfo }) {
           )
         )}
       </div>
+      {info.canJoinAsNew && (
+        <div className="screen-foot">
+          {info.players.length > 0 && <p className="muted" style={{ margin: 0, textAlign: 'center' }}>Not on the list? Add yourself:</p>}
+          <input
+            className="field"
+            value={name}
+            placeholder="Type your name"
+            maxLength={LIMITS.maxNameLength}
+            autoCapitalize="words"
+            autoComplete="off"
+            enterKeyHint="go"
+            aria-label="Your name"
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && cleanName(name) && !isNameBlocked(name)) joinGame(info, { name });
+            }}
+          />
+          {isNameBlocked(name) && (
+            <p className="field-error" role="alert" style={{ margin: 0 }}>
+              {NAME_BLOCKED}
+            </p>
+          )}
+          <button type="button" className="btn btn-xl btn-blue" disabled={!cleanName(name) || isNameBlocked(name)} onClick={() => joinGame(info, { name })}>
+            Join as {cleanName(name) || 'me'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -244,3 +244,9 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 
 - `npm run build:ios` now points the app at `https://cardshot.link` (it was the `workers.dev` address). Links shared from the app use it too. The old address still works, so older TestFlight builds keep running.
 - Invite links open the app from both addresses: `applinks:cardshot.link` was added to the entitlements next to the old one.
+
+## Pictures and colours (Oct 2026)
+
+- Picture choices: your letter, ⛳️ 🏌️‍♂️ 🏌️‍♀️ 😈 ⭐️ 😀 😤 🥱 🤫 🫪 🐐 👑 🍀. The earlier emojis are retired: they're not offered, but players who picked one keep it.
+- Colours: blue, red, yellow, green, orange, purple, then pink and black so a full table of 8 players each gets their own. Colours are saved by position, so games already in progress show the new colours in the same slots. Yellow gets dark lettering.
+- "What's your name?" and the join screen both show a big floating picture, with the name box above the button.

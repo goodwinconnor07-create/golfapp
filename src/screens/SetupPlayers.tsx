@@ -1,6 +1,6 @@
 import { cleanName, isNameBlocked, LIMITS, NAME_BLOCKED } from '../game';
 import { navigate, openSheet, setDraftNames, useApp } from '../state/store';
-import { Avatar, BackBar } from '../ui/components';
+import { BackBar, HeroPicture } from '../ui/components';
 
 /** Setup step 1: just the host's name. Everyone else joins from their own phone with the code. */
 export function SetupPlayers() {
@@ -8,7 +8,6 @@ export function SetupPlayers() {
   const blocked = isNameBlocked(name);
   const valid = Boolean(cleanName(name)) && !blocked;
   const look = useApp((s) => s.profileLook);
-  const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
   const next = () => {
     // Older drafts could hold other players' names: only the host's carries on.
     setDraftNames([name]);
@@ -23,24 +22,7 @@ export function SetupPlayers() {
         <p className="muted" style={{ margin: 0 }}>
           Next you'll get a code. Your group joins on their own phones and picks their own cards.
         </p>
-        {/* Your picture, big. It pops whenever the letter, emoji or colour changes, then floats. */}
-        <div className="hero-pic">
-          <button
-            type="button"
-            className="avatar-button hero-button"
-            aria-label="Change your picture"
-            onClick={() => openSheet({ name: 'look' })}
-          >
-            <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
-              <span className="hero-float">
-                <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
-              </span>
-            </span>
-          </button>
-          <button type="button" className="btn-link-small" onClick={() => openSheet({ name: 'look' })}>
-            {look.emoji ? 'Change your picture' : 'Pick a picture'}
-          </button>
-        </div>
+        <HeroPicture name={name} look={look} onChange={() => openSheet({ name: 'look' })} />
       </div>
       <div className="screen-foot">
         <input
