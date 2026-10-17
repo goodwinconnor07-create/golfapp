@@ -20,8 +20,7 @@
   height: calc(var(--safe-top) + 320px);
   transform: translateX(-50%);
   overflow: hidden;
-  /* Just a hint of green at the top, fading to white. */
-  background: linear-gradient(180deg, var(--pine-bg) 0%, var(--bg) 100%);
+  background: var(--bg);
   pointer-events: none;
 }
 
@@ -133,7 +132,7 @@
   padding: 16px 20px;
   border: 0;
   border-radius: var(--r-lg);
-  background: var(--pine);
+  background: var(--home-accent);
   color: var(--on-color);
   box-shadow: var(--shadow-soft);
   font: inherit;
@@ -166,7 +165,7 @@
 .live-resume {
   font-size: var(--fs-small);
   font-weight: 800;
-  color: var(--pine-hi);
+  color: var(--home-accent-hi);
 }
 
 .live-main {
@@ -183,7 +182,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: conic-gradient(var(--pine-hi) calc(var(--p) * 360deg), var(--on-sky) 0);
+  background: conic-gradient(var(--home-accent-hi) calc(var(--p) * 360deg), var(--on-sky) 0);
 }
 
 .live-ring b {
@@ -192,7 +191,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--pine);
+  background: var(--home-accent);
   font-size: var(--fs-lead);
   font-weight: 900;
 }
@@ -224,7 +223,7 @@
 
 .live-faces .avatar,
 .play-again-faces .avatar {
-  box-shadow: 0 0 0 2px var(--pine);
+  box-shadow: 0 0 0 2px var(--home-accent);
 }
 
 .live-faces .avatar + .avatar,
@@ -404,7 +403,7 @@
 .first-home-links .btn-link {
   min-height: 44px;
   font-size: var(--fs-small);
-  color: var(--pine-ink);
+  color: var(--home-accent-ink);
 }
 
 /* Before a first round: the logo, the demo and a way in. */
@@ -431,7 +430,7 @@
   letter-spacing: -0.04em;
   padding-right: 8px;
   background: none;
-  color: var(--pine);
+  color: var(--home-accent);
 }
 
 .first-home-tag {
@@ -459,7 +458,7 @@
   color: var(--ink-3);
 }
 
-/* The website's Home: the join screen with a hint of green at the top. */
+/* The website's Home: the join screen. */
 .join-sky {
   height: calc(var(--safe-top) + 380px);
 }
@@ -527,7 +526,7 @@
   height: clamp(280px, calc(100dvh - 360px - var(--safe-top) - var(--safe-bottom)), 480px);
   border-radius: var(--r-xl);
   overflow: hidden;
-  background: var(--pine-bg);
+  background: var(--home-accent-bg);
 }
 
 .demo-sun {
@@ -542,7 +541,7 @@
   width: 120%;
   height: 62%;
   border-radius: 50%;
-  background: linear-gradient(180deg, var(--pine-ink) 0%, var(--pine) 50%);
+  background: var(--bg-3);
 }
 
 .demo-scene {
@@ -557,7 +556,7 @@
   text-align: center;
   font-size: var(--fs-h3);
   font-weight: 900;
-  color: var(--pine);
+  color: var(--home-accent);
 }
 
 .demo-bubble {
@@ -663,7 +662,7 @@
 .demo-card-back {
   align-items: center;
   justify-content: center;
-  background: var(--pine);
+  background: var(--home-accent);
   /* Rises in, then turns edge-on; it ends hidden so the front is what stays. */
   animation:
     demo-rise 0.45s ease-out both,
@@ -902,7 +901,7 @@
 .demo-score-total b {
   font-size: var(--fs-display-1);
   font-weight: 900;
-  color: var(--pine);
+  color: var(--home-accent);
 }
 
 /* 5. Win */
@@ -1020,7 +1019,7 @@
 
 .demo-dots span.on {
   width: 24px;
-  background: var(--pine);
+  background: var(--home-accent);
 }
 
 /* ── How to play ─────────────────────────────────────────────────────────── */
@@ -4974,7 +4973,7 @@ button.roster-item:active {
   }
 }
 
-/* Home's main button: dark green. */
-.btn-pine {
-  background: linear-gradient(180deg, var(--pine-ink) 0%, var(--pine) 100%);
+/* Home's main button: near-black. */
+.btn-home {
+  background: linear-gradient(180deg, var(--home-accent-ink) 0%, var(--home-accent) 100%);
 }
