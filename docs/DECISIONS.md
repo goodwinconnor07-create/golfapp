@@ -172,7 +172,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 - Player names go through a light filter (`src/game/names.ts`): slurs and obvious sexual or abusive words are refused with "Pick a different name.", including l33t and spaced-out spellings, without blocking real names like Dickson or Scunthorpe. Enforced in the reducer and on upload. Hosts can still remove players in the lobby.
 - The host's lobby heading is "Ready to tee off?" (was the old brand's "Ready to send it?").
-- `/privacy` and `/support` are plain pages on the website, linked from the last How to play slide (so they're one tap away in the app, as Apple asks). The contact email is a placeholder (`SUPPORT_EMAIL`) until the product owner picks one.
+- `/privacy` and `/support` are plain pages on the website, linked from the last How to play slide (so they're one tap away in the app, as Apple asks). The contact email is support@cardshot.link, forwarded by Cloudflare Email Routing to the owner's inbox.
 
 ## Push notifications (Oct 2026)
 
