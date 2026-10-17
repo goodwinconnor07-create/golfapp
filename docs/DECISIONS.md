@@ -25,7 +25,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 | Seeing other picks   | Online, picks stay hidden until the whole group has picked, then a 3-2-1 reveal shows everyone's level. Players on the host's phone pick one at a time.                                                                       |
 | Situation cards      | Off by default (Short-Game Success, The Recovery Route, Bunker Escape, The Sand Save, The Comeback Birdie). A game option turns them on; then a card whose situation never happened counts as "didn't happen" with no change. |
 | Ties                 | Ties stay ties. A game option breaks game-score ties on real strokes.                                                                                                                                                         |
-| Round length         | Front 9, back 9, 18, or any 1 to 18 holes starting on any hole.                                                                                                                                                               |
+| Round length         | Front 9, back 9 or 18 only (custom lengths removed Oct 2026).                                                                                                                                                                 |
 | Real vs game score   | Stored separately. Game score is always worked out from the real strokes and the card result, so fixing a score recalculates everything.                                                                                      |
 
 ## My calls while building (easy to change)
