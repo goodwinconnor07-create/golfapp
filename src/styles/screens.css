@@ -4308,3 +4308,15 @@ button.roster-item:active {
   box-shadow: 0 0 0 3px var(--bg);
   border-radius: 50%;
 }
+
+/* Team rows get extra room: the names can wrap onto two lines instead of being cut off. */
+.reveal-row.reveal-team {
+  min-height: 88px;
+  padding: 16px;
+}
+
+.reveal-team .reveal-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}

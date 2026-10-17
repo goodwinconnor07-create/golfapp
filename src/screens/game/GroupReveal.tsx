@@ -67,7 +67,7 @@ export function GroupReveal({ game }: { game: Game }) {
               const e = getEntry(game, members[0].id, h);
               const open = Math.min(...members.map((m) => game.players.indexOf(m))) < shown;
               return (
-                <div key={p.id} className={`reveal-row ${open ? 'open' : ''} ${open && e?.tier ? `reveal-${e.tier}` : ''}`}>
+                <div key={p.id} className={`reveal-row${p.members ? " reveal-team" : ""} ${open ? 'open' : ''} ${open && e?.tier ? `reveal-${e.tier}` : ''}`}>
                   {p.members ? (
                     <span className="reveal-pair">
                       {p.members.map((m) => (
