@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { cleanName, CODE_LENGTH, isNameBlocked, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
-import { APP_STORE_URL, canHost } from '../state/platform';
-import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, startNewGame, useApp } from '../state/store';
+import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar, Blobs, HeroPicture } from '../ui/components';
+import { Avatar, BackBar, HeroPicture } from '../ui/components';
 
 /**
  * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
- * screen under a sky header, with How to play and a way for hosts to get started.
+ * screen with How to play in the corner and no footer.
  */
 export function Join({ initialCode, home = false }: { initialCode?: string; home?: boolean }) {
   const [code, setCode] = useState(normalizeCode(initialCode ?? ''));
@@ -53,7 +52,6 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
     <div className={`screen${home ? ' join-home' : ''}`}>
       {home ? (
         <>
-          <Blobs />
           <div className="join-home-top">
             <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
               How to play
@@ -103,27 +101,21 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
           </p>
         )}
         {server === 'down' && <p className="note">Can't reach the server right now. Check your signal.</p>}
+        {/* The website has no button: the code is looked up as soon as all 5 letters are in. */}
+        {home && busy && <span className="spinner join-home-busy" aria-label="Looking for the game" />}
       </div>
-      <div className="screen-foot">
-        <button
-          type="button"
-          className={`btn btn-xl ${home ? 'btn-brand' : 'btn-blue'}`}
-          disabled={code.length !== CODE_LENGTH || busy}
-          onClick={() => void lookUp(code)}
-        >
-          {busy ? <span className="spinner" aria-label="Looking for the game" /> : 'Find game'}
-        </button>
-        {home &&
-          (canHost ? (
-            <button type="button" className="btn btn-link join-home-host" onClick={() => startNewGame()}>
-              Hosting? Start a game
-            </button>
-          ) : (
-            <a className="btn btn-link join-home-host" href={APP_STORE_URL}>
-              Hosting? Get the iPhone app
-            </a>
-          ))}
-      </div>
+      {!home && (
+        <div className="screen-foot">
+          <button
+            type="button"
+            className="btn btn-xl btn-blue"
+            disabled={code.length !== CODE_LENGTH || busy}
+            onClick={() => void lookUp(code)}
+          >
+            {busy ? <span className="spinner" aria-label="Looking for the game" /> : 'Find game'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

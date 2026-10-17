@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { loadHistory, type GameRecord } from '../state/persist';
 import { appHome } from '../state/platform';
 import { navigate, openSheet, startNewGame, useApp } from '../state/store';
-import { Avatar, Blobs } from '../ui/components';
+import { Avatar } from '../ui/components';
 import { colourWipe } from '../ui/effects';
 import { joinNames } from '../ui/format';
 import { ArrowIcon, ClockIcon } from '../ui/Icons';
@@ -34,7 +34,6 @@ function HostHome() {
 
   return (
     <div className="screen home">
-      <Blobs />
       <div className="home-head">
         <h1>CardShot</h1>
         <button type="button" className="icon-btn press" aria-label="Past games" onClick={() => navigate({ name: 'history' })}>

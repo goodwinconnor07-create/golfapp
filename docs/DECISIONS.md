@@ -166,7 +166,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 
 - Logo: the driver knocking the card off a tee (not the cannon). It's the app icon and launch screen.
 - The iPhone app is the web app wrapped with Capacitor (details in `docs/IOS.md`). It adds real haptics, the iOS share sheet, invite links that open the app and a native backup of saved games.
-- **The host pays** for the app (planned $4.99). Friends join free on the website with the link or code. Once the app is in the App Store, the website stops starting games (`VITE_WEB_HOSTING=off`): the "Hosting?" link on the website's Home (the join screen) goes to the App Store.
+- **The host pays** for the app (planned $4.99). Friends join free on the website with the link or code. Once the app is in the App Store, the website stops starting games the website doesn't start games (see "Home: the app and the website split").
 
 ## Names, lobby wording, privacy and support (Oct 2026)
 
@@ -255,7 +255,7 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 
 Asked for by the product owner, then simplified at their request (the first version had too much on it).
 
-- **The website opens on the join screen:** the icon, "Join the game", the code box and Find game, with How to play in the top corner. While the website can still host (`VITE_WEB_HOSTING` isn't `off`), a quiet "Hosting? Start a game" link sits at the bottom; once it's off, the link goes to the App Store.
+- **The website opens on the join screen:** "Join the game", the code box and How to play in the top corner. No footer: the code is looked up as soon as all 5 letters are typed. The website doesn't host (product owner's call); build with `VITE_WEB_HOSTING=on` to bring it back. Development builds with the app's Home still host, for the e2e tests.
 - **The iPhone app's Home** (style A from the options board): light, with the three level colours softly blurred behind. A big "CardShot" title with the Past games clock, a **News** card (glass, with the fanned-cards art) that opens a sheet with the story, then one row: "Back to your game" while a round is on, or else "Play again". Then a black New game button, with Join a game and How to play as small links. The first story is "Version 1.0 is here" listing the main features; edit `NEWS` and the list in `src/screens/sheets/NewsSheet.tsx` for the next one.
 - **No app icon on Home.** Apple's guidelines say not to show your logo around the app, since people already know which app they're in; the title and colours carry the brand. The website's join screen dropped it too.
 - **Play again** starts a new game with everyone from the newest saved round (other than you) already on the list. Friends tap their name when they join. With your name known it skips the name screen.
@@ -270,3 +270,4 @@ Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the pro
 - **Icon:** three fanned cards (Safe teal with the shield, Bold orange with the flame on top, Insane purple with the bolt) on deep plum with soft glows. Regenerate the PNGs, iPhone icon and launch screen with `npm run icons`.
 - **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
 - **Unchanged:** green for go buttons and blue for Share.
+- **Moving background:** the three level colours, blurred, drift slowly behind every screen (`<Blobs />` in `App.tsx`). Reduce Motion stops them.

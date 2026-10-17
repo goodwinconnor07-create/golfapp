@@ -41,13 +41,6 @@ export function joinLink(code: string): string {
 }
 
 /**
- * Who can start games. The host pays for the iPhone app; friends join free on the website.
- * The website keeps hosting until the app is in the App Store: build with VITE_WEB_HOSTING=off
- * to switch it off then.
- */
-export const canHost = isNative || import.meta.env.VITE_WEB_HOSTING !== 'off';
-
-/**
  * Which Home to show. The iPhone app gets the host's Home (your game, how you play, New game);
  * the website opens straight on the join screen. In development, sendit.appHome in localStorage
  * shows the app's Home in a browser, which is how the e2e tests drive it.
@@ -61,6 +54,13 @@ function devFlag(key: string): boolean {
     return false;
   }
 }
+
+/**
+ * Who can start games. The host pays for the iPhone app; friends join free on the website, which
+ * doesn't host (build with VITE_WEB_HOSTING=on to let it). Development builds showing the app's
+ * Home can host, so the e2e tests can play rounds in a browser.
+ */
+export const canHost = isNative || appHome || import.meta.env.VITE_WEB_HOSTING === 'on';
 
 /** Where the website sends would-be hosts once web hosting is off. */
 export const APP_STORE_URL = import.meta.env.VITE_APP_STORE_URL ?? 'https://apps.apple.com/';

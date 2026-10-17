@@ -275,10 +275,8 @@
   color: var(--ink-3);
 }
 
-.join-home-host {
-  min-height: 44px;
-  font-size: var(--fs-small);
-  color: var(--ink-3);
+.join-home-busy {
+  align-self: center;
 }
 
 /* ── How to play ─────────────────────────────────────────────────────────── */
