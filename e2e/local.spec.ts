@@ -313,7 +313,7 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
   await shot(page, '40-pick-picture');
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(page.locator('.name-row .avatar')).toHaveText('🦈');
+  await expect(page.locator('.hero-pic .avatar')).toHaveText('🦈');
   await shot(page, '41-name-with-picture');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();

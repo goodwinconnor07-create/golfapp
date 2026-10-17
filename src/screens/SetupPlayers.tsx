@@ -8,6 +8,7 @@ export function SetupPlayers() {
   const blocked = isNameBlocked(name);
   const valid = Boolean(cleanName(name)) && !blocked;
   const look = useApp((s) => s.profileLook);
+  const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
   const next = () => {
     // Older drafts could hold other players' names: only the host's carries on.
     setDraftNames([name]);
@@ -22,40 +23,45 @@ export function SetupPlayers() {
         <p className="muted" style={{ margin: 0 }}>
           Next you'll get a code. Your group joins on their own phones and picks their own cards.
         </p>
-        <div className="name-row">
+        {/* Your picture, big. It pops whenever the letter, emoji or colour changes, then floats. */}
+        <div className="hero-pic">
           <button
             type="button"
-            className="avatar-button press"
+            className="avatar-button hero-button"
             aria-label="Change your picture"
             onClick={() => openSheet({ name: 'look' })}
           >
-            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={50} />
+            <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+              <span className="hero-float">
+                <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+              </span>
+            </span>
           </button>
-          <input
-            className="field"
-            value={name}
-            placeholder="Your name"
-            maxLength={LIMITS.maxNameLength}
-            autoComplete="off"
-            autoCapitalize="words"
-            enterKeyHint="next"
-            aria-label="Your name"
-            onChange={(e) => setDraftNames([e.target.value])}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && valid) next();
-            }}
-          />
+          <button type="button" className="btn-link-small" onClick={() => openSheet({ name: 'look' })}>
+            {look.emoji ? 'Change your picture' : 'Pick a picture'}
+          </button>
         </div>
+      </div>
+      <div className="screen-foot">
+        <input
+          className="field"
+          value={name}
+          placeholder="Type your name"
+          maxLength={LIMITS.maxNameLength}
+          autoComplete="off"
+          autoCapitalize="words"
+          enterKeyHint="next"
+          aria-label="Your name"
+          onChange={(e) => setDraftNames([e.target.value])}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && valid) next();
+          }}
+        />
         {blocked && (
-          <p className="field-error" role="alert">
+          <p className="field-error" role="alert" style={{ margin: 0 }}>
             {NAME_BLOCKED}
           </p>
         )}
-        <button type="button" className="btn-link-small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet({ name: 'look' })}>
-          {look.emoji ? 'Change your picture' : 'Pick a picture'}
-        </button>
-      </div>
-      <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={next}>
           Next
         </button>

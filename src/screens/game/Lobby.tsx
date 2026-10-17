@@ -102,10 +102,14 @@ export function Lobby({ game }: { game: Game }) {
         <div className="roster">
           {game.players.map((p, i) => {
             const you = p.deviceId === deviceId;
+            const isHostPlayer = p.deviceId === game.hostDeviceId;
             const inner = (
               <>
-                <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ["--float-delay" as string]: `${0.6 + i * 0.4}s` }}>
-                  <Avatar player={p} size={72} />
+                <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ['--float-delay' as string]: `${0.6 + i * 0.4}s` }}>
+                  {/* The float (and the shadow and glow) move together, so nothing is left behind. */}
+                  <span className={`roster-float${isHostPlayer ? ' is-host' : ''}`}>
+                    <Avatar player={p} size={72} />
+                  </span>
                 </span>
                 <span className="roster-name">{p.name}</span>
                 {you && <span className="tag tag-you">You</span>}
@@ -115,8 +119,8 @@ export function Lobby({ game }: { game: Game }) {
               <button
                 key={p.id}
                 type="button"
-                className="roster-item press"
-                aria-label={`${p.name}${you ? ', you' : ''}`}
+                className="roster-item"
+                aria-label={`${p.name}${you ? ', you' : ''}${isHostPlayer ? ', host' : ''}`}
                 onClick={() => openSheet({ name: 'player', playerId: p.id })}
               >
                 {inner}
