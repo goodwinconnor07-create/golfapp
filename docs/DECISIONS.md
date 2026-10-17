@@ -270,4 +270,4 @@ Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the pro
 - **Icon:** three fanned cards (Safe teal with the shield, Bold orange with the flame on top, Insane purple with the bolt) on deep plum with soft glows. Regenerate the PNGs, iPhone icon and launch screen with `npm run icons`.
 - **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
 - **Unchanged:** green for go buttons and blue for Share.
-- **Moving background:** the three level colours, blurred, drift slowly behind every screen (`<Blobs />` in `App.tsx`). Reduce Motion stops them.
+- **Moving background:** the three level colours, blurred, drift slowly behind Home (the app's Home and the website's join screen). Reduce Motion stops them.

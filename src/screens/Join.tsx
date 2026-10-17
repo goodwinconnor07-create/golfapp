@@ -3,7 +3,7 @@ import { cleanName, CODE_LENGTH, isNameBlocked, normalizeCode, type GameInfo } f
 import { fetchGameInfo } from '../state/api';
 import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar, HeroPicture } from '../ui/components';
+import { Avatar, BackBar, Blobs, HeroPicture } from '../ui/components';
 
 /**
  * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
@@ -52,6 +52,7 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
     <div className={`screen${home ? ' join-home' : ''}`}>
       {home ? (
         <>
+          <Blobs />
           <div className="join-home-top">
             <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
               How to play

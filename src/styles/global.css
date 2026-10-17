@@ -227,11 +227,6 @@ body {
   min-height: 100dvh;
 }
 
-/* Its own layer, so the drifting colours (z-index -1) sit above the page's white, under every screen. */
-#root {
-  isolation: isolate;
-}
-
 /* In the iPhone app, no text selection or long-press callouts on screens: it's an app, not a page.
    Typing in fields still works (input, below). */
 html.native body {

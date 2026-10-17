@@ -1,5 +1,5 @@
 import { useApp } from './state/store';
-import { Blobs, Toasts } from './ui/components';
+import { Toasts } from './ui/components';
 import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { SetupPlayers } from './screens/SetupPlayers';
@@ -51,8 +51,6 @@ export function App() {
 
   return (
     <>
-      {/* The level colours drifting behind every screen. */}
-      <Blobs />
       <div key={`${depth}-${route.name}`}>{screen}</div>
       {sheet && <SheetHost key={sheetKey} sheet={sheet} />}
       {flash && <ScoreFlash key={flash.key} flash={flash} />}
