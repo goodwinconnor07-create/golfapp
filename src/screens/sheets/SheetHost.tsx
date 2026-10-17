@@ -11,9 +11,11 @@ import {
   useApp,
   type Sheet as SheetSpec,
 } from '../../state/store';
+import type { Game } from '../../game';
 import { isHost } from '../../state/view';
 import { Sheet } from '../../ui/components';
-import { ExitIcon, FlagIcon, GearIcon, HelpIcon, HomeIcon, ListIcon, TrophyIcon, UsersIcon } from '../../ui/Icons';
+import { BellIcon, ExitIcon, GearIcon, HelpIcon, HomeIcon, ListIcon, StopIcon, TrophyIcon, UsersIcon } from '../../ui/Icons';
+import { useFixCount } from '../game/FixPrompt';
 import { EditSheet } from './EditSheet';
 import { InviteSheet } from './InviteSheet';
 import { OptionsSheet, ParsSheet } from './OptionsSheet';
@@ -40,7 +42,7 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
     case 'standings':
       return <StandingsSheet />;
     case 'look':
-      return <LookSheet typed={sheet.typed} editName={sheet.editName} />;
+      return <LookSheet typed={sheet.typed} />;
     case 'player':
       return <PlayerSheet playerId={sheet.playerId} />;
     case 'edit':
@@ -81,13 +83,19 @@ interface Item {
   color: string;
   onClick: () => void;
   danger?: boolean;
+  badge?: number;
 }
 
 function MenuSheet() {
   const game = useApp((s) => s.game);
+  if (!game) return null;
+  return <Menu game={game} />;
+}
+
+function Menu({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
   const online = useApp((s) => s.session?.mode === 'online');
-  if (!game) return null;
+  const asks = useFixCount(game);
   const host = isHost(game, deviceId);
   const started = game.status !== 'lobby';
 
@@ -95,6 +103,14 @@ function MenuSheet() {
   if (started) {
     items.push({ label: 'Standings', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => openSheet({ name: 'standings' }) });
     items.push({ label: 'Scorecard & fixes', Icon: ListIcon, color: 'var(--blue)', onClick: () => navigate({ name: 'scorecard' }) });
+    if (online)
+      items.push({
+        label: 'Notifications',
+        Icon: BellIcon,
+        color: 'var(--red)',
+        badge: asks,
+        onClick: () => openSheet({ name: 'notifications' }),
+      });
   }
   if (host || online)
     items.push({
@@ -109,7 +125,7 @@ function MenuSheet() {
   if (host && game.status === 'playing') {
     items.push({
       label: 'End round now',
-      Icon: FlagIcon,
+      Icon: StopIcon,
       color: 'var(--red)',
       danger: true,
       onClick: () =>
@@ -141,12 +157,19 @@ function MenuSheet() {
 
   return (
     <Sheet title="Menu">
-      {items.map(({ label, Icon, color, onClick, danger }) => (
-        <button key={label} type="button" className={`menu-item press ${danger ? 'danger' : ''}`} onClick={onClick}>
+      {items.map(({ label, Icon, color, onClick, danger, badge }) => (
+        <button
+          key={label}
+          type="button"
+          className={`menu-item press ${danger ? 'danger' : ''}`}
+          aria-label={badge ? `${label}, ${badge} new` : label}
+          onClick={onClick}
+        >
           <span className="mi-icon" style={{ background: color }}>
             <Icon />
           </span>
           {label}
+          {badge ? <span className="menu-badge">{badge > 9 ? '9+' : badge}</span> : null}
         </button>
       ))}
     </Sheet>

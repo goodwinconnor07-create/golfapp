@@ -99,9 +99,10 @@ export function gameView(
   if (holeComplete(game, hole)) {
     return room ? { kind: 'resultsReveal', hole } : { kind: 'results' };
   }
-  // Everyone's in: flip all the tiers over at once, before anyone tees off.
+  // Everyone's in: flip all the tiers over at once, before anyone tees off. Online with friends on
+  // other phones only; on one phone everyone just watched the picks being made.
   const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);
-  if (game.players.length >= 2 && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
+  if (room && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
   if (room) {
     const mineDone = mine.length > 0 && mine.every((p) => getEntry(game, p.id, hole)?.done);
     if (!ui.scoring && !mineDone) return { kind: 'play' };

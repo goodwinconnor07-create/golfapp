@@ -44,9 +44,12 @@ export const DEFAULT_SETTINGS: Settings = {
 export const PLAYER_COLORS = 8;
 
 /** The avatar emojis players can pick from. Anything else from the network is dropped. */
-export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '🫪', '🐐', '👑', '🍀'] as const;
-/** The earlier set. No longer offered, but players who already picked one keep it. */
-const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🍺', '🎯', '🌵'];
+export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '😎', '🐐', '👑', '🍀'] as const;
+/**
+ * No longer offered, but players who already picked one keep it. 🫪 (Unicode 16) showed as an empty
+ * box on iPhones older than iOS 18.4, so 😎 is back in its place.
+ */
+const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '🦈', '🍺', '🎯', '🌵', '🫪'];
 /** One-tap reactions and heckles on someone's hole result. */
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
@@ -54,7 +57,7 @@ export const isReaction = (v: unknown): v is string => typeof v === 'string' && 
 export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
-function freeColor(players: Player[], want?: number, exceptId?: string): number {
+export function freeColor(players: Pick<Player, 'id' | 'color'>[], want?: number, exceptId?: string): number {
   const used = new Set(players.filter((p) => p.id !== exceptId).map((p) => p.color));
   if (want != null && want >= 0 && want < PLAYER_COLORS && !used.has(want)) return want;
   let color = 0;
@@ -429,9 +432,12 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const from = before?.strokes != null ? { strokes: before.strokes, outcome: before.outcome } : null;
       const err = writeScore(g, action.playerId, action.hole, action.strokes, action.outcome, action.mulligan);
       if (err) return fail(err);
-      // Online, a change to a score after the hole is locked in (or to someone else's) is shown to everyone.
+      // A change to a score after the hole is locked in (or, online, to someone else's) is listed for
+      // everyone, so a fixed card never changes without a trace. One phone: no approval, but still listed.
       if (from && g.code && (isLocked(g, action.hole) || !ownsPlayer(g, ctx.deviceId, action.playerId))) {
         logEdit(g, action.playerId, action.hole, from, 'Host', ctx.now);
+      } else if (from && !g.code && isLocked(g, action.hole)) {
+        logEdit(g, action.playerId, action.hole, from, 'Fixed later', ctx.now);
       }
       break;
     }

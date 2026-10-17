@@ -16,7 +16,8 @@ import {
 import { navigate, shownHoles, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Move, rankLabel } from '../../ui/BoardRow';
-import { Avatar, Sheet, TierIcon } from '../../ui/components';
+import { Avatar, OutcomeMark, Sheet, SumTable, TierIcon } from '../../ui/components';
+import { plural, roundLine } from '../../ui/format';
 
 const NOW = { playing: 'Playing', done: 'Scoring', scored: 'Scored' } as const;
 
@@ -81,9 +82,7 @@ export function StandingsSheet() {
                         Now: {tier && <TierIcon tier={tier} size={14} />} {NOW[status]}
                       </>
                     ) : (
-                      <>
-                        {row.totals.real} strokes · {row.totals.made} of {row.totals.holes} cards
-                      </>
+                      roundLine(row.totals)
                     )}
                   </span>
                 </span>
@@ -148,7 +147,7 @@ function RowDetail({ game, player, holes }: { game: Game; player: Player; holes:
                   <b className="num">{formatToPar(r.toPar)}</b>
                   <span className={`hbh-card tier-ink-${r.tier}`}>
                     <TierIcon tier={r.tier} size={12} />
-                    {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}
+                    <OutcomeMark outcome={r.outcome} size={11} />
                   </span>
                 </>
               ) : (
@@ -159,10 +158,14 @@ function RowDetail({ game, player, holes }: { game: Game; player: Player; holes:
         })}
       </div>
       {holes.length > 0 && (
-        <p className="sum-line" aria-label={`Golf ${formatToPar(golf)} plus cards ${formatToPar(cards)} equals ${formatToPar(t.toPar)}`}>
-          <span className="sum-pill">Golf {formatToPar(golf)}</span>+<span className="sum-pill">Cards {formatToPar(cards)}</span>=
-          <b className="num">{formatToPar(t.toPar)}</b>
-        </p>
+        <SumTable
+          className="row-sum"
+          lines={[
+            { label: `Golf · ${plural(t.real, 'stroke')}`, value: formatToPar(golf) },
+            { label: 'Cards', value: formatToPar(cards) },
+          ]}
+          total={{ label: 'Total', value: formatToPar(t.toPar) }}
+        />
       )}
     </div>
   );

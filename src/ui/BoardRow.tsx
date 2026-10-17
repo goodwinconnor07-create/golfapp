@@ -29,7 +29,7 @@ export function PlayerRow({
   name,
   detail,
   score,
-  scoreLabel = 'To par',
+  scoreLabel = 'Total',
   className = '',
   style,
   hidden,

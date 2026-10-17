@@ -42,7 +42,6 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
         .map((p) => p.id),
     [game, hole],
   );
-  const best = Math.min(...[...results.values()].map((r) => r?.toPar ?? Infinity));
 
   // Already watched (say, after a reload)? Show it settled straight away.
   const [instant] = useState(() => reducedMotion() || resultsRevealSeen(game.id, hole));
@@ -95,13 +94,12 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
   return (
     <>
       <div className="screen-body" onClick={settled ? undefined : skip}>
-        <div className="reveal-head">
-          <h1 className="h1">Results</h1>
-          <span className="col-label" aria-hidden>
-            Total
-          </span>
-        </div>
+        <h1 className="h1">Results</h1>
         {settled && <Overtakes game={game} hole={hole} />}
+        <div className="board-cols" aria-hidden>
+          <span>This hole</span>
+          <span>Total</span>
+        </div>
         {/* Screen readers get the settled standings once, not the shuffle. */}
         {settled && (
           <p className="sr-only" role="status">
@@ -125,7 +123,6 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                 className={[
                   'prow board-row result-row',
                   settled && now.rank === 1 ? 'first' : '',
-                  isMine && mine.length === 1 ? 'mine' : '',
                   settled && !instant && from !== 0 ? 'reorder' : '',
                 ].join(' ')}
                 style={settled && !instant && from !== 0 ? ({ '--from': from } as React.CSSProperties) : undefined}
@@ -133,7 +130,8 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                 <RankedAvatar player={p} rank={rankLabel(total.rank, total.tied)} size={56} />
                 <span className="prow-main">
                   <span className="prow-name">
-                    {p.name}
+                    <span className="board-name-text">{p.name}</span>
+                    {isMine && mine.length === 1 && <span className="you-tag">You</span>}
                     {settled && <Move n={moves[p.id]} />}
                   </span>
                   <span className="prow-detail">
@@ -145,12 +143,12 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                           adjustment={r.adjustment}
                           outcome={r.outcome}
                           tier={r.tier}
+                          cardTitle={getCard(r.cardId)?.title}
                           doubled={r.doubled}
                         />
-                        {settled && r.toPar === best && <span className="best-tag">Best hole</span>}
-                        <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
-                        <VoteTag game={game} playerId={p.id} hole={hole} />
-                        <span className="sr-only">{getCard(r.cardId)?.title}</span>
+                        <HoleMeta mulligan={r.mulligan} freePass={r.freePass}>
+                          <VoteTag game={game} playerId={p.id} hole={hole} />
+                        </HoleMeta>
                       </>
                     ) : (
                       r && (

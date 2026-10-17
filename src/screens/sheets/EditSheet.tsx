@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   cardStakes,
+  formatDelta,
   getCard,
   stakeFor,
   isDoubleHole,
@@ -17,8 +18,7 @@ import {
 } from '../../game';
 import { closeSheet, dispatch, submitScore, toast, useApp } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { Breakdown, Sheet, StrokePicker, Toggle } from '../../ui/components';
-import { CheckIcon, CrossIcon } from '../../ui/Icons';
+import { AutoNote, OutcomeMark, Receipt, Sheet, StrokePicker, Toggle } from '../../ui/components';
 
 /**
  * Fix a score after the fact. Totals recalculate from the corrected strokes and result.
@@ -62,94 +62,90 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
     }
   };
 
+  const stakes = cardStakes(game, hole, entry.tier, entry.freePass);
+  // A segmented choice, not two action buttons: picking one here doesn't save anything until Save score.
+  const option = (value: 'made' | 'missed') => {
+    const disabled = auto !== null && auto !== value;
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-checked={effective === value}
+        disabled={disabled}
+        className={`seg-option ${value}${effective === value ? ' on' : ''}`}
+        onClick={() => setOutcome(value)}
+      >
+        <OutcomeMark outcome={value} size={20} />
+        {value === 'made' ? 'Completed' : 'Failed'}
+        <span className="seg-delta num">{formatDelta(value === 'made' ? stakes.made : stakes.missed)}</span>
+      </button>
+    );
+  };
+
   return (
-    <Sheet title={`${player.name} · hole ${game.holes[hole].number}`}>
-      <div className="stack" style={{ gap: 14 }}>
-        <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, hole, entry.tier, entry.freePass)} />
+    <Sheet title={`Fix ${player.name}'s hole ${game.holes[hole].number}`}>
+      <div className="stack" style={{ gap: 16 }}>
+        <ChallengeCard compact hideStakes tier={entry.tier} cardId={entry.cardId} />
         <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label={`Strokes taken · par ${par}`} />
-        {showChoices ? (
-          <>
-            <div className="made-missed">
-              <button
-                type="button"
-                className={`btn ${effective === 'made' ? 'btn-green' : 'btn-ghost'}`}
-                aria-pressed={effective === 'made'}
-                onClick={() => setOutcome('made')}
-              >
-                Completed
-              </button>
-              <button
-                type="button"
-                className={`btn ${effective === 'missed' ? 'btn-red' : 'btn-ghost'}`}
-                aria-pressed={effective === 'missed'}
-                onClick={() => setOutcome('missed')}
-              >
-                Failed
-              </button>
-            </div>
-            {choices.includes('na') && (
-              <button
-                type="button"
-                className={`btn ${effective === 'na' ? 'btn-dark' : 'btn-ghost'}`}
-                aria-pressed={effective === 'na'}
-                onClick={() => setOutcome('na')}
-              >
-                It didn't happen
-              </button>
-            )}
-          </>
-        ) : (
-          // Same look as the score screen.
-          <div className={`auto-result ${auto} pop`} key={auto}>
-            {auto === 'made' ? <CheckIcon width={28} height={28} /> : <CrossIcon width={28} height={28} />}
-            {auto === 'made' ? 'Completed' : 'Failed'}
-            <small>{auto === 'made' ? '· your strokes prove it' : '· not possible with that many strokes'}</small>
+        {auto && <AutoNote outcome={auto} />}
+        {(showChoices || auto) && (
+          <div className="seg" role="radiogroup" aria-label="The card">
+            {option('made')}
+            {option('missed')}
           </div>
         )}
-        <p className="h2 center num" style={{ margin: '4px 0' }}>
-          {adjustment != null ? (
-            <Breakdown
-              strokes={strokes}
-              par={par}
-              adjustment={adjustment}
-              outcome={effective!}
-              doubled={isDoubleHole(game, hole)}
-              freePass={entry.freePass}
-              total
-              big
-            />
-          ) : (
-            'Completed or failed?'
-          )}
-        </p>
+        {showChoices && choices.includes('na') && (
+          <button
+            type="button"
+            className={`btn ${effective === 'na' ? 'btn-dark' : 'btn-ghost'}`}
+            aria-pressed={effective === 'na'}
+            onClick={() => setOutcome('na')}
+          >
+            It didn't happen
+          </button>
+        )}
+        {adjustment != null && effective && (
+          <Receipt
+            className="edit-sum"
+            strokes={strokes}
+            par={par}
+            adjustment={adjustment}
+            outcome={effective}
+            doubled={isDoubleHole(game, hole)}
+            freePass={entry.freePass}
+          />
+        )}
         {access === 'direct' && mulliganAllowance(game) > 0 && (
           <Toggle
             on={mulligan}
             disabled={!mulligan && mulligansLeft(game, playerId) + (entry.mulligan ? 1 : 0) <= 0}
             title="Used a mulligan"
-            detail={`${mulligansLeft(game, playerId) + (entry.mulligan ? 1 : 0)} of ${mulliganAllowance(game)} left before this hole.`}
+            detail={`${mulligansLeft(game, playerId) + (entry.mulligan ? 1 : 0)} of ${mulliganAllowance(game)} left before this hole`}
             onChange={setMulligan}
           />
         )}
         {access === 'request' && (
           <p className="note" style={{ margin: 0 }}>
             {pending
-              ? `${pending.byName} has asked to change this to ${pending.strokes}. Sending again replaces that request.`
-              : `This hole is locked in. ${approver === 'the host' ? 'The host' : approver} gets asked to approve the change.`}
+              ? `${pending.byName} asked to change this to ${pending.strokes}. Asking again replaces that.`
+              : `This hole is locked in, so ${approver} has to approve the change.`}
           </p>
         )}
-        <button type="button" className="btn btn-xl btn-dark" disabled={!effective || (access === 'request' && unchanged)} onClick={save}>
-          {access === 'request' ? 'Ask to change' : 'Save score'}
-        </button>
-        {pending && pending.by === deviceId && (
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}
-          >
-            Cancel my request
+        {/* Stuck to the bottom of the sheet, so it's on screen without scrolling. */}
+        <div className="sheet-foot">
+          <button type="button" className="btn btn-xl btn-dark" disabled={!effective || (access === 'request' && unchanged)} onClick={save}>
+            {access === 'request' ? 'Ask to change' : 'Save score'}
           </button>
-        )}
+          {pending && pending.by === deviceId && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => dispatch({ type: 'answerFix', id: pending.id, accept: false }) && closeSheet()}
+            >
+              Cancel my request
+            </button>
+          )}
+        </div>
       </div>
     </Sheet>
   );

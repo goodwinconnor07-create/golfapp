@@ -12,7 +12,10 @@ import {
   CODE_LENGTH,
   formatDelta,
   formatToPar,
+  isNameBlocked,
   LIMITS,
+  NAME_BLOCKED,
+  toParWords,
   TIERS,
   type Outcome,
   type Par,
@@ -22,25 +25,16 @@ import {
 import { haptic, reducedMotion } from './effects';
 import { avatarInk, BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
-import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PencilIcon, PlusIcon, ShieldIcon } from './Icons';
+import { BackIcon, BoltIcon, CheckIcon, CloseIcon, CrossIcon, FlameIcon, MinusIcon, PencilIcon, PlusIcon, ShieldIcon } from './Icons';
+import { plural } from './format';
 
 // ── Tiers ───────────────────────────────────────────────────────────────────
 
-export const TIER_LOOK: Record<Tier, { Icon: ComponentType<SVGProps<SVGSVGElement>>; pips: number; color: string }> = {
-  safe: { Icon: ShieldIcon, pips: 1, color: 'var(--safe)' },
-  bold: { Icon: FlameIcon, pips: 2, color: 'var(--bold)' },
-  insane: { Icon: BoltIcon, pips: 3, color: 'var(--insane)' },
+export const TIER_LOOK: Record<Tier, { Icon: ComponentType<SVGProps<SVGSVGElement>>; color: string }> = {
+  safe: { Icon: ShieldIcon, color: 'var(--safe)' },
+  bold: { Icon: FlameIcon, color: 'var(--bold)' },
+  insane: { Icon: BoltIcon, color: 'var(--insane)' },
 };
-
-export function Pips({ n, of = 3 }: { n: number; of?: number }) {
-  return (
-    <span className="pips" aria-hidden>
-      {Array.from({ length: of }, (_, i) => (
-        <i key={i} className={i < n ? 'on' : ''} />
-      ))}
-    </span>
-  );
-}
 
 export function TierIcon({ tier, size = 24 }: { tier: Tier; size?: number }) {
   const { Icon } = TIER_LOOK[tier];
@@ -110,59 +104,61 @@ export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'c
 }
 
 /**
- * A big picture of you with "Change your picture" under it. It pops when the look changes, then floats.
- * With `nameTag`, your name sits in a pill over the top of the picture instead, and the whole thing is one button.
+ * The name step (new game and joining): a big picture of you that opens the picture picker, and a
+ * plain name box under it. The picture pops when the look changes, then floats.
  */
-export function HeroPicture({
+export function NameAndPicture({
   name,
   look,
-  onChange,
-  nameTag = false,
+  onName,
+  onPicture,
+  onDone,
 }: {
   name: string;
   look: { emoji: string | null; color: number };
-  onChange: () => void;
-  nameTag?: boolean;
+  onName: (name: string) => void;
+  onPicture: () => void;
+  /** Return on the keyboard. */
+  onDone?: () => void;
 }) {
   const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
-  if (nameTag) {
-    const shown = name.trim();
-    return (
-      <div className="hero-pic">
-        <button
-          type="button"
-          className="avatar-button hero-button hero-tagged"
-          aria-label={shown ? `${shown}: edit your name and picture` : 'Add your name and picture'}
-          onClick={onChange}
-        >
-          <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
-            {/* The pill and pencil ride inside the float, so they bob with the picture. */}
-            <span className="hero-float">
-              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={164} />
-              <span className="hero-edit-badge" aria-hidden>
-                <PencilIcon width={20} height={20} />
-              </span>
-              <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
-                <span className="hero-name-text">{shown || 'Add your name'}</span>
-              </span>
-            </span>
-          </span>
-        </button>
-      </div>
-    );
-  }
   return (
     <div className="hero-pic">
-      <button type="button" className="avatar-button hero-button" aria-label="Change your picture" onClick={onChange}>
+      <button type="button" className="avatar-button hero-button" aria-label="Change your picture" onClick={onPicture}>
         <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
           <span className="hero-float">
-            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={140} />
+            {/* A pencil on the picture says it can be changed. */}
+            <span className="hero-edit-badge" aria-hidden>
+              <PencilIcon width={20} height={20} />
+            </span>
           </span>
         </span>
       </button>
-      <button type="button" className="btn-link-small" onClick={onChange}>
-        {look.emoji ? 'Change your picture' : 'Pick a picture'}
-      </button>
+      <div className="name-box">
+        <input
+          className="field name-field"
+          value={name}
+          placeholder="Your name"
+          aria-label="Your name"
+          maxLength={LIMITS.maxNameLength}
+          autoComplete="given-name"
+          autoCapitalize="words"
+          enterKeyHint="done"
+          autoFocus={!name.trim()}
+          onChange={(e) => onName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return;
+            e.currentTarget.blur();
+            onDone?.();
+          }}
+        />
+        {isNameBlocked(name) && (
+          <p className="field-error" role="alert">
+            {NAME_BLOCKED}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -291,6 +287,8 @@ export function StrokePicker({
           {look.emoji}
         </span>
         {scoreName(strokes, par)}
+        {/* "1 over" in plain words, for anyone who doesn't speak golf. */}
+        {strokes !== 1 && strokes !== par && <small className="score-over">{toParWords(strokes - par)}</small>}
       </p>
     </div>
   );
@@ -587,54 +585,124 @@ export function Spinner({ label }: { label?: string }) {
 
 type SumOpts = { doubled?: boolean; freePass?: boolean };
 
-/**
- * A hole's working, all against par so it adds up to the big number:
- * golf "Bogey +1", card "Card −4". Real strokes stay visible elsewhere (stroke picker, scorecard).
- */
-export function breakdownParts(strokes: number, par: Par, adjustment: number, opts: SumOpts = {}): { golf: string; card: string } {
+/** The golf half of a hole: "Bogey +1", "Double bogey +2", plain "Par" (never "Par 0"). */
+export function golfPart(strokes: number, par: Par): string {
   const diff = strokes - par;
   const name = scoreName(strokes, par);
-  // scoreName falls back to "+5" for big numbers; don't print it twice. Plain "Par", never "Par 0".
-  const golf = /^[+−-]?\d/.test(name) ? formatDelta(diff) : diff === 0 ? name : `${name} ${formatDelta(diff)}`;
-  let card = `Card ${formatDelta(adjustment)}`;
-  if (opts.freePass && adjustment === 0) card = 'Card 0 · free shot';
-  else if (opts.doubled && adjustment !== 0) card += ' (2×)';
-  return { golf, card };
+  // scoreName falls back to "+5" for big numbers; don't print it twice.
+  if (/^[+−-]?\d/.test(name)) return formatDelta(diff);
+  return diff === 0 ? name : `${name} ${formatDelta(diff)}`;
 }
 
+/** ✓ or ✗ as an icon (a typed ✗ reads as "times"), or a dash when the card didn't happen. */
+export function OutcomeMark({ outcome, size = 14 }: { outcome: Outcome; size?: number }) {
+  if (outcome === 'made') return <CheckIcon width={size} height={size} aria-hidden />;
+  if (outcome === 'missed') return <CrossIcon width={size} height={size} aria-hidden />;
+  return <span aria-hidden>–</span>;
+}
+
+const OUTCOME_WORD: Record<Outcome, string> = { made: 'completed', missed: 'failed', na: "didn't happen" };
+
 /**
- * The working as pills: [Bogey +1] + [✓ Card −4], plus "= −3" when total is set.
- * The card pill is green when made and red when missed, with ✓/✗ so colour isn't the only cue.
+ * A hole in two short lines, for result rows: "Bogey +1", then "[level icon] Lag It Close ✓ −2". The
+ * golf half, then the card by name with what it was worth: green with ✓ when completed, red with ✗ when failed.
  */
-export function Breakdown({
+export function Working({
   strokes,
   par,
   adjustment,
   outcome,
-  total,
-  big,
-  ...opts
-}: { strokes: number; par: Par; adjustment: number; outcome: Outcome; total?: boolean; big?: boolean } & SumOpts) {
-  const { golf, card } = breakdownParts(strokes, par, adjustment, opts);
-  const mark = outcome === 'made' ? '✓ ' : outcome === 'missed' ? '✗ ' : '';
+  tier,
+  cardTitle,
+  doubled,
+}: {
+  strokes: number;
+  par: Par;
+  adjustment: number;
+  outcome: Outcome;
+  tier: Tier;
+  cardTitle?: string;
+  doubled?: boolean;
+}) {
+  const golf = golfPart(strokes, par);
+  const card = cardTitle ?? `${TIERS[tier].label} card`;
+  const label = `${golf}, ${card} ${OUTCOME_WORD[outcome]} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
   return (
-    <span className={`breakdown${big ? ' big' : ''}`} aria-label={`${golf} plus ${card}`}>
-      <span className="pill pill-golf">{golf}</span>
-      <span className="pill-op">+</span>
-      {/* The card pill and the total wrap together, so "= −3" never sits alone. */}
-      <span className="pill-group">
-        <span className={`pill pill-${outcome}`}>
-          {mark}
-          {card}
+    <span className="working" aria-label={label}>
+      <span className="working-golf">{golf}</span>
+      <span className="working-card">
+        <span className={`working-tier tier-ink-${tier}`}>
+          <TierIcon tier={tier} size={14} />
         </span>
-        {total && (
-          <>
-            <span className="pill-op">=</span>
-            <b className="pill-total">{formatToPar(strokes - par + adjustment)}</b>
-          </>
-        )}
+        <span className="working-title">{card}</span>
+        <span className={`working-delta ${outcome}`}>
+          <OutcomeMark outcome={outcome} size={13} />
+          {formatDelta(adjustment)}
+          {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
+        </span>
       </span>
     </span>
+  );
+}
+
+/**
+ * A hole's sum written out like a receipt, numbers lined up on the right:
+ *   Bogey · 5 strokes      +1
+ *   ✓ Card completed       −2
+ *   This hole              −1
+ * Used wherever the sum is the point: the score splash, Fix a score and How to play.
+ */
+export function Receipt({
+  strokes,
+  par,
+  adjustment,
+  outcome,
+  doubled,
+  freePass,
+  className = '',
+}: { strokes: number; par: Par; adjustment: number; outcome: Outcome; className?: string } & SumOpts) {
+  const diff = strokes - par;
+  let card = `Card ${OUTCOME_WORD[outcome]}`;
+  if (freePass && adjustment === 0) card += ' · free shot';
+  else if (doubled && adjustment !== 0) card += ' (2×)';
+  return (
+    <SumTable
+      className={className}
+      lines={[
+        { label: `${scoreName(strokes, par)} · ${plural(strokes, 'stroke')}`, value: formatDelta(diff) },
+        { label: card, value: formatDelta(adjustment), tone: outcome, mark: outcome },
+      ]}
+      total={{ label: 'This hole', value: formatToPar(diff + adjustment) }}
+    />
+  );
+}
+
+export interface SumLine {
+  label: string;
+  value: string;
+  tone?: Outcome;
+  mark?: Outcome;
+}
+
+/** Lines that add up, with the total under a rule. The one layout for every sum in the app. */
+export function SumTable({ lines, total, className = '' }: { lines: SumLine[]; total: SumLine; className?: string }) {
+  const spoken = `${lines.map((l) => `${l.label} ${l.value}`).join(', plus ')}, equals ${total.value}`;
+  return (
+    <div className={`sum-table ${className}`} role="img" aria-label={spoken}>
+      {lines.map((l) => (
+        <div key={l.label} className={`sum-row${l.tone ? ` ${l.tone}` : ''}`}>
+          <span className="sum-label">
+            {l.mark && <OutcomeMark outcome={l.mark} size={16} />}
+            {l.label}
+          </span>
+          <b className="num">{l.value}</b>
+        </div>
+      ))}
+      <div className="sum-row sum-total">
+        <span className="sum-label">{total.label}</span>
+        <b className="num">{total.value}</b>
+      </div>
+    </div>
   );
 }
 
@@ -667,41 +735,6 @@ export function CountUp({ value, from = 0, format = String }: { value: number; f
   return <>{format(shown)}</>;
 }
 
-/**
- * A hole's working as one pill in two halves: the golf score, then the card (its level's icon,
- * ✓ or ✗, and what it was worth). Together they add up to the big number. Doubled holes show 2×.
- */
-export function Working({
-  strokes,
-  par,
-  adjustment,
-  outcome,
-  tier,
-  doubled,
-}: {
-  strokes: number;
-  par: Par;
-  adjustment: number;
-  outcome: Outcome;
-  tier: Tier;
-  doubled?: boolean;
-}) {
-  // Golfers just say "a double": shorter names keep the pill on one line in a narrow row.
-  const golf = breakdownParts(strokes, par, adjustment).golf.replace(/^(Double|Triple) bogey/, '$1');
-  const label = `${golf}, ${TIERS[tier].label} card ${outcome === 'made' ? 'completed' : outcome === 'missed' ? 'failed' : 'no change'} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
-  return (
-    <span className="working" aria-label={label}>
-      <span className="working-golf">{golf}</span>
-      <span className={`working-card ${outcome}`}>
-        <span className={`working-tier tier-ink-${tier}`}>{TIERS[tier].label}</span>
-        {/* Colour says completed or failed; the label says it for screen readers. */}
-        {formatDelta(adjustment)}
-        {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
-      </span>
-    </span>
-  );
-}
-
 /** Small grey notes beside a name: mulligan, free shot. Kept quiet so the score reads first. */
 export function HoleMeta({ mulligan, freePass, children }: { mulligan?: boolean; freePass?: boolean; children?: ReactNode }) {
   if (!mulligan && !freePass && !children) return null;
@@ -711,5 +744,18 @@ export function HoleMeta({ mulligan, freePass, children }: { mulligan?: boolean;
       {freePass && <span>🛟 Free shot</span>}
       {children}
     </span>
+  );
+}
+
+/**
+ * When the strokes alone settle a card (par on "Par Hunter", a double on "Bogey Buffer"…), one slim
+ * line says so. Same look on the score screen and in Fix a score.
+ */
+export function AutoNote({ outcome }: { outcome: 'made' | 'missed' }) {
+  return (
+    <div className={`auto-result ${outcome} pop`} key={outcome} role="status">
+      <OutcomeMark outcome={outcome} size={18} />
+      {outcome === 'made' ? 'Your strokes complete this card' : 'Too many strokes to complete this card'}
+    </div>
   );
 }

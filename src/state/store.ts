@@ -64,7 +64,7 @@ export type Sheet =
   | { name: 'menu' }
   | { name: 'pars' }
   /** `typed` is a name still being typed (the join screen), so the picker shows it. */
-  | { name: 'look'; typed?: string; editName?: boolean }
+  | { name: 'look'; typed?: string }
   | { name: 'notifications' }
   | { name: 'news' }
   | { name: 'standings' }
@@ -412,7 +412,7 @@ export function dispatch(action: Action): boolean {
     if (!s.game) return false;
     if (state.busy) {
       // The game is being uploaded for online play; a change now would be lost.
-      toast('One second, getting your code…');
+      toast('Getting your code…');
       return false;
     }
     const r = applyAction(s.game, action, { deviceId: state.deviceId, now: Date.now(), rng: cryptoRng });

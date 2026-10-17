@@ -1,7 +1,7 @@
 import { LIMITS, type Game } from '../../game';
-import { confirm, dispatch, goOnline, openSheet, useApp } from '../../state/store';
+import { confirm, dispatch, goOnline, navigate, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
-import { Avatar, SkeletonInvite } from '../../ui/components';
+import { Avatar, SkeletonInvite, TierIcon } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
 import { CopyIcon, QrIcon, ShareIcon } from '../../ui/Icons';
 import { joinLink, joinLinkLabel, SHORT_HOST } from '../../state/platform';
@@ -21,7 +21,7 @@ export function Lobby({ game }: { game: Game }) {
     if (!alone) return colourWipe(e, start);
     confirm({
       title: 'Start on your own?',
-      body: 'Nobody has joined yet. Send the code to your group first so everyone picks their own cards.',
+      body: "Nobody's joined yet. Share the code so friends can play on their own phones.",
       confirm: 'Start anyway',
       onConfirm: start,
     });
@@ -148,11 +148,26 @@ export function Lobby({ game }: { game: Game }) {
           </div>
         )}
 
-        {/* Guests get the rules in one line; the host's lobby stays focused on inviting. */}
+        {/* Guests skip How to play to keep joining quick, so the lobby wait teaches the game. The host's lobby stays on inviting. */}
         {!host && (
-          <p className="muted rules-line">
-            <b>Each hole</b>: strokes ± your challenge, over or under par. Lowest total wins.
-          </p>
+          <div className="how-steps">
+            <p className="section-title">How it works</p>
+            <ol>
+              <li>
+                <span className="how-step-icons" aria-hidden>
+                  <TierIcon tier="safe" size={18} />
+                  <TierIcon tier="bold" size={18} />
+                  <TierIcon tier="insane" size={18} />
+                </span>
+                Before each hole, pick Safe, Bold or Insane.
+              </li>
+              <li>Get a card from that level, then play the hole.</li>
+              <li>Complete it and strokes come off your score. Fail it and they go on. Lowest score wins.</li>
+            </ol>
+            <button type="button" className="btn-link-small" onClick={() => navigate({ name: 'howto' })}>
+              How to play
+            </button>
+          </div>
         )}
       </div>
 
