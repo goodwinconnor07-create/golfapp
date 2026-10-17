@@ -63,9 +63,9 @@
   --badge: #ff3b30;
 
   /* ── Brand */
-  --brand-1: #f97316;
-  --brand-2: #ec4899;
-  --brand-3: #8b5cf6;
+  --brand-1: #2b4f8f;
+  --brand-2: #1e3a6e;
+  --brand-3: #0b1d3f;
   --brand: linear-gradient(100deg, var(--brand-1) 0%, var(--brand-2) 50%, var(--brand-3) 100%);
 
   /* ── States. -lo shades are for gradients under white text; -ink is text on a tinted -bg. */
@@ -455,7 +455,7 @@ input {
 }
 
 .btn-brand {
-  background: linear-gradient(100deg, var(--bold-hi) 0%, var(--brand-2) 50%, var(--insane) 100%);
+  background: var(--brand);
 }
 
 .btn-safe {

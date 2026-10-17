@@ -56,20 +56,20 @@ export function Home() {
       <div className="screen-foot clear">
         {canHost ? (
           <>
-            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, startNewGame)}>
+            <button type="button" className="btn btn-xl btn-brand" onClick={(e) => colourWipe(e, startNewGame)}>
               New game
             </button>
-            <button type="button" className="btn btn-xl btn-blue" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
+            <button type="button" className="btn btn-xl btn-red" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
               Join a game
             </button>
           </>
         ) : (
           // The host pays for the iPhone app; joining stays free here on the website.
           <>
-            <button type="button" className="btn btn-xl btn-green" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
+            <button type="button" className="btn btn-xl btn-brand" onClick={(e) => colourWipe(e, () => navigate({ name: 'join' }))}>
               Join a game
             </button>
-            <a className="btn btn-xl btn-blue" href={APP_STORE_URL}>
+            <a className="btn btn-xl btn-red" href={APP_STORE_URL}>
               Host · get the app
             </a>
           </>
