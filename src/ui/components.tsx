@@ -146,7 +146,6 @@ export function HeroPicture({
           </span>
           <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
             <span className="hero-name-text">{shown || 'Add your name'}</span>
-            <PencilIcon width={18} height={18} />
           </span>
         </button>
       </div>

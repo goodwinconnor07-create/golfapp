@@ -4958,11 +4958,6 @@ button.roster-item:active {
   text-overflow: ellipsis;
 }
 
-.hero-name-pill svg {
-  flex: none;
-  color: var(--ink-3);
-}
-
 /* A pencil on the picture says it can be changed. */
 .hero-edit-badge {
   position: absolute;
