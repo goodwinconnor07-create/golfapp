@@ -7,7 +7,18 @@ import {
   type ReactNode,
   type SVGProps,
 } from 'react';
-import { AVATAR_EMOJIS, CODE_LENGTH, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
+import {
+  AVATAR_EMOJIS,
+  CODE_LENGTH,
+  formatDelta,
+  formatToPar,
+  LIMITS,
+  TIERS,
+  type Outcome,
+  type Par,
+  type Player,
+  type Tier,
+} from '../game';
 import { haptic, reducedMotion } from './effects';
 import { avatarInk, BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
@@ -85,7 +96,13 @@ export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'c
   return (
     <span
       className={`avatar${player.emoji ? ' avatar-emoji' : ''}`}
-      style={{ width: size, height: size, fontSize: size * (player.emoji ? 0.56 : 0.46), background: playerColor(player.color), color: avatarInk(playerColor(player.color)) }}
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * (player.emoji ? 0.56 : 0.46),
+        background: playerColor(player.color),
+        color: avatarInk(playerColor(player.color)),
+      }}
       aria-hidden
     >
       {player.emoji ?? initial}
@@ -93,9 +110,44 @@ export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'c
   );
 }
 
-/** A big picture of you with "Change your picture" under it. It pops when the look changes, then floats. */
-export function HeroPicture({ name, look, onChange }: { name: string; look: { emoji: string | null; color: number }; onChange: () => void }) {
+/**
+ * A big picture of you with "Change your picture" under it. It pops when the look changes, then floats.
+ * With `nameTag`, your name sits in a pill over the top of the picture instead, and the whole thing is one button.
+ */
+export function HeroPicture({
+  name,
+  look,
+  onChange,
+  nameTag = false,
+}: {
+  name: string;
+  look: { emoji: string | null; color: number };
+  onChange: () => void;
+  nameTag?: boolean;
+}) {
   const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
+  if (nameTag) {
+    const shown = name.trim();
+    return (
+      <div className="hero-pic">
+        <button
+          type="button"
+          className="avatar-button hero-button hero-tagged"
+          aria-label={shown ? `${shown}: edit your name and picture` : 'Add your name and picture'}
+          onClick={onChange}
+        >
+          <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+            <span className="hero-float">
+              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+            </span>
+          </span>
+          <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
+            {shown || 'Add your name'}
+          </span>
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="hero-pic">
       <button type="button" className="avatar-button hero-button" aria-label="Change your picture" onClick={onChange}>

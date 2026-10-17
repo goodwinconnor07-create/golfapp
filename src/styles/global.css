@@ -1292,6 +1292,12 @@ input {
   margin: 0 0 20px;
 }
 
+.look-name {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
 .look-preview .pop {
   display: inline-flex;
 }

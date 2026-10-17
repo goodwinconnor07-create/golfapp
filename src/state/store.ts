@@ -64,7 +64,7 @@ export type Sheet =
   | { name: 'menu' }
   | { name: 'pars' }
   /** `typed` is a name still being typed (the join screen), so the picker shows it. */
-  | { name: 'look'; typed?: string }
+  | { name: 'look'; typed?: string; editName?: boolean }
   | { name: 'notifications' }
   | { name: 'standings' }
   | { name: 'player'; playerId: string }

@@ -20,11 +20,11 @@ test.describe('first time', () => {
     await page.getByRole('button', { name: 'New game' }).click();
     await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
     await page.getByRole('button', { name: 'Skip' }).click();
-    await expect(page.getByLabel('Your name')).toBeVisible();
+    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
     // The second time goes straight to the name screen.
     await page.getByRole('button', { name: 'Back' }).click();
     await page.getByRole('button', { name: 'New game' }).click();
-    await expect(page.getByLabel('Your name')).toBeVisible();
+    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
   });
 
   test('finishing How to play lands on the name screen', async ({ page }) => {
@@ -38,6 +38,6 @@ test.describe('first time', () => {
     await expect(page.getByRole('button', { name: "Let's play" })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Skip' })).toBeHidden();
     await page.getByRole('button', { name: "Let's play" }).click();
-    await expect(page.getByLabel('Your name')).toBeVisible();
+    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
   });
 });

@@ -18,9 +18,17 @@ export async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
+/** On the new game screen: tap the picture, type the name in the sheet, close it. */
+export async function enterName(page: Page, name: string) {
+  await page.getByRole('button', { name: /your name and picture/ }).click();
+  await page.getByRole('textbox', { name: 'Your name' }).fill(name);
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+}
+
 export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'Back 9' | '18 holes' = 'Front 9') {
   await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill(names[0]);
+  await enterName(page, names[0]);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: new RegExp(holes) }).click();

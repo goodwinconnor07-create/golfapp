@@ -1,4 +1,4 @@
-import { cleanName, isNameBlocked, LIMITS, NAME_BLOCKED } from '../game';
+import { cleanName, isNameBlocked } from '../game';
 import { navigate, openSheet, setDraftNames, useApp } from '../state/store';
 import { BackBar, HeroPicture } from '../ui/components';
 
@@ -22,28 +22,9 @@ export function SetupPlayers() {
         <p className="muted" style={{ margin: 0 }}>
           Next you'll get a code. Your group joins on their own phones and picks their own cards.
         </p>
-        <HeroPicture name={name} look={look} onChange={() => openSheet({ name: 'look' })} />
+        <HeroPicture name={name} look={look} nameTag onChange={() => openSheet({ name: 'look', editName: true })} />
       </div>
       <div className="screen-foot">
-        <input
-          className="field"
-          value={name}
-          placeholder="Type your name"
-          maxLength={LIMITS.maxNameLength}
-          autoComplete="off"
-          autoCapitalize="words"
-          enterKeyHint="next"
-          aria-label="Your name"
-          onChange={(e) => setDraftNames([e.target.value])}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && valid) next();
-          }}
-        />
-        {blocked && (
-          <p className="field-error" role="alert" style={{ margin: 0 }}>
-            {NAME_BLOCKED}
-          </p>
-        )}
         <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={next}>
           Next
         </button>

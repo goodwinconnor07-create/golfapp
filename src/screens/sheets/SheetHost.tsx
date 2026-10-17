@@ -37,7 +37,7 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
     case 'standings':
       return <StandingsSheet />;
     case 'look':
-      return <LookSheet typed={sheet.typed} />;
+      return <LookSheet typed={sheet.typed} editName={sheet.editName} />;
     case 'player':
       return <PlayerSheet playerId={sheet.playerId} />;
     case 'edit':
