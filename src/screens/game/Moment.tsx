@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { completedHoles, isDoubleHole, newLeader, standings, type Game } from '../../game';
+import { completedHoles, isDoubleHole, standings, type Game } from '../../game';
 import { useApp } from '../../state/store';
-import { Avatar } from '../../ui/components';
-import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
+import { haptic } from '../../ui/effects';
 
 const SEEN_KEY = 'sendit.moment';
 
 /**
- * A full-screen beat between holes, only when it matters: a new leader, a tie for the lead,
- * halfway through 18, or the double-stakes holes coming up. Once per hole, after the standings
+ * A full-screen beat between holes, only when it matters: a tie for the lead, halfway through 18,
+ * or the double-stakes holes coming up. (A new leader gets its line under the results heading.) Once per hole, after the standings
  * have slid into place. It never blocks: taps go straight through, and it fades on its own.
  */
 export function Moment({ game, hole = game.current, delay = 800 }: { game: Game; hole?: number; delay?: number }) {
@@ -26,8 +25,7 @@ export function Moment({ game, hole = game.current, delay = 800 }: { game: Game;
       hide = setTimeout(() => setShow(false), 2600);
       setShow(true);
       markSeen(key);
-      haptic(moment.kind === 'lead' ? 'success' : 'medium');
-      if (moment.kind === 'lead' && !reducedMotion()) confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.4 }, 90);
+      haptic('medium');
     }, delay);
     return () => {
       clearTimeout(t);
@@ -39,14 +37,7 @@ export function Moment({ game, hole = game.current, delay = 800 }: { game: Game;
   return (
     <div className={`moment moment-${moment.kind}`} role="status" aria-live="polite">
       <div className="moment-card pop">
-        {moment.player ? (
-          <span className="moment-avatar">
-            <Avatar player={moment.player} size={96} />
-            {moment.kind === 'lead' && <span className="moment-crown">👑</span>}
-          </span>
-        ) : (
-          <span className="moment-emoji">{moment.emoji}</span>
-        )}
+        <span className="moment-emoji">{moment.emoji}</span>
         <h2 className="moment-title">{moment.title}</h2>
         {moment.sub && <p className="moment-sub">{moment.sub}</p>}
       </div>
@@ -54,7 +45,7 @@ export function Moment({ game, hole = game.current, delay = 800 }: { game: Game;
   );
 }
 
-type Pick = { kind: 'lead' | 'tie' | 'half' | 'double'; title: string; sub?: string; emoji?: string; player?: Game['players'][number] };
+type Pick = { kind: 'tie' | 'half' | 'double'; title: string; sub?: string; emoji: string };
 
 function pick(game: Game, h: number): Pick | null {
   if (game.players.length < 2 || game.status !== 'playing') return null;
@@ -69,14 +60,7 @@ function pick(game: Game, h: number): Pick | null {
   const last = h >= game.holes.length - 1;
   if (last) return null;
   const doubleNext = isDoubleHole(game, h + 1) && !isDoubleHole(game, h);
-  const leader = newLeader(game, h);
-  if (leader)
-    return {
-      kind: 'lead',
-      player: leader,
-      title: `${leader.name} takes the lead!`,
-      sub: doubleNext ? 'Final 3 holes next: every card counts double.' : `Up${by}.`,
-    };
+  // A new leader already gets its line (and confetti) under the results heading, so no second moment for it.
   if (top.length > 1 && h > 0)
     return { kind: 'tie', emoji: '🤝', title: 'All square!', sub: `${top.map((r) => r.player.name).join(' and ')} share the lead.` };
   if (doubleNext)

@@ -1,11 +1,8 @@
 import type { Game, Par } from '../../game';
 import { dispatch } from '../../state/store';
 
-const PARS: { par: Par; className: string }[] = [
-  { par: 3, className: 'btn-blue' },
-  { par: 4, className: 'btn-green' },
-  { par: 5, className: 'btn-dark' },
-];
+// One colour for all three: par 3, 4 and 5 aren't better or worse than each other.
+const PARS: Par[] = [3, 4, 5];
 
 export function ParPick({ game }: { game: Game }) {
   return (
@@ -15,11 +12,11 @@ export function ParPick({ game }: { game: Game }) {
         What's the par?
       </h1>
       <div className="par-buttons">
-        {PARS.map(({ par, className }) => (
+        {PARS.map((par) => (
           <button
             key={par}
             type="button"
-            className={`btn par-btn ${className}`}
+            className="btn par-btn btn-dark"
             onClick={() => dispatch({ type: 'setPar', hole: game.current, par })}
           >
             <small>PAR</small>
@@ -27,9 +24,6 @@ export function ParPick({ game }: { game: Game }) {
           </button>
         ))}
       </div>
-      <p className="muted" style={{ marginTop: 18 }}>
-        It's on the sign at the tee.
-      </p>
     </div>
   );
 }

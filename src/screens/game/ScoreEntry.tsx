@@ -1,11 +1,26 @@
 import { useState } from 'react';
-import { cardStakes, getCard, getEntry, judgeFromStrokes, lastHoleToPar, outcomeChoices, type Game, type Outcome } from '../../game';
+import {
+  cardStakes,
+  formatDelta,
+  getCard,
+  getEntry,
+  judgeFromStrokes,
+  lastHoleToPar,
+  outcomeChoices,
+  type Game,
+  type Outcome,
+} from '../../game';
 import { dispatch, submitScore } from '../../state/store';
 import { ChallengeCard } from '../../ui/ChallengeCard';
-import { Avatar, StrokePicker } from '../../ui/components';
+import { AutoNote, Avatar, StrokePicker } from '../../ui/components';
 import { CheckIcon, CrossIcon } from '../../ui/Icons';
 
-export function ScoreEntry({ game, playerId }: { game: Game; playerId: string }) {
+/**
+ * Strokes first, then the card. Completed and Failed each carry what they're worth and save the
+ * score in one tap. The footer keeps the same shape whatever the strokes: when the strokes settle
+ * the card, the other button just greys out.
+ */
+export function ScoreEntry({ game, playerId, back }: { game: Game; playerId: string; back?: { label: string; run: () => void } }) {
   const h = game.current;
   const par = game.holes[h].par ?? 4;
   const entry = getEntry(game, playerId, h);
@@ -17,9 +32,10 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
 
   const auto = judgeFromStrokes(card, par, strokes, lastHoleToPar(game, playerId, h));
   const choices = outcomeChoices(card);
-  // The strokes settle it either way (e.g. par on "Par Hunter" can only be completed), so there's nothing to tap.
-  const settled = auto !== null;
-  const send = (outcome?: Outcome) => submitScore(playerId, h, strokes, outcome);
+  const stakes = cardStakes(game, h, entry.tier, entry.freePass);
+  // The strokes settle it either way (e.g. par on "Par Hunter" can only be completed), so the other answer is off.
+  const send = (outcome: Outcome) => submitScore(playerId, h, strokes, auto && outcome !== 'na' ? undefined : outcome);
+  const canNa = choices.includes('na') || card.situational;
 
   return (
     <>
@@ -31,60 +47,48 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
           </h1>
         </div>
 
-        {/* Cards the strokes settle on their own: a small note above the counter, no taps needed. */}
-        {settled && (
-          <div className={`auto-result ${auto} pop`} key={auto} role="status">
-            {auto === 'made' ? <CheckIcon width={18} height={18} /> : <CrossIcon width={18} height={18} />}
-            <b>{auto === 'made' ? 'Completed' : 'Failed'}</b>
-            <span>{auto === 'made' ? 'your strokes prove it' : 'not possible with that many strokes'}</span>
-          </div>
-        )}
-
         <div className="tile score-tile">
-          <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label="Strokes taken" />
+          <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label={`Strokes taken · par ${par}`} />
         </div>
 
         {entry.mulligan && (
           // Taken on the Go play! screen; here it's just a reminder.
           <div className="mulligan-bar taken mulligan-note">
-            <span className="mulligan-text">🔁 Mulligan used: don't count the re-hit in your strokes.</span>
+            <span className="mulligan-text">🔁 Mulligan used: leave the re-hit out</span>
             <button type="button" className="btn-link-small" onClick={() => dispatch({ type: 'mulligan', playerId, hole: h, on: false })}>
               Remove
             </button>
           </div>
         )}
 
-        <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, h, entry.tier, entry.freePass)} />
+        <ChallengeCard compact hideStakes tier={entry.tier} cardId={entry.cardId} />
+        {auto && <AutoNote outcome={auto} />}
       </div>
 
       <div className="screen-foot score-foot">
-        {settled ? (
-          <>
-            <button type="button" className="btn btn-green" onClick={() => send()}>
-              Save score
-            </button>
-            {card.situational && (
-              <button type="button" className="btn btn-ghost" onClick={() => send('na')}>
-                It didn't happen (no change)
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <div className="made-missed">
-              <button type="button" className="btn btn-green" onClick={() => send('made')}>
-                <CheckIcon /> Completed
-              </button>
-              <button type="button" className="btn btn-red" onClick={() => send('missed')}>
-                <CrossIcon /> Failed
-              </button>
-            </div>
-            {choices.includes('na') && (
-              <button type="button" className="btn btn-ghost" onClick={() => send('na')}>
-                It didn't happen (no change)
-              </button>
-            )}
-          </>
+        <div className="made-missed">
+          <button type="button" className="btn btn-green btn-stake" disabled={auto === 'missed'} onClick={() => send('made')}>
+            <span className="btn-stake-main">
+              <CheckIcon /> Completed
+            </span>
+            <span className="btn-stake-delta num">{formatDelta(stakes.made)}</span>
+          </button>
+          <button type="button" className="btn btn-red btn-stake" disabled={auto === 'made'} onClick={() => send('missed')}>
+            <span className="btn-stake-main">
+              <CrossIcon /> Failed
+            </span>
+            <span className="btn-stake-delta num">{formatDelta(stakes.missed)}</span>
+          </button>
+        </div>
+        {canNa && (
+          <button type="button" className="btn btn-ghost" onClick={() => send('na')}>
+            It didn't happen (no change)
+          </button>
+        )}
+        {back && (
+          <button type="button" className="btn btn-link" onClick={back.run}>
+            {back.label}
+          </button>
         )}
       </div>
     </>

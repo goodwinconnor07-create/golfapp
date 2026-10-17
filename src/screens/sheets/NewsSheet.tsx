@@ -7,12 +7,12 @@ import { BoltIcon, ClockIcon, FlagIcon, FlameIcon, ShareIcon, TrophyIcon, UsersI
 export const NEWS = {
   tag: 'New',
   title: 'Version 1.0 is here',
-  text: "Tap to see what's in it",
+  text: "See what's in it",
 };
 
 const FEATURES: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; text: string }[] = [
   { icon: FlameIcon, title: 'Pick your risk', text: 'Safe, Bold or Insane before every hole, with a new card each time.' },
-  { icon: UsersIcon, title: 'Everyone on their own phone', text: 'Friends join with a code, a link or the QR. No app needed.' },
+  { icon: UsersIcon, title: 'Everyone on their own phone', text: 'Friends join with a code, link or QR code. No app needed.' },
   { icon: FlagIcon, title: 'Find your course', text: 'Search for it and every par fills itself in.' },
   { icon: BoltIcon, title: 'Twists', text: 'Mulligans, and the last 3 holes count double.' },
   { icon: TrophyIcon, title: 'Live standings', text: 'See who leads after every hole, and react to big moments.' },
@@ -23,9 +23,6 @@ const FEATURES: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; t
 export function NewsSheet() {
   return (
     <Sheet title="Version 1.0">
-      <p className="muted" style={{ marginTop: 0 }}>
-        CardShot is out. Here's what you can do.
-      </p>
       <div className="news-list">
         {FEATURES.map(({ icon: Icon, title, text }) => (
           <div key={title} className="news-item">

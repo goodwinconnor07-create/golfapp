@@ -26,7 +26,7 @@ export const SHOT_ART: Record<string, ShotArt> = {
   S16: { kind: 'drive', metres: 150 },
   B16: { kind: 'score', toPar: 0, tag: 'match or beat your last hole' },
   B17: { kind: 'putt', two: true, tag: '1st putt within 3 feet' },
-  B18: { kind: 'trouble', hazard: 'both', tag: 'no penalties · 2 putts max' },
+  B18: { kind: 'putt', two: true, tag: 'no penalties · 2 putts max' },
   B19: { kind: 'drive', tag: 'tee shot · fairway' },
   B20: { kind: 'drive', tag: '2nd shot · fairway' },
   I16: { kind: 'putt', feet: 4 },

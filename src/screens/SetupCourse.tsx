@@ -27,9 +27,9 @@ function saveRecent(course: CourseDetail) {
 }
 
 const PRESETS = [
-  { label: 'Front 9', count: 9, start: 1, className: 'btn-green' },
-  { label: 'Back 9', count: 9, start: 10, className: 'btn-blue' },
-  { label: '18 holes', count: 18, start: 1, className: 'btn-dark' },
+  { label: 'Front 9', count: 9, start: 1 },
+  { label: 'Back 9', count: 9, start: 10 },
+  { label: '18 holes', count: 18, start: 1 },
 ];
 
 /** Front 9, Back 9 or 18, with each one's total par when the course has pars. A 9-hole course only plays 9. */
@@ -48,7 +48,7 @@ function HoleChoices({ course }: { course: CourseDetail | null }) {
           <button
             key={p.label}
             type="button"
-            className={`btn hole-choice ${p.className}`}
+            className="btn hole-choice btn-dark"
             onClick={(e) => colourWipe(e, () => createLocalGame(makeHoles(p.count, p.start)))}
           >
             <b>{p.label}</b>

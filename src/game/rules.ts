@@ -1,6 +1,6 @@
 import { CARDS, getCard, type CardDef } from './cards';
 import { adjustmentFor } from './tiers';
-import type { Entry, FixRequest, Game, Outcome, Par, Settings, Tier } from './types';
+import type { Entry, FixRequest, Game, Outcome, Par, Settings, Team, Tier } from './types';
 
 /** The last few holes of a round count double, so whoever's behind still has a shot. */
 export const DOUBLE_STAKES_HOLES = 3;
@@ -16,14 +16,34 @@ export function isDoubleHole(game: Pick<Game, 'holes'>, hole: number): boolean {
  * Strokes a card adds or takes off on this hole: the tier's modifier, doubled on the
  * last holes, and nothing for a failed free shot. The tier values themselves never change.
  */
-export function stakeFor(game: Pick<Game, 'holes'>, hole: number, tier: Tier, outcome: Outcome, freePass = false): number {
+export function stakeFor(game: Pick<Game, 'holes' | 'teams'>, hole: number, tier: Tier, outcome: Outcome, freePass = false): number {
   if (outcome === 'missed' && freePass) return 0;
-  return adjustmentFor(tier, outcome) * (isDoubleHole(game, hole) ? 2 : 1);
+  return adjustmentFor(tier, outcome, Boolean(game.teams)) * (isDoubleHole(game, hole) ? 2 : 1);
 }
 
 /** What completing and failing a card is worth on this hole, for showing on cards and buttons. */
-export function cardStakes(game: Pick<Game, 'holes'>, hole: number, tier: Tier, freePass = false): { made: number; missed: number } {
+export function cardStakes(game: Pick<Game, 'holes' | 'teams'>, hole: number, tier: Tier, freePass = false): { made: number; missed: number } {
   return { made: stakeFor(game, hole, tier, 'made'), missed: stakeFor(game, hole, tier, 'missed', freePass) };
+}
+
+// ── Teams ────────────────────────────────────────────────────────────────────
+
+export function teamOf(game: Pick<Game, 'teams'>, playerId: string): Team | undefined {
+  return game.teams?.find((t) => t.players.includes(playerId));
+}
+
+/** The other player on this player's team, if teams are on. */
+export function mateOf(game: Pick<Game, 'teams'>, playerId: string): string | undefined {
+  const t = teamOf(game, playerId);
+  return t ? t.players.find((id) => id !== playerId) : undefined;
+}
+
+/** The team completes a card when either partner does. Missed only once both are in and neither did. */
+function teamResolve(own: Outcome | null, mate: Outcome | null): Outcome | null {
+  if (own == null) return null;
+  if (own === 'made' || mate === 'made') return 'made';
+  if (mate == null) return null;
+  return own === 'na' && mate === 'na' ? 'na' : 'missed';
 }
 
 /** Honour-system cards (judged by eye) go to a group vote when someone says they made it. */
@@ -119,15 +139,26 @@ export function isVoteable(game: Game, playerId: string, hole: number): boolean 
   return entry.outcome === 'made' && !judgeFromStrokes(card, par, entry.strokes);
 }
 
+/**
+ * Has this player entered their own score for the hole, with their own result settled?
+ * (In a team game a player's hole result also waits on their partner, so use this to ask
+ * whether this player still has something to enter.)
+ */
+export function playerScored(game: Game, playerId: string, hole: number): boolean {
+  return resolveOutcome(getEntry(game, playerId, hole), game.holes[hole]?.par ?? null, lastHoleToPar(game, playerId, hole)) != null;
+}
+
 /** Where a player is on the current hole: still out there, finished, or scored. */
 export function holeStatus(game: Game, playerId: string, hole: number): 'playing' | 'done' | 'scored' {
-  if (holeResult(game, playerId, hole)) return 'scored';
+  if (playerScored(game, playerId, hole)) return 'scored';
   return getEntry(game, playerId, hole)?.done ? 'done' : 'playing';
 }
 
 /** Has this player used their redraw this round? */
 export function redrawUsed(game: Game, playerId: string): boolean {
-  return game.holes.some((_, h) => getEntry(game, playerId, h)?.redrawn);
+  // In a team game the redraw belongs to the team: one between the partners.
+  const ids = [playerId, mateOf(game, playerId)].filter((id): id is string => Boolean(id));
+  return game.holes.some((_, h) => ids.some((id) => getEntry(game, id, h)?.redrawn));
 }
 
 /** Has this player used their free shot this round? */
@@ -152,13 +183,22 @@ export interface HoleResult {
   freePass: boolean;
   /** Used a mulligan on this hole. */
   mulligan: boolean;
+  /**
+   * This player's own result. In a team game `outcome` is the team's (made if either partner
+   * made it), so a failed partner still shows ✓ with `ownOutcome` 'missed'.
+   */
+  ownOutcome: Outcome;
 }
 
 /** Full result for one player on one hole, or null if it isn't finished yet. */
 export function holeResult(game: Game, playerId: string, hole: number): HoleResult | null {
   const entry = getEntry(game, playerId, hole);
   const par = game.holes[hole]?.par ?? null;
-  const outcome = resolveOutcome(entry, par, lastHoleToPar(game, playerId, hole));
+  const own = resolveOutcome(entry, par, lastHoleToPar(game, playerId, hole));
+  const mate = mateOf(game, playerId);
+  const outcome = mate
+    ? teamResolve(own, resolveOutcome(getEntry(game, mate, hole), par, lastHoleToPar(game, mate, hole)))
+    : own;
   if (!entry || !entry.tier || !entry.cardId || entry.strokes == null || outcome == null) return null;
   const adjustment = stakeFor(game, hole, entry.tier, outcome, entry.freePass);
   return {
@@ -173,6 +213,7 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
     doubled: isDoubleHole(game, hole),
     freePass: Boolean(entry.freePass),
     mulligan: Boolean(entry.mulligan),
+    ownOutcome: own ?? outcome,
   };
 }
 

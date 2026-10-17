@@ -9,30 +9,29 @@ test('mulligans: on by default, 2 for 9 holes, taken on the Go play! screen', as
   await page.getByRole('button', { name: 'Game options' }).click();
   const option = page.getByRole('switch', { name: /Mulligans/ });
   await expect(option).toHaveAttribute('aria-checked', 'true');
-  await expect(option).toContainText('2 bad shots');
+  await expect(option).toContainText('2 re-hits each');
   await page.getByRole('button', { name: 'Done' }).click();
 
   await page.getByRole('button', { name: "Let's go!" }).click();
   await page.getByRole('button', { name: /PAR\s*4/ }).click();
   await pickAndReveal(page, 'Safe');
   await pickAndReveal(page, 'Safe');
-  await page.getByRole('button', { name: 'Go play!' }).click();
+  await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
 
-  // Taken during the hole, on the Go play! screen: a token is spent, and it can be undone.
-  const take = page.getByRole('button', { name: /Take a mulligan/ });
+  // Taken during the hole, on the Go play! screen: what's left is in words, and it can be undone.
+  const take = page.getByRole('button', { name: /Mulligan: re-hit a shot/ });
   // Only the open card (Sam's) shows the button; Alex's opens on a tap.
   await expect(take).toHaveCount(1);
   await take.first().click();
-  await expect(page.getByText('🔁 Mulligan taken')).toBeVisible();
-  await expect(page.getByLabel('1 of 2 mulligans left')).toBeVisible();
+  await expect(page.getByText('🔁 Mulligan taken · 1 left')).toBeVisible();
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.getByLabel('2 of 2 mulligans left').first()).toBeVisible();
+  await expect(take.first()).toContainText('2 left');
   await take.first().click();
   await shot(page, '45-mulligan-play');
 
   // The score screen just reminds you.
   await page.getByRole('button', { name: /Hole done/ }).click();
-  await expect(page.getByText(/Mulligan used: don't count the re-hit/)).toBeVisible();
+  await expect(page.getByText(/Mulligan used: leave the re-hit out/)).toBeVisible();
   await enterScore(page, 5, true);
   await enterScore(page, 5, true);
 

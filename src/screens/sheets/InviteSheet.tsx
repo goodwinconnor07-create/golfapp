@@ -5,7 +5,6 @@ import { goOnline, toast, useApp } from '../../state/store';
 import { Sheet, SkeletonInvite } from '../../ui/components';
 import { CopyIcon, ShareIcon } from '../../ui/Icons';
 import { QRCode } from '../../ui/QRCode';
-import { TILE_COLORS } from '../../ui/theme';
 
 
 export async function copy(text: string) {
@@ -40,7 +39,7 @@ export function CodeTiles({ code }: { code: string }) {
   return (
     <div className="code-tiles" aria-label={`Game code ${code.split('').join(' ')}`}>
       {code.split('').map((ch, i) => (
-        <span key={i} style={{ background: TILE_COLORS[i % TILE_COLORS.length], animationDelay: `${i * 60}ms` }}>
+        <span key={i} style={{ animationDelay: `${i * 60}ms` }}>
           {ch}
         </span>
       ))}

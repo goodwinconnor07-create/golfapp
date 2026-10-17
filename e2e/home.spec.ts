@@ -40,6 +40,15 @@ test.describe('after a round', () => {
     }),
   });
 
+  test('Home has News for regulars, and the story opens in a sheet', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: /Version 1.0 is here/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('Pick your risk');
+    await shot(page, '01d-news');
+    await page.getByRole('button', { name: "Let's play" }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+  });
+
   test('Play again starts with the same group', async ({ page }) => {
     await page.goto('/');
     await shot(page, '01b-home-play-again');
@@ -55,15 +64,13 @@ test.describe('first time', () => {
   // A phone that has never opened How to play (the other tests start as if it had).
   test.use({ storageState: phone({ 'sendit.appHome': 'true' }) });
 
-  test('Home has News, and the story opens in a sheet', async ({ page }) => {
+  test('Home leads with How to play for someone who has never played', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'CardShot' })).toBeVisible();
     await shot(page, '01a-home');
-    await page.getByRole('button', { name: /Version 1.0 is here/ }).click();
-    await expect(page.getByRole('dialog')).toContainText('Pick your risk');
-    await shot(page, '01d-news');
-    await page.getByRole('button', { name: "Let's play" }).click();
-    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.getByRole('button', { name: /Version 1.0 is here/ })).toHaveCount(0);
+    await page.getByRole('button', { name: /^How to play/ }).click();
+    await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
   });
 
   test('a new host sees How to play once and can skip it', async ({ page }) => {
@@ -71,25 +78,25 @@ test.describe('first time', () => {
     await startGame(page);
     await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
     await page.getByRole('button', { name: 'Skip' }).click();
-    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Your name' })).toBeVisible();
     // The second time goes straight to the name screen.
     await page.getByRole('button', { name: 'Back' }).click();
     await startGame(page);
-    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Your name' })).toBeVisible();
   });
 
   test('finishing How to play lands on the name screen', async ({ page }) => {
     await page.goto('/');
     await startGame(page);
     // Let each slide settle before tapping Next again (the slides scroll across).
-    for (const title of ['Get a card', 'Play the hole', 'Score it', 'Lowest score wins', 'Twists']) {
+    for (const title of ['Get a card', 'Play the hole', 'Score it', 'Lowest score wins', 'Extras']) {
       await page.getByRole('button', { name: 'Next', exact: true }).click();
       await expect(page.getByRole('heading', { name: title })).toBeInViewport({ ratio: 0.9 });
     }
     await expect(page.getByRole('button', { name: "Let's play" })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Skip' })).toBeHidden();
     await page.getByRole('button', { name: "Let's play" }).click();
-    await expect(page.getByRole('button', { name: /your name and picture/ })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Your name' })).toBeVisible();
   });
 });
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getCard, getEntry, holeResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
+import { getCard, getEntry, holeResult, unitHoleResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { HoleMeta, Working } from '../../ui/components';
@@ -26,17 +26,16 @@ export function HoleResults({ game }: { game: Game }) {
   return (
     <>
       <div className="screen-body">
-        {/* Each row: this hole's working, then the running total. */}
-        <div className="reveal-head">
-          <h1 className="h1">Hole {game.holes[h].number} done!</h1>
-          <span className="col-label" aria-hidden>
-            Total
-          </span>
-        </div>
+        {/* The hole number is in the top bar already. Each row: this hole, then the running total. */}
+        <h1 className="h1">Results</h1>
         <Overtakes game={game} />
+        <div className="board-cols" aria-hidden>
+          <span>This hole</span>
+          <span>Total</span>
+        </div>
         <div className="board">
           {rows.map((row, i) => {
-            const r = holeResult(game, row.player.id, h);
+            const r = unitHoleResult(game, row.player.id, h);
             return (
               <BoardRow
                 key={row.player.id}
@@ -53,12 +52,13 @@ export function HoleResults({ game }: { game: Game }) {
                         adjustment={r.adjustment}
                         outcome={r.outcome}
                         tier={r.tier}
+                        cardTitle={getCard(r.cardId)?.title}
                         doubled={r.doubled}
                       />
-                      <HoleMeta mulligan={r.mulligan} freePass={r.freePass} />
-                      <VoteTag game={game} playerId={row.player.id} hole={h} />
+                      <HoleMeta mulligan={r.mulligan} freePass={r.freePass}>
+                        <VoteTag game={game} playerId={row.player.id} hole={h} />
+                      </HoleMeta>
                       <Reactions game={game} playerId={row.player.id} hole={h} />
-                      <span className="sr-only">{getCard(r.cardId)?.title}</span>
                     </>
                   )
                 }
@@ -95,8 +95,7 @@ export function VoteTag({ game, playerId, hole }: { game: Game; playerId: string
   if (fair + unfair === 0) return null;
   return (
     <span className={`vote-note${unfair > fair ? ' meta-bad' : ''}`}>
-      👍{fair} 👎{unfair}
-      {unfair > fair ? ' · overturned' : ''}
+      {unfair > fair ? 'Voted down' : 'Vote'} 👍 {fair} · 👎 {unfair}
     </span>
   );
 }

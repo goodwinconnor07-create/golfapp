@@ -30,6 +30,8 @@ function HostHome() {
   const me = useApp((s) => s.profileName.trim());
   const active = (game && game.status !== 'finished') || joining;
   const [group] = useState(() => (me ? lastGroup(loadHistory(), me) : []));
+  // Someone who's never finished a round gets How to play as the main card; News is for regulars.
+  const [firstTime] = useState(() => loadHistory().length === 0);
   const names = group.map((p) => p.name);
 
   return (
@@ -42,18 +44,31 @@ function HostHome() {
         </button>
       </div>
       <div className="screen-body home-body">
-        <section className="home-news" aria-label="News">
-          <p className="section-title">News</p>
-          <button type="button" className="news-card press" onClick={() => openSheet({ name: 'news' })}>
+        <section className="home-news" aria-label={firstTime ? 'New here' : 'News'}>
+          <p className="section-title">{firstTime ? 'New here?' : 'News'}</p>
+          <button
+            type="button"
+            className="news-card press"
+            onClick={() => (firstTime ? navigate({ name: 'howto' }) : openSheet({ name: 'news' }))}
+          >
             <span className="news-art" aria-hidden>
               <i className="news-card-safe" />
               <i className="news-card-insane" />
               <i className="news-card-bold" />
             </span>
             <span className="news-text">
-              <span className="news-tag">{NEWS.tag}</span>
-              <b>{NEWS.title}</b>
-              <small>{NEWS.text}</small>
+              {firstTime ? (
+                <>
+                  <b>How to play</b>
+                  <small>Pick a risk, get a card, play the hole</small>
+                </>
+              ) : (
+                <>
+                  <span className="news-tag">{NEWS.tag}</span>
+                  <b>{NEWS.title}</b>
+                  <small>{NEWS.text}</small>
+                </>
+              )}
             </span>
           </button>
         </section>
@@ -93,9 +108,12 @@ function HostHome() {
           <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'join' })}>
             Join a game
           </button>
-          <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'howto' })}>
-            How to play
-          </button>
+          {/* First-timers have How to play as the big card already. */}
+          {!firstTime && (
+            <button type="button" className="btn btn-link" onClick={() => navigate({ name: 'howto' })}>
+              How to play
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
   lastHoleToPar,
   outcomeChoices,
   ownsPlayer,
+  mateOf,
   redrawUsed,
   scoreAccess,
 } from './rules';
@@ -44,9 +45,12 @@ export const DEFAULT_SETTINGS: Settings = {
 export const PLAYER_COLORS = 8;
 
 /** The avatar emojis players can pick from. Anything else from the network is dropped. */
-export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '🫪', '🐐', '👑', '🍀'] as const;
-/** The earlier set. No longer offered, but players who already picked one keep it. */
-const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🍺', '🎯', '🌵'];
+export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '😎', '🐐', '👑', '🍀'] as const;
+/**
+ * No longer offered, but players who already picked one keep it. 🫪 (Unicode 16) showed as an empty
+ * box on iPhones older than iOS 18.4, so 😎 is back in its place.
+ */
+const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '🦈', '🍺', '🎯', '🌵', '🫪'];
 /** One-tap reactions and heckles on someone's hole result. */
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
@@ -54,7 +58,7 @@ export const isReaction = (v: unknown): v is string => typeof v === 'string' && 
 export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
-function freeColor(players: Player[], want?: number, exceptId?: string): number {
+export function freeColor(players: Pick<Player, 'id' | 'color'>[], want?: number, exceptId?: string): number {
   const used = new Set(players.filter((p) => p.id !== exceptId).map((p) => p.color));
   if (want != null && want >= 0 && want < PLAYER_COLORS && !used.has(want)) return want;
   let color = 0;
@@ -113,6 +117,25 @@ export function createGame(input: NewGameInput): Game {
     decks: {},
     seq: 0,
   };
+}
+
+/** In a team game the partners play one card: whatever one has drawn, the other holds too. */
+function shareWithMate(g: Game, playerId: string, hole: number): void {
+  const mate = mateOf(g, playerId);
+  const entry = g.entries[entryKey(playerId, hole)];
+  if (!mate || !entry) return;
+  const key = entryKey(mate, hole);
+  const m: Entry = g.entries[key] ?? {};
+  m.tier = entry.tier;
+  m.pickedBy = entry.pickedBy;
+  if (entry.cardId) m.cardId = entry.cardId;
+  else delete m.cardId;
+  g.entries[key] = m;
+}
+
+/** Has anyone on this player's side entered strokes for the hole? Then the card can't change. */
+function scoringStarted(g: Game, playerId: string, hole: number): boolean {
+  return [playerId, mateOf(g, playerId)].some((id) => id && g.entries[entryKey(id, hole)]?.strokes != null);
 }
 
 /** Saves strokes (and the tapped result) for a played hole. Returns an error, or null. Mutates g. */
@@ -183,6 +206,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (findPlayer(action.id)) return unchanged;
       if (!canAddPlayers(g)) return fail('Too late to add players to this round.');
       if (g.players.length >= LIMITS.maxPlayers) return fail(`A game can have up to ${LIMITS.maxPlayers} players.`);
+      if (g.teams && g.status !== 'lobby') return fail("Teams are on, so the group can't change now.");
       if (!isHost && !action.claim) return fail('Only the host can add guests.');
       const name = cleanName(action.name);
       if (!name) return fail('Add a name.');
@@ -194,6 +218,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         ...(isAvatarEmoji(action.emoji) ? { emoji: action.emoji } : {}),
         deviceId: action.claim ? ctx.deviceId : null,
       });
+      delete g.teams; // teams are for exactly four: the host sets them again
       break;
     }
 
@@ -227,6 +252,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!isHost) return fail('Only the host can remove players.');
       if (!findPlayer(action.playerId)) return unchanged;
       if (g.players.length <= 1) return fail('A game needs at least one player.');
+      if (g.teams && g.status !== 'lobby') return fail("Teams are on, so the group can't change now.");
+      delete g.teams;
       g.players = g.players.filter((p) => p.id !== action.playerId);
       for (const key of Object.keys(g.entries)) {
         if (key.startsWith(`${action.playerId}:`)) delete g.entries[key];
@@ -279,6 +306,21 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       break;
     }
 
+    case 'setTeams': {
+      if (!isHost) return fail('Only the host can set teams.');
+      if (g.status !== 'lobby') return fail('Teams are set before the round starts.');
+      if (action.teams === null) {
+        if (!g.teams) return unchanged;
+        delete g.teams;
+        break;
+      }
+      const ids = action.teams.flat();
+      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2)) return fail('Teams need exactly four players, two on each side.');
+      if (new Set(ids).size !== 4 || ids.some((id) => !findPlayer(id))) return fail('Each player goes on one team.');
+      g.teams = action.teams.map(([a, b], i) => ({ id: `team${i + 1}`, players: [a, b] as [string, string] }));
+      break;
+    }
+
     case 'start': {
       if (g.status !== 'lobby') return unchanged;
       if (!isHost) return fail('Only the host can start the game.');
@@ -309,6 +351,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const own = action.cardId ? takeCard(g, action.tier, action.hole, action.cardId) : null;
       if (own) entry.cardId = own;
       else if (!ctx.predict) entry.cardId = drawCard(g, action.tier, action.hole, ctx.rng);
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 
@@ -320,7 +363,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!entry || !entry.tier || !card) return unchanged;
       if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (!card.needsBunker) return fail('Only bunker cards can be swapped.');
-      if (entry.strokes != null) return fail('This hole is already scored.');
+      if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
       const oldId = card.id;
       const opts = { exclude: [oldId], noBunker: true };
       const own = action.cardId ? takeCard(g, entry.tier, action.hole, action.cardId, opts) : null;
@@ -333,6 +376,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
         returnCard(g, oldId);
       }
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 
@@ -343,8 +387,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
       if (!actsFor(action.playerId)) return fail("That's not your card.");
-      if (entry.strokes != null) return fail('This hole is already scored.');
-      if (redrawUsed(g, action.playerId)) return fail("You've used your redraw this round.");
+      if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
+      if (redrawUsed(g, action.playerId)) return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
       const oldId = card.id;
       const opts = { exclude: [oldId] };
       entry.redrawn = true;
@@ -358,6 +402,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
         returnCard(g, oldId);
       }
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 
@@ -408,6 +453,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.status !== 'playing' || action.hole !== g.current) return fail('Reactions have closed on that hole.');
       if (!findPlayer(action.playerId) || !ownsPlayer(g, ctx.deviceId, action.fromId)) return fail('You can only react as yourself.');
       if (action.fromId === action.playerId) return fail("You can't react to your own hole.");
+      if (g.teams && mateOf(g, action.fromId) === action.playerId) return fail("You can't react to your own team.");
       const entry = g.entries[entryKey(action.playerId, action.hole)];
       if (entry?.strokes == null) return fail('Nothing to react to yet.');
       if ((entry.reactions?.[action.fromId] ?? null) === action.emoji) return unchanged;
@@ -429,9 +475,12 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const from = before?.strokes != null ? { strokes: before.strokes, outcome: before.outcome } : null;
       const err = writeScore(g, action.playerId, action.hole, action.strokes, action.outcome, action.mulligan);
       if (err) return fail(err);
-      // Online, a change to a score after the hole is locked in (or to someone else's) is shown to everyone.
+      // A change to a score after the hole is locked in (or, online, to someone else's) is listed for
+      // everyone, so a fixed card never changes without a trace. One phone: no approval, but still listed.
       if (from && g.code && (isLocked(g, action.hole) || !ownsPlayer(g, ctx.deviceId, action.playerId))) {
         logEdit(g, action.playerId, action.hole, from, 'Host', ctx.now);
+      } else if (from && !g.code && isLocked(g, action.hole)) {
+        logEdit(g, action.playerId, action.hole, from, 'Fixed later', ctx.now);
       }
       break;
     }
