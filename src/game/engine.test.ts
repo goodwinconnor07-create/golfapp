@@ -7,6 +7,12 @@ import {
   newLeader,
   overtakes,
   skins,
+  playerScored,
+  mateOf,
+  teamOf,
+  units,
+  cardStakes,
+  halves,
   rankMoves,
   createGame,
   eligibleCards,
@@ -880,5 +886,140 @@ describe('skins, overtakes and reactions', () => {
     // Kept on upload, minus anything not on the list.
     g.entries[entryKey('player00', 0)].reactions = { player01: '😂', nobody99: '🔥' };
     expect(sanitizeUpload(g, HOST, 5, seeded())!.entries[entryKey('player00', 0)].reactions).toEqual({ player01: '😂' });
+  });
+});
+
+describe('2v2 teams', () => {
+  const NAMES = ['Sam', 'Alex', 'Kim', 'Lee'];
+  const TEAMS: [string, string][] = [
+    ['player00', 'player01'],
+    ['player02', 'player03'],
+  ];
+  function teamGame(pars: Par[] = [4, 4, 4, 4, 4, 4]): Game {
+    let g = newGame(NAMES, pars);
+    g = run(g, { type: 'setTeams', teams: TEAMS });
+    return run(g, { type: 'start' });
+  }
+  const score = (g: Game, id: string, hole: number, strokes: number, outcome?: 'made' | 'missed') =>
+    run(g, { type: 'score', playerId: id, hole, strokes, ...(outcome ? { outcome } : {}) });
+
+  it('lets only the host set teams, in the lobby, for exactly four players', () => {
+    const g = newGame(NAMES);
+    expect(applyAction(g, { type: 'setTeams', teams: TEAMS }, ctx(OTHER)).ok).toBe(false);
+    expect(applyAction(newGame(['Sam', 'Alex', 'Kim']), { type: 'setTeams', teams: TEAMS }, ctx()).ok).toBe(false);
+    expect(applyAction(g, { type: 'setTeams', teams: [['player00', 'player01'], ['player01', 'player02']] }, ctx()).ok).toBe(false);
+    const t = run(g, { type: 'setTeams', teams: TEAMS });
+    expect(t.teams).toHaveLength(2);
+    expect(mateOf(t, 'player00')).toBe('player01');
+    expect(teamOf(t, 'player03')?.players).toEqual(['player02', 'player03']);
+    expect(applyAction(run(t, { type: 'start' }), { type: 'setTeams', teams: null }, ctx()).ok).toBe(false);
+    // Anyone joining or leaving in the lobby clears the teams.
+    expect(run(t, { type: 'removePlayer', playerId: 'player03' }).teams).toBeUndefined();
+    expect(run(t, { type: 'setTeams', teams: null }).teams).toBeUndefined();
+  });
+
+  it('gives both partners the same card as soon as one picks, first tap wins', () => {
+    let g = teamGame();
+    g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold' });
+    const a = g.entries[entryKey('player00', 0)], b = g.entries[entryKey('player01', 0)];
+    expect(a.tier).toBe('bold');
+    expect(a.cardId).toBeDefined();
+    expect(a.cardId).toBe(b.cardId);
+    const again = applyAction(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'insane' }, ctx());
+    expect(again.ok && !again.changed).toBe(true);
+    // The other team draws a different card.
+    g = run(g, { type: 'pick', playerId: 'player02', hole: 0, tier: 'bold' });
+    expect(g.entries[entryKey('player02', 0)].cardId).not.toBe(a.cardId);
+  });
+
+  it('uses the team values: Safe −3/+2, Bold −4/+3, Insane −12/+4, doubled on the last 3 holes', () => {
+    const g = teamGame();
+    expect(cardStakes(g, 0, 'safe')).toEqual({ made: -3, missed: 2 });
+    expect(cardStakes(g, 0, 'bold')).toEqual({ made: -4, missed: 3 });
+    expect(cardStakes(g, 0, 'insane')).toEqual({ made: -12, missed: 4 });
+    expect(cardStakes(g, 5, 'insane')).toEqual({ made: -24, missed: 8 });
+    // Solo games are unchanged.
+    expect(cardStakes(run(newGame(NAMES), { type: 'start' }), 0, 'insane')).toEqual({ made: -9, missed: 3 });
+  });
+
+  it('completes the card for the team if either partner does', () => {
+    let g = teamGame();
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = giveCard(g, 'player01', 0, 'S02');
+    // Sam fails: the team waits on Alex.
+    g = score(g, 'player00', 0, 5, 'missed');
+    expect(playerScored(g, 'player00', 0)).toBe(true);
+    expect(holeResult(g, 'player00', 0)).toBeNull();
+    // Alex completes it: both are credited, with their own golf scores.
+    g = score(g, 'player01', 0, 4, 'made');
+    expect(holeResult(g, 'player00', 0)).toMatchObject({ outcome: 'made', ownOutcome: 'missed', adjustment: -3, toPar: -2 });
+    expect(holeResult(g, 'player01', 0)).toMatchObject({ outcome: 'made', ownOutcome: 'made', adjustment: -3, toPar: -3 });
+  });
+
+  it('fails the card for the team only when both partners fail it', () => {
+    let g = teamGame();
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = giveCard(g, 'player01', 0, 'S02');
+    g = score(g, 'player00', 0, 4, 'missed');
+    g = score(g, 'player01', 0, 4, 'missed');
+    expect(holeResult(g, 'player00', 0)).toMatchObject({ outcome: 'missed', adjustment: 2 });
+    expect(holeResult(g, 'player01', 0)).toMatchObject({ outcome: 'missed', adjustment: 2 });
+  });
+
+  it('ranks teams by the average of both partners, in halves', () => {
+    let g = teamGame();
+    for (const [id, strokes, outcome] of [['player00', 4, 'made'], ['player01', 5, 'made'], ['player02', 5, 'missed'], ['player03', 4, 'missed']] as const) {
+      g = giveCard(g, id, 0, 'S02');
+      g = score(g, id, 0, strokes, outcome);
+    }
+    // Team 1 completed Safe (−3): Sam −3, Alex −2, average −2½. Team 2 failed (+2): Kim +3, Lee +2, average +2½.
+    const rows = standings(g);
+    expect(units(g).map((u) => u.name)).toEqual(['Sam & Alex', 'Kim & Lee']);
+    expect(rows.map((r) => [r.player.name, r.rank, r.totals.toPar])).toEqual([
+      ['Sam & Alex', 1, -2.5],
+      ['Kim & Lee', 2, 2.5],
+    ]);
+    expect(rows[0].totals.real).toBe(9);
+    expect(formatToPar(-2.5)).toBe('\u22122½');
+    expect(halves(0.5)).toBe('½');
+    expect(gapText(run(g, { type: 'nextHole', from: 0 }), 'player02')).toBe("You're 5 strokes behind Sam & Alex");
+  });
+
+  it('shares one redraw between partners, and only before anyone scores', () => {
+    let g = teamGame();
+    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'bold' });
+    const first = g.entries[entryKey('player00', 0)].cardId;
+    g = run(g, { type: 'redraw', playerId: 'player01', hole: 0 });
+    expect(g.entries[entryKey('player00', 0)].cardId).not.toBe(first);
+    expect(g.entries[entryKey('player00', 0)].cardId).toBe(g.entries[entryKey('player01', 0)].cardId);
+    expect(applyAction(g, { type: 'redraw', playerId: 'player00', hole: 0 }, ctx()).ok).toBe(false);
+  });
+
+  it("shows a teammate the team's card but keeps the other team's picks hidden", () => {
+    let g = { ...teamGame(), code: 'BCDFG' } as Game;
+    g.players[0].deviceId = HOST;
+    g.players[1].deviceId = OTHER;
+    g.players[2].deviceId = 'third-device-3';
+    g.players[3].deviceId = 'fourth-device-4';
+    g = run(g, { type: 'pick', playerId: 'player00', hole: 0, tier: 'insane' });
+    const forAlex = redactForDevice(g, OTHER);
+    expect(forAlex.entries[entryKey('player00', 0)].cardId).toBeDefined();
+    expect(forAlex.entries[entryKey('player01', 0)].cardId).toBeDefined();
+    const forKim = redactForDevice(g, 'third-device-3');
+    expect(forKim.entries[entryKey('player00', 0)]).toEqual({ hidden: true });
+    expect(forKim.entries[entryKey('player01', 0)]).toEqual({ hidden: true });
+  });
+
+  it('keeps teams on upload only when they are still two pairs of four players', () => {
+    const g = newGame(NAMES);
+    g.teams = [
+      { id: 'team1', players: ['player00', 'player01'] },
+      { id: 'team2', players: ['player02', 'player03'] },
+    ];
+    expect(sanitizeUpload(g, HOST, 5, seeded())!.teams).toHaveLength(2);
+    g.teams[1].players = ['player02', 'player99'];
+    expect(sanitizeUpload(g, HOST, 5, seeded())!.teams).toBeUndefined();
+    expect(parseAction({ type: 'setTeams', teams: [['player00', 'player01'], ['player02']] })).toBeNull();
+    expect(parseAction({ type: 'setTeams', teams: null })).toEqual({ type: 'setTeams', teams: null });
   });
 });

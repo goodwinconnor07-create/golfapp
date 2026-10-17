@@ -13,6 +13,7 @@ import {
   ownsPlayer,
   cryptoRng,
   holeResult,
+  playerScored,
   standings,
   newId,
   normalizeCode,
@@ -675,7 +676,7 @@ export function startScoring(): void {
       if (!getEntry(g, p.id, g.current)?.done) dispatch({ type: 'holeDone', playerId: p.id, hole: g.current });
     }
     // Straight to your score: the waiting room comes after it.
-    scoreFor = mine.find((p) => !holeResult(g, p.id, g.current))?.id ?? null;
+    scoreFor = mine.find((p) => !playerScored(g, p.id, g.current))?.id ?? null;
   }
   set({ ui: { ...state.ui, scoring: true, scoreFor } });
 }
@@ -731,7 +732,7 @@ export function submitScore(
   const g = state.game;
   // Next of this phone's players to score, or back to the waiting room.
   if (state.ui.scoreFor === playerId) {
-    const next = g ? myPlayers(g, state.deviceId, true).find((p) => p.id !== playerId && !holeResult(g, p.id, hole)) : undefined;
+    const next = g ? myPlayers(g, state.deviceId, true).find((p) => p.id !== playerId && !playerScored(g, p.id, hole)) : undefined;
     set({ ui: { ...state.ui, scoreFor: next?.id ?? null } });
   }
   // The shared results reveal shows everyone's result, so skip the splash there.

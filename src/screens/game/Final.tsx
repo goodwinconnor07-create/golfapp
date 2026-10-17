@@ -17,7 +17,7 @@ function names(game: Game, ids: string[]): string {
 function shareText(game: Game, rc: Recap): string {
   const lines = [`⛳ CardShot${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
   if (rc.winners.length) {
-    const who = joinNames(rc.winners.map((w) => w.player.name));
+    const who = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
     lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} at ${toParWords(rc.winners[0].totals.toPar)}`);
   }
   lines.push('', 'Against par (lowest wins):');
@@ -102,7 +102,7 @@ export function Final({ game }: { game: Game }) {
     if (played) confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.22 }, 150);
   }, [played]);
 
-  const winnerNames = joinNames(rc.winners.map((w) => w.player.name));
+  const winnerNames = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
 
   return (
     <>

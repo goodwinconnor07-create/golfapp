@@ -200,3 +200,15 @@ Asked for by the product owner. None of these change the score or the rules (doc
 - **Race standings (Mario Kart style):** every standings row (hole results, the online results reveal, the leaderboard and the final screen) leads with a big place badge (1st gold, 2nd silver, 3rd bronze, "=2nd" for ties). After a hole, rows slide from their old place to the new one, the place pops, and a ▲2 / ▼1 chip shows places gained or lost. Under the hole's title, "🏎️ Sam overtakes Alex" lines name each pass (up to 3; the new leader keeps the existing "takes the lead" banner instead).
 - **Skins, scorecard only:** the single best game score on a finished hole wins its skin; ties roll it over to the next finished hole (a tie on the last hole means nobody wins it). The winning cell gets a frame and a ribbon in the winner's avatar colour with their emoji (or initial), and "×2", "×3"… when it carried over. No prize, no other screen, no setting. Worked out from the scores (`skins()` in `selectors.ts`), never stored.
 - **One-tap reactions and heckles:** 🔥 👏 😂 🫣 🤡 under other players' hole results, for players on another phone (heckling someone on your own phone happens out loud). One reaction per player per result; tap it again to take it back. Everyone sees the tallies. Open until the group moves on, like votes. Enforced in the reducer (`react` action), only listed emojis pass `parseAction()` / `sanitizeUpload()`. No push notifications for them.
+
+## 2v2 teams (Oct 2026)
+
+Asked for by the product owner, built to match the last simulation. Optional, 4 players only.
+
+- **Setup:** the host switches on "Play as 2v2 teams" in the lobby when exactly 4 players are in. Teams start as players 1+2 and 3+4. The host drags a profile pic onto someone on the other team to swap them (tapping two pics works too). Guests see the teams but can't change them. Teams lock when the round starts; adding or removing a player turns teams off.
+- **One shared card:** either partner can pick the level; whoever taps first picks for the team. The same card is on both phones. One redraw per team per round.
+- **Scoring:** each player still enters their own real strokes. The team's hole score is the **average of both partners' golf scores** plus the card result **once**. **Either partner completing the card completes it for the team**; it only fails when both have scored and neither completed it. Scores can land on half points (−2½).
+- **Team values:** Safe −3/+2, Bold −4/+3, Insane −12/+4 (in `TEAM_TIERS`, `tiers.ts`). The solo values are unchanged. The 2× finish on the last 3 holes applies as usual.
+- **Standings:** teams are ranked against each other (lowest average wins). Skins on the scorecard stay per player.
+- **Left out for now:** one-tap reactions don't show in team games.
+- Team values and the either-completes rule came from the simulation only. `npm run balance` doesn't check team games yet.

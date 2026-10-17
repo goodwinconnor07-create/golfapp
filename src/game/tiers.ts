@@ -18,6 +18,20 @@ export const TIERS: Record<Tier, TierDef> = {
   insane: { id: 'insane', label: 'Insane', made: -9, missed: 3 },
 };
 
+/**
+ * Team games (2v2, partners share one card and the team completes it if either partner does) are
+ * valued separately: a pair finishes a card far more often than one player, so the numbers differ.
+ * Tuned in the Oct 2026 team simulation; see docs/GAME_BALANCE.md before changing.
+ */
+export const TEAM_TIERS: Record<Tier, TierDef> = {
+  safe: { id: 'safe', label: 'Safe', made: -3, missed: 2 },
+  bold: { id: 'bold', label: 'Bold', made: -4, missed: 3 },
+  insane: { id: 'insane', label: 'Insane', made: -12, missed: 4 },
+};
+
+/** The values in play: solo or team. */
+export const tiersFor = (teams: boolean): Record<Tier, TierDef> => (teams ? TEAM_TIERS : TIERS);
+
 export const TIER_ORDER: readonly Tier[] = ['safe', 'bold', 'insane'];
 
 export function isTier(value: unknown): value is Tier {
@@ -25,28 +39,40 @@ export function isTier(value: unknown): value is Tier {
 }
 
 /** Strokes added to (or taken off) the game score for this tier and outcome. */
-export function adjustmentFor(tier: Tier, outcome: Outcome): number {
-  if (outcome === 'made') return TIERS[tier].made;
-  if (outcome === 'missed') return TIERS[tier].missed;
+export function adjustmentFor(tier: Tier, outcome: Outcome, teams = false): number {
+  const t = tiersFor(teams)[tier];
+  if (outcome === 'made') return t.made;
+  if (outcome === 'missed') return t.missed;
   return 0;
+}
+
+/**
+ * A number with halves for team averages: 3 → "3", 2.5 → "2½", 0.5 → "½". (A team's score is the
+ * average of two players', so it lands on whole numbers or halves.)
+ */
+export function halves(n: number): string {
+  const abs = Math.abs(n);
+  const whole = Math.floor(abs + 1e-9);
+  const half = abs - whole > 0.25;
+  return half ? (whole === 0 ? '½' : `${whole}½`) : String(whole);
 }
 
 /** "−4" / "+2" / "0", using a real minus sign. */
 export function formatDelta(n: number): string {
   if (n === 0) return '0';
-  return n > 0 ? `+${n}` : `−${Math.abs(n)}`;
+  return n > 0 ? `+${halves(n)}` : `\u2212${halves(n)}`;
 }
 
 /** Golf-style score against par: "E", "+2", "−5". */
 export function formatToPar(n: number): string {
   if (n === 0) return 'E';
-  return n > 0 ? `+${n}` : `\u2212${Math.abs(n)}`;
+  return n > 0 ? `+${halves(n)}` : `\u2212${halves(n)}`;
 }
 
 /** The same in words: "even par", "2 over", "5 under". */
 export function toParWords(n: number): string {
   if (n === 0) return 'even par';
-  return n > 0 ? `${n} over` : `${Math.abs(n)} under`;
+  return n > 0 ? `${halves(n)} over` : `${halves(n)} under`;
 }
 
 /** Signed number with a real minus sign, for scores that can go below zero. */

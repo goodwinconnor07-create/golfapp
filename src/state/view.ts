@@ -2,7 +2,7 @@
 // Nothing here is stored: the screen always follows the data, so every phone in an
 // online game lands in the right place after a reconnect.
 
-import { allPicked, getEntry, hasPicked, holeComplete, holeResult, type Game, type Player } from '../game';
+import { allPicked, getEntry, hasPicked, holeComplete, playerScored, type Game, type Player } from '../game';
 
 export interface HoleUi {
   gameId: string;
@@ -97,12 +97,12 @@ export function gameView(
   if (room) {
     const mineDone = mine.length > 0 && mine.every((p) => getEntry(game, p.id, hole)?.done);
     if (!ui.scoring && !mineDone) return { kind: 'play' };
-    if (ui.scoreFor && !holeResult(game, ui.scoreFor, hole)) return { kind: 'score', playerId: ui.scoreFor };
+    if (ui.scoreFor && !playerScored(game, ui.scoreFor, hole)) return { kind: 'score', playerId: ui.scoreFor };
     return { kind: 'scoreRoom' };
   }
   if (!ui.scoring) return { kind: 'play' };
 
   // Everyone is on this phone here, so once all are scored the hole is complete (handled above).
-  const toScore = mine.find((p) => !holeResult(game, p.id, hole));
+  const toScore = mine.find((p) => !playerScored(game, p.id, hole));
   return toScore ? { kind: 'score', playerId: toScore.id } : { kind: 'results' };
 }

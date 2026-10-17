@@ -15,6 +15,7 @@ import {
   lastHoleToPar,
   outcomeChoices,
   ownsPlayer,
+  mateOf,
   redrawUsed,
   scoreAccess,
 } from './rules';
@@ -113,6 +114,25 @@ export function createGame(input: NewGameInput): Game {
   };
 }
 
+/** In a team game the partners play one card: whatever one has drawn, the other holds too. */
+function shareWithMate(g: Game, playerId: string, hole: number): void {
+  const mate = mateOf(g, playerId);
+  const entry = g.entries[entryKey(playerId, hole)];
+  if (!mate || !entry) return;
+  const key = entryKey(mate, hole);
+  const m: Entry = g.entries[key] ?? {};
+  m.tier = entry.tier;
+  m.pickedBy = entry.pickedBy;
+  if (entry.cardId) m.cardId = entry.cardId;
+  else delete m.cardId;
+  g.entries[key] = m;
+}
+
+/** Has anyone on this player's side entered strokes for the hole? Then the card can't change. */
+function scoringStarted(g: Game, playerId: string, hole: number): boolean {
+  return [playerId, mateOf(g, playerId)].some((id) => id && g.entries[entryKey(id, hole)]?.strokes != null);
+}
+
 /** Saves strokes (and the tapped result) for a played hole. Returns an error, or null. Mutates g. */
 function writeScore(
   g: Game,
@@ -179,6 +199,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (findPlayer(action.id)) return unchanged;
       if (!canAddPlayers(g)) return fail('Too late to add players to this round.');
       if (g.players.length >= LIMITS.maxPlayers) return fail(`A game can have up to ${LIMITS.maxPlayers} players.`);
+      if (g.teams && g.status !== 'lobby') return fail("Teams are on, so the group can't change now.");
       if (!isHost && !action.claim) return fail('Only the host can add guests.');
       const name = cleanName(action.name);
       if (!name) return fail('Add a name.');
@@ -190,6 +211,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         ...(isAvatarEmoji(action.emoji) ? { emoji: action.emoji } : {}),
         deviceId: action.claim ? ctx.deviceId : null,
       });
+      delete g.teams; // teams are for exactly four: the host sets them again
       break;
     }
 
@@ -223,6 +245,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!isHost) return fail('Only the host can remove players.');
       if (!findPlayer(action.playerId)) return unchanged;
       if (g.players.length <= 1) return fail('A game needs at least one player.');
+      if (g.teams && g.status !== 'lobby') return fail("Teams are on, so the group can't change now.");
+      delete g.teams;
       g.players = g.players.filter((p) => p.id !== action.playerId);
       for (const key of Object.keys(g.entries)) {
         if (key.startsWith(`${action.playerId}:`)) delete g.entries[key];
@@ -275,6 +299,21 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       break;
     }
 
+    case 'setTeams': {
+      if (!isHost) return fail('Only the host can set teams.');
+      if (g.status !== 'lobby') return fail('Teams are set before the round starts.');
+      if (action.teams === null) {
+        if (!g.teams) return unchanged;
+        delete g.teams;
+        break;
+      }
+      const ids = action.teams.flat();
+      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2)) return fail('Teams need exactly four players, two on each side.');
+      if (new Set(ids).size !== 4 || ids.some((id) => !findPlayer(id))) return fail('Each player goes on one team.');
+      g.teams = action.teams.map(([a, b], i) => ({ id: `team${i + 1}`, players: [a, b] as [string, string] }));
+      break;
+    }
+
     case 'start': {
       if (g.status !== 'lobby') return unchanged;
       if (!isHost) return fail('Only the host can start the game.');
@@ -304,6 +343,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const own = action.cardId ? takeCard(g, action.tier, action.hole, action.cardId) : null;
       if (own) entry.cardId = own;
       else if (!ctx.predict) entry.cardId = drawCard(g, action.tier, action.hole, ctx.rng);
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 
@@ -314,7 +354,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
       if (!card.needsBunker) return fail('Only bunker cards can be swapped.');
-      if (entry.strokes != null) return fail('This hole is already scored.');
+      if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
       const oldId = card.id;
       const opts = { exclude: [oldId], noBunker: true };
       const own = action.cardId ? takeCard(g, entry.tier, action.hole, action.cardId, opts) : null;
@@ -327,6 +367,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
         returnCard(g, oldId);
       }
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 
@@ -336,8 +377,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[key];
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
-      if (entry.strokes != null) return fail('This hole is already scored.');
-      if (redrawUsed(g, action.playerId)) return fail("You've used your redraw this round.");
+      if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
+      if (redrawUsed(g, action.playerId)) return fail(g.teams ? "Your team has used its redraw this round." : "You've used your redraw this round.");
       const oldId = card.id;
       const opts = { exclude: [oldId] };
       entry.redrawn = true;
@@ -351,6 +392,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         entry.cardId = drawCard(g, entry.tier, action.hole, ctx.rng, opts);
         returnCard(g, oldId);
       }
+      shareWithMate(g, action.playerId, action.hole);
       break;
     }
 

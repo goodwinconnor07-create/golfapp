@@ -3100,3 +3100,78 @@
     animation: none;
   }
 }
+
+/* 2v2 team picker */
+.team-picker {
+  display: grid;
+  gap: 12px;
+}
+
+.team-box {
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line, transparent);
+}
+
+.team-box-1 {
+  background: var(--blue-bg);
+}
+
+.team-box-2 {
+  background: var(--green-bg);
+}
+
+.team-members {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.team-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  font-weight: 800;
+  touch-action: none;
+  user-select: none;
+  min-width: 0;
+}
+
+.team-chip .name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-chip.can-drag {
+  cursor: grab;
+}
+
+.team-chip.picked {
+  outline: 3px solid var(--blue);
+}
+
+.team-chip.dragging {
+  position: relative;
+  z-index: 5;
+  box-shadow: var(--shadow);
+  transition: none;
+}
+
+.team-hint {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-small);
+}
+
+.team-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--fs-small);
+}

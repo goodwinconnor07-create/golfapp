@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cardStakes, formatDelta, freePassAvailable, gapText, isDoubleHole, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
+import { cardStakes, formatDelta, freePassAvailable, gapText, isDoubleHole, mateOf, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
 import { pickTier } from '../../state/store';
 import { haptic } from '../../ui/effects';
 import { Avatar, Pips, TierIcon, TIER_LOOK } from '../../ui/components';
@@ -14,6 +14,7 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
   const doubled = isDoubleHole(game, h);
   const gap = gapText(game, playerId);
   const canFree = freePassAvailable(game, playerId);
+  const mate = game.players.find((p) => p.id === mateOf(game, playerId));
 
   return (
     <>
@@ -27,6 +28,15 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
             </p>
           </div>
         </div>
+
+        {mate && (
+          <div className="tile-flat team-note" role="status">
+            <Avatar player={mate} size={32} />
+            <span>
+              Your team's card, shared with <b>{mate.name}</b>. Either of you completing it counts.
+            </span>
+          </div>
+        )}
 
         {doubled && (
           <div className="double-banner" role="status">

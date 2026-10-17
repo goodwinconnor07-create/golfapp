@@ -563,7 +563,8 @@ export function CountUp({ value, from = 0, format = String }: { value: number; f
     let raf = 0;
     const step = (t: number) => {
       const p = Math.min(1, (t - t0) / 450);
-      const n = Math.round(start + (value - start) * (1 - (1 - p) ** 3));
+      // Halves, because a team's average can land on one.
+      const n = Math.round((start + (value - start) * (1 - (1 - p) ** 3)) * 2) / 2;
       current.current = n;
       setShown(n);
       if (p < 1) raf = requestAnimationFrame(step);

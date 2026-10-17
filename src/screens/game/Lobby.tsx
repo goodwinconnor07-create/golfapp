@@ -5,6 +5,7 @@ import { Avatar, SkeletonInvite } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
 import { GearIcon, ShareIcon } from '../../ui/Icons';
 import { CodeTiles, shareInvite } from '../sheets/InviteSheet';
+import { TeamPicker } from './TeamPicker';
 
 export function Lobby({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
@@ -14,6 +15,11 @@ export function Lobby({ game }: { game: Game }) {
   const busy = useApp((s) => s.busy);
   const server = useApp((s) => s.server);
   const alone = game.players.length === 1;
+  const canTeam = game.players.length === 4;
+  const setTeams = (on: boolean) => {
+    const [a, b, c, d] = game.players;
+    dispatch({ type: 'setTeams', teams: on ? [[a.id, b.id], [c.id, d.id]] : null });
+  };
 
   const start = () => dispatch({ type: 'start' });
   const startClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -84,8 +90,19 @@ export function Lobby({ game }: { game: Game }) {
             </button>
           )}
         </div>
+        {host && canTeam && (
+          <button
+            type="button"
+            className={`btn ${game.teams ? 'btn-blue' : 'btn-outline'}`}
+            aria-pressed={!!game.teams}
+            onClick={() => setTeams(!game.teams)}
+          >
+            {game.teams ? '2v2 teams on' : 'Play as 2v2 teams'}
+          </button>
+        )}
+        {game.teams && <TeamPicker game={game} editable={host} />}
         <div className="stack">
-          {game.players.map((p) => {
+          {!game.teams && game.players.map((p) => {
             const tag =
               p.deviceId === deviceId ? (
                 <span className="tag tag-you">You</span>

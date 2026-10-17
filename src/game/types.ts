@@ -81,6 +81,11 @@ export interface Game {
   /** Keyed by entryKey(playerId, holeIndex). */
   entries: Record<string, Entry>;
   settings: Settings;
+  /**
+   * 2v2 teams (exactly 4 players). Partners play one shared card each hole; the team completes
+   * it if either partner does. Set by the host in the lobby. See docs/GAME_BALANCE.md.
+   */
+  teams?: Team[];
   /** Remaining shuffled card ids per tier. Kept on the server for online games. */
   decks?: Partial<Record<Tier, string[]>>;
   /** Bumped on every applied action. */
@@ -89,6 +94,11 @@ export interface Game {
   fixes?: FixRequest[];
   /** Score changes made after a hole was locked in, shown to everyone (online). */
   edits?: ScoreEdit[];
+}
+
+export interface Team {
+  id: string;
+  players: [string, string];
 }
 
 /** "Change Sam's hole 3 to 6 strokes": waits for the player (or the host) to approve. */
@@ -124,6 +134,8 @@ export type Action =
   | { type: 'setPar'; hole: number; par: Par }
   | { type: 'setCourse'; course: string }
   | { type: 'setSettings'; settings: Partial<Settings> }
+  /** Host, in the lobby: set 2v2 teams (two pairs of the four players), or null for no teams. */
+  | { type: 'setTeams'; teams: [string, string][] | null }
   | { type: 'start' }
   /** cardId: a card the phone dealt itself while offline. The server keeps it if it fits, or deals another. */
   | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean }

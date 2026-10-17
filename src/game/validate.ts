@@ -65,6 +65,16 @@ export function parseAction(input: unknown): Action | null {
       }
       return { type: 'setSettings', settings };
     }
+    case 'setTeams': {
+      if (a.teams === null) return { type: 'setTeams', teams: null };
+      if (!Array.isArray(a.teams) || a.teams.length !== 2) return null;
+      const teams: [string, string][] = [];
+      for (const t of a.teams) {
+        if (!Array.isArray(t) || t.length !== 2 || !isPlayerId(t[0]) || !isPlayerId(t[1])) return null;
+        teams.push([t[0], t[1]]);
+      }
+      return { type: 'setTeams', teams };
+    }
     case 'start':
     case 'finish':
       return { type: a.type };
@@ -246,6 +256,17 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
     decks: {},
     seq: 0,
   };
+  // Teams only survive if they're still two pairs of exactly four known players.
+  if (Array.isArray(input.teams) && input.teams.length === 2 && players.length === 4) {
+    const pairs: string[][] = [];
+    for (const t of input.teams) {
+      const pl = isObj(t) && Array.isArray(t.players) ? t.players : null;
+      if (!pl || pl.length !== 2 || !pl.every((id: unknown) => typeof id === 'string' && ids.has(id))) break;
+      pairs.push(pl as string[]);
+    }
+    if (pairs.length === 2 && new Set(pairs.flat()).size === 4)
+      game.teams = pairs.map((t, i) => ({ id: `team${i + 1}`, players: [t[0], t[1]] as [string, string] }));
+  }
   game.decks = rebuildDecks(game, rng);
   return game;
 }
