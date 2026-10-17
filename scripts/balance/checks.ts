@@ -91,7 +91,7 @@ export const CANDIDATES: Card2[] = [
   },
   {
     id: 'S12',
-    title: 'No Triple Bogey',
+    title: 'Triple Bogey Cap',
     pass: 'Finish the hole at triple bogey or better.',
     pars: ANY,
     auto: true,

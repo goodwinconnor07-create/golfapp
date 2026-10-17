@@ -36,7 +36,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
   - Green in Four: par 4 only. Trivially easy on a par 3, and the same as "Green in Regulation" on a par 5.
   - Pin Pointer, The Bullseye, The Wedge Shot and Wedge Perfection: par 4 and 5 only. On a par 3 the approach is the tee shot, which the par-3 cards already cover.
 - **No Bunker Visit** stays in the deck. If the hole has no bunker in play, the player can swap it once for a card that doesn't need one.
-- **Cards the strokes decide** are judged by the app: Bogey Buffer, No Triple Bogey, Par Hunter and Birdie Time. Cards with a strokes condition plus something else (like The Clean Birdie) are marked missed automatically when the strokes rule them out; otherwise the player taps Completed or Failed.
+- **Cards the strokes decide** are judged by the app: Bogey Buffer, Triple Bogey Cap, Par Hunter and Birdie Time. Cards with a strokes condition plus something else (like The Clean Birdie) are marked missed automatically when the strokes rule them out; otherwise the player taps Completed or Failed.
 - **Decks:** one shuffled pile per level for the whole round, so cards don't repeat until the pile runs out.
 - **Who can do what online:** you enter your own score (and any guests' on your phone). See "Changing scores" below. Only the host can start, end early, change options, add guests, remove players, or change a par once cards are out. Only the host can pick, redraw or finish a hole for someone on another phone (see "After the card is drawn").
 - **Joining late:** new players can join until the first hole is finished. Anyone can claim a name the host typed in at any time.
@@ -278,3 +278,7 @@ Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the pro
 - **Name screen:** the picture is a bit smaller (164px) so emojis stay crisp. The name pill and pencil sit inside the floating part, so they move with the picture. Same for the "You" tag in the lobby.
 - **Pick your risk:** Safe's whole-card shimmer is gone; light now glances off the shields one by one, like the flashes behind Insane.
 - **Score screen:** "Completed · your strokes prove it" is a slim banner above the stroke counter, only on cards the strokes settle. Footer buttons are normal height. "Not done yet" (or Cancel, when the host scores for someone else) is a back arrow in the header next to Par; the standings trophy steps aside while scoring.
+
+## Card S12 renamed (Oct 2026)
+
+- **S12** was titled "No Triple Bogey" but its approved rule is "triple bogey or better", which allows a triple. The title said the opposite. The rule stays as approved (a stricter one would copy Bogey Buffer, which is double bogey or better), so the title is now **Triple Bogey Cap**. No values or balance numbers changed.

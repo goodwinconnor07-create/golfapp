@@ -65,7 +65,7 @@ export const CARDS: readonly CardDef[] = [
   { id: 'S09', tier: 'safe', title: 'Short-Game Success', pass: 'If the approach misses the green, get the next shot onto the green.', note: "Only offer when the hole's layout and challenge setup make this condition applicable.", pars: ANY, situational: true, hint: SITUATION_HINT, enabled: false },
   { id: 'S10', tier: 'safe', title: 'No Bunker Visit', pass: 'Complete the hole without the ball entering a bunker.', note: 'Only offer on a hole with a bunker in play.', pars: ANY, needsBunker: true, hint: BUNKER_HINT, enabled: true },
   { id: 'S11', tier: 'safe', title: 'The Safe Start', pass: 'On a par 4 or 5, finish the tee shot in the fairway or rough without taking a penalty on that shot.', note: 'Par 4 or 5.', pars: P45, enabled: true },
-  { id: 'S12', tier: 'safe', title: 'No Triple Bogey', pass: 'Finish the hole at triple bogey or better.', note: 'Whole hole; any par.', pars: ANY, score: { maxToPar: 3, decides: true }, enabled: true },
+  { id: 'S12', tier: 'safe', title: 'Triple Bogey Cap', pass: 'Finish the hole at triple bogey or better.', note: 'Whole hole; any par.', pars: ANY, score: { maxToPar: 3, decides: true }, enabled: true },
   // Par 4 only: trivially easy on a par 3, and the same test as Bold "Green in Regulation" on a par 5.
   { id: 'S13', tier: 'safe', title: 'Green in Four', pass: 'Reach the green in 4 strokes or fewer.', note: 'Only use where the target is not trivially easy; hole eligibility needs testing.', pars: P4, doneWithin: { strokes: 4 }, enabled: false },
   // Off: the same test as Two-Putt Limit (product owner, Oct 2026).

@@ -265,7 +265,7 @@ Pass condition: On a par 4 or 5, finish the tee shot in the fairway or
 rough without taking a penalty on that shot.  
 Eligibility / implementation note: Par 4 or 5.
 
-**12. No Triple Bogey**  
+**12. Triple Bogey Cap**  
 Pass condition: Finish the hole at triple bogey or better.  
 Eligibility / implementation note: Whole hole; any par.
 
