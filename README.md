@@ -18,7 +18,7 @@ The product spec is in [docs/SPEC.md](docs/SPEC.md). Product calls made while bu
 
 ## Playing together
 
-Everyone plays on their own phone. Starting a game gets a 5-letter code straight away, with a share link (`/j/CODE`) and a QR code. Friends open the link or type the code, then tap their name or add themselves. Picks stay hidden until the whole group has locked in, then a 3-2-1 reveal shows everyone's level. After a hole, each phone scores its own player and waits in a room until everyone's in, then the results flip over together.
+Everyone plays on their own phone. Starting a game gets a 5-letter code straight away, with a short share link (`cardshot.link/CODE`) and a QR code. Friends open the link or type the code, then tap their name or add themselves. Picks stay hidden until the whole group has locked in, then a 3-2-1 reveal shows everyone's level. After a hole, each phone scores its own player and waits in a room until everyone's in, then the results flip over together.
 
 Someone without a phone can be added to the host's phone ("No phone? Add them here"). Lost signal mid-round is fine: changes are kept on the phone and sent when signal returns.
 

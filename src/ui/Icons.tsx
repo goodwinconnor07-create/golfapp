@@ -111,6 +111,15 @@ export const CopyIcon = (p: P) => (
   </svg>
 );
 
+export const QrIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <rect x="4" y="4" width="6" height="6" rx="1.2" />
+    <rect x="14" y="4" width="6" height="6" rx="1.2" />
+    <rect x="4" y="14" width="6" height="6" rx="1.2" />
+    <path d="M14 14h2.5v2.5H14zM19 14v.01M14 19.5v.01M17.5 19h2.5v-2.5" />
+  </svg>
+);
+
 export const UsersIcon = (p: P) => (
   <svg {...stroke(p)}>
     <circle cx="9" cy="8" r="3.5" />

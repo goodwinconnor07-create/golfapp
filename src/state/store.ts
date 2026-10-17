@@ -763,8 +763,9 @@ export function nextHole(): void {
 export function boot(): void {
   window.addEventListener('popstate', onPopState);
 
-  const path = location.pathname.match(/^\/j\/([A-Za-z]+)\/?$/);
-  const code = normalizeCode(path?.[1] ?? new URLSearchParams(location.search).get('join') ?? '');
+  // /j/CODE (older links) or just /CODE (the short cardshot.link/CODE form).
+  const path = location.pathname.match(/^\/(?:j\/([A-Za-z]+)|([A-Za-z]{5}))\/?$/);
+  const code = normalizeCode(path?.[1] ?? path?.[2] ?? new URLSearchParams(location.search).get('join') ?? '');
   try {
     history.scrollRestoration = 'manual';
     if (path || location.search) history.replaceState(null, '', '/');

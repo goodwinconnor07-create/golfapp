@@ -192,3 +192,10 @@ Decided by the product owner after the balance simulations. The full rulebook, t
 - **No hidden dealing:** a skill-matched dealer was tested and made no difference once the deck was skill-flat.
 - **Tested and not adopted:** chaser's shield, leader can't pick Safe on 2× holes, bounce-back and momentum boosts, a Safe streak, per-card values, capping holes at bogey, players declaring a skill level. Reasons in GAME_BALANCE.md.
 - This answers the open questions about Green in Regulation, Par Three Sniper vs Master, Two-Shot Threat and The Chip-In Chance: all retired.
+
+## Lobby layout and short join link (Oct 2026)
+
+- The host's lobby is one screen with no scrolling: join code tiles, the link `cardshot.link/CODE` (tap to copy), Share and QR buttons, then the list of who's in, then Let's go!
+- Game options moved from the footer to a gear icon in the header, beside the menu. Only the host sees it in the lobby.
+- Join links are now `https://cardshot.link/CODE`. Old `/j/CODE` links still work. `cardshot.link` has to be a zone in the Cloudflare account; the Worker is attached to it in `wrangler.jsonc`. Set `VITE_SHORT_LINK_HOST` to use a different domain.
+- Not done yet: the iPhone app opening `cardshot.link` links directly (needs the domain added to the app's associated domains and an `apple-app-site-association` file served there).

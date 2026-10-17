@@ -1,9 +1,9 @@
 import { isDoubleHole, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
-import { gameView, myPlayers, type GameView } from '../../state/view';
+import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
-import { BellIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
+import { BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
@@ -86,6 +86,7 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
   const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
   const hole = game.holes[game.current];
   const asks = useFixCount(game);
+  const host = isHost(game, useApp((s) => s.deviceId));
   return (
     <div className="topbar">
       <div className="topbar-title">
@@ -106,6 +107,11 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
       {game.status === 'playing' && (
         <button type="button" className="icon-btn press" aria-label="Leaderboard" onClick={() => navigate({ name: 'leaderboard' })}>
           <TrophyIcon />
+        </button>
+      )}
+      {game.status === 'lobby' && host && (
+        <button type="button" className="icon-btn press" aria-label="Game options" onClick={() => openSheet({ name: 'options' })}>
+          <GearIcon />
         </button>
       )}
       {online && game.status !== 'lobby' && (

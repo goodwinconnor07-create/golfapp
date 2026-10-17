@@ -3,8 +3,9 @@ import { confirm, dispatch, goOnline, openSheet, useApp } from '../../state/stor
 import { isHost } from '../../state/view';
 import { Avatar, SkeletonInvite } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
-import { GearIcon, ShareIcon } from '../../ui/Icons';
-import { CodeTiles, shareInvite } from '../sheets/InviteSheet';
+import { CopyIcon, QrIcon, ShareIcon } from '../../ui/Icons';
+import { joinLink, joinLinkLabel, SHORT_HOST } from '../../state/platform';
+import { CodeTiles, copy, shareInvite } from '../sheets/InviteSheet';
 
 export function Lobby({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
@@ -37,19 +38,30 @@ export function Lobby({ game }: { game: Game }) {
           </p>
         </div>
 
-        {/* Invite first: the code and a share button are the main thing on the host's lobby. */}
+        {/* Invite first: the code is the main thing on the host's lobby, with the list of friends right under it. */}
         {host && (
           <div className="invite-panel">
             {online && game.code ? (
               <>
-                <p className="label">Friends join with this code</p>
                 <CodeTiles code={game.code} />
-                <button type="button" className="btn btn-xl btn-blue" onClick={() => void shareInvite(game.code!)}>
-                  <ShareIcon width={26} height={26} /> Share invite
+                <button
+                  type="button"
+                  className="link-chip press"
+                  aria-label={`Copy link ${joinLinkLabel(game.code)}`}
+                  onClick={() => void copy(joinLink(game.code!))}
+                >
+                  <span className="link-host">{SHORT_HOST}/</span>
+                  <b>{game.code}</b>
+                  <CopyIcon width={20} height={20} />
                 </button>
-                <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'invite' })}>
-                  Show QR code
-                </button>
+                <div className="invite-actions">
+                  <button type="button" className="btn btn-blue" onClick={() => void shareInvite(game.code!)}>
+                    <ShareIcon width={24} height={24} /> Share invite
+                  </button>
+                  <button type="button" className="btn btn-ghost icon-only" aria-label="Show QR code" onClick={() => openSheet({ name: 'invite' })}>
+                    <QrIcon width={26} height={26} />
+                  </button>
+                </div>
               </>
             ) : busy ? (
               <SkeletonInvite label={busy} />
@@ -135,14 +147,9 @@ export function Lobby({ game }: { game: Game }) {
 
       <div className="screen-foot">
         {host ? (
-          <>
-            <button type="button" className="btn btn-xl btn-green" onClick={startClick}>
-              Let's go!
-            </button>
-            <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'options' })}>
-              <GearIcon width={22} height={22} /> Game options
-            </button>
-          </>
+          <button type="button" className="btn btn-xl btn-green" onClick={startClick}>
+            Let's go!
+          </button>
         ) : (
           <div className="waiting-line">
             <span className="dots" aria-hidden>

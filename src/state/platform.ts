@@ -28,6 +28,18 @@ export function publicOrigin(): string {
   return SERVER || location.origin;
 }
 
+export const SHORT_HOST =import.meta.env.VITE_SHORT_LINK_HOST ?? 'cardshot.link';
+
+/** The short join link for a game code, as typed or shared: cardshot.link/ABCDE. */
+export function joinLinkLabel(code: string): string {
+  return `${SHORT_HOST}/${code}`;
+}
+
+/** The same link with https, for sharing and QR codes. */
+export function joinLink(code: string): string {
+  return `https://${joinLinkLabel(code)}`;
+}
+
 /**
  * Who can start games. The host pays for the iPhone app; friends join free on the website.
  * The website keeps hosting until the app is in the App Store: build with VITE_WEB_HOSTING=off

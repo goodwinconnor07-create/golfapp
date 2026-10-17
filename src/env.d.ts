@@ -8,4 +8,6 @@ interface ImportMetaEnv {
   readonly VITE_WEB_HOSTING?: string;
   /** The App Store page the website points hosts to. */
   readonly VITE_APP_STORE_URL?: string;
+  /** The short domain for join links. Defaults to cardshot.link. */
+  readonly VITE_SHORT_LINK_HOST?: string;
 }
