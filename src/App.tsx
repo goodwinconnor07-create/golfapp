@@ -3,7 +3,6 @@ import { Toasts } from './ui/components';
 import { Home } from './screens/Home';
 import { HowToPlay } from './screens/HowToPlay';
 import { SetupPlayers } from './screens/SetupPlayers';
-import { SetupHoles } from './screens/SetupHoles';
 import { SetupCourse } from './screens/SetupCourse';
 import { Join, JoinWho } from './screens/Join';
 import { GameScreen } from './screens/game/GameScreen';
@@ -32,9 +31,6 @@ export function App() {
       break;
     case 'setupCourse':
       screen = <SetupCourse />;
-      break;
-    case 'setupHoles':
-      screen = <SetupHoles />;
       break;
     case 'join':
       screen = <Join initialCode={route.code} />;

@@ -194,7 +194,6 @@ test('picking a course fills in the pars', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByLabel('Search for your course').fill('palmer');
   await page.getByRole('button', { name: /Palmer Links/ }).click();
-  await expect(page.getByText('pars filled in for you')).toBeVisible();
   await expect(page.getByRole('button', { name: /Front 9/ })).toContainText('par 36');
   await shot(page, '27-holes-with-course');
   await page.getByRole('button', { name: /Front 9/ }).click();

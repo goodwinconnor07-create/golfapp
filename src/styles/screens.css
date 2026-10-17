@@ -1246,6 +1246,37 @@
   min-height: 76px;
 }
 
+/* A picked course: its row stays on top and the hole choices open under it. */
+.course-open {
+  display: grid;
+  gap: 8px;
+}
+
+.hole-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.hole-choice {
+  display: grid;
+  gap: 2px;
+  min-height: 72px;
+  padding: 12px 8px;
+  color: var(--on-color);
+}
+
+.hole-choice b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+}
+
+.hole-choice small {
+  font-size: var(--fs-small);
+  font-weight: 800;
+  opacity: 0.92;
+}
+
 .course-icon {
   width: 46px;
   height: 46px;

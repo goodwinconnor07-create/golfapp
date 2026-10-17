@@ -52,7 +52,6 @@ export type Route =
   | { name: 'howto'; intro?: boolean }
   | { name: 'setupPlayers' }
   | { name: 'setupCourse' }
-  | { name: 'setupHoles' }
   | { name: 'join'; code?: string }
   | { name: 'joinWho'; info: GameInfo }
   | { name: 'game' }
