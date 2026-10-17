@@ -67,6 +67,10 @@
   --brand-2: #1e3a6e;
   --brand-3: #0b1d3f;
   --brand: linear-gradient(100deg, var(--brand-1) 0%, var(--brand-2) 50%, var(--brand-3) 100%);
+  /* The logo word matches the icon's daytime sky. */
+  --sky-1: #2f7be0;
+  --sky-2: #4a9cf0;
+  --logo: linear-gradient(100deg, var(--sky-1) 0%, var(--sky-2) 100%);
 
   /* ── States. -lo shades are for gradients under white text; -ink is text on a tinted -bg. */
   --green: #15803d;

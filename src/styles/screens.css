@@ -33,6 +33,7 @@
   letter-spacing: -0.04em;
   padding-right: 8px;
   margin-top: 12px;
+  background-image: var(--logo);
 }
 
 .tier-row {

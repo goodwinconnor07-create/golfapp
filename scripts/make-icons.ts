@@ -35,7 +35,7 @@ const ogPage = `<!doctype html><html><head><style>
   .icon{width:300px;height:300px;flex:none;position:relative}
   .icon svg{width:100%;height:100%;filter:drop-shadow(0 24px 40px rgba(11,29,63,.35))}
   h1{margin:0;font-size:132px;line-height:.95;font-weight:900;font-style:italic;letter-spacing:-4px;
-     background:linear-gradient(90deg,#2B4F8F,#1E3A6E 50%,#0B1D3F);-webkit-background-clip:text;color:transparent}
+     background:linear-gradient(90deg,#2F7BE0,#4A9CF0);-webkit-background-clip:text;color:transparent}
   p{margin:22px 0 0;font-size:40px;font-weight:800;color:#0b0b12;line-height:1.2}
   .chips{display:flex;gap:14px;margin-top:28px}
   .chip{font-size:28px;font-weight:900;color:#fff;padding:12px 22px;border-radius:999px}
