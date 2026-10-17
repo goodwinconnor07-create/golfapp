@@ -51,7 +51,9 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   // Guest follows the link and adds themselves.
   await guest.goto(`/j/${code}`);
   await expect(guest.getByText('Who are you?')).toBeVisible();
-  await guest.getByLabel('Your name').fill('Gus');
+  await guest.getByRole('button', { name: /your name and picture/ }).click();
+  await guest.getByRole('textbox', { name: 'Your name' }).fill('Gus');
+  await guest.getByRole('button', { name: 'Done' }).click();
   await shot(guest, '22-join-who');
   await guest.getByRole('button', { name: 'Join as Gus' }).click();
   await expect(guest.getByText("You're in!")).toBeVisible();
@@ -263,7 +265,9 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await newGame(host, ['Hana']);
   const code = await gameCode(host, '.invite-panel');
   await guest.goto(`/j/${code}`);
-  await guest.getByLabel('Your name').fill('Gus');
+  await guest.getByRole('button', { name: /your name and picture/ }).click();
+  await guest.getByRole('textbox', { name: 'Your name' }).fill('Gus');
+  await guest.getByRole('button', { name: 'Done' }).click();
   await guest.getByRole('button', { name: 'Join as Gus' }).click();
   await expect(host.locator('.roster-item', { hasText: 'Gus' })).toBeVisible();
   await host.getByRole('button', { name: "Let's go!" }).click();

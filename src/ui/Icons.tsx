@@ -79,6 +79,12 @@ export const PlusIcon = (p: P) => (
   </svg>
 );
 
+export const PencilIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <path d="M4 20l1-5L16.5 3.5a2.1 2.1 0 013 3L8 18l-4 2z" />
+  </svg>
+);
+
 export const MinusIcon = (p: P) => (
   <svg {...stroke(p)}>
     <path d="M5 12h14" />

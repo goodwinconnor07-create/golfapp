@@ -4014,7 +4014,7 @@ button.roster-item:active {
 
 .hero-tagged {
   position: relative;
-  padding-top: 20px;
+  padding-top: 24px;
 }
 
 /* Your name in a pill over the top edge of the picture. */
@@ -4023,16 +4023,47 @@ button.roster-item:active {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 260px;
+  z-index: 1;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 16px;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  /* A shade darker than the page so it reads as its own tag, not a bite out of the picture. */
+  background: var(--bg-3);
+  border: 2px solid var(--surface);
   color: var(--ink);
   font-size: var(--fs-h3);
   font-weight: 900;
   white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+
+.hero-name-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hero-name-pill svg {
+  flex: none;
+  color: var(--ink-3);
+}
+
+/* A pencil on the picture says it can be changed. */
+.hero-edit-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--btn-dark);
+  color: var(--on-contrast);
+  border: 4px solid var(--surface);
   box-shadow: var(--shadow);
 }
 

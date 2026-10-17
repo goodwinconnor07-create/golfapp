@@ -22,7 +22,7 @@ import {
 import { haptic, reducedMotion } from './effects';
 import { avatarInk, BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
-import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
+import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PencilIcon, PlusIcon, ShieldIcon } from './Icons';
 
 // ── Tiers ───────────────────────────────────────────────────────────────────
 
@@ -138,11 +138,15 @@ export function HeroPicture({
         >
           <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
             <span className="hero-float">
-              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={200} />
             </span>
           </span>
+          <span className="hero-edit-badge" aria-hidden>
+            <PencilIcon width={22} height={22} />
+          </span>
           <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
-            {shown || 'Add your name'}
+            <span className="hero-name-text">{shown || 'Add your name'}</span>
+            <PencilIcon width={18} height={18} />
           </span>
         </button>
       </div>
