@@ -53,7 +53,6 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
     <div className={`screen${home ? ' join-home' : ''}`}>
       {home ? (
         <>
-          <span className="home-sky join-sky" aria-hidden />
           <div className="join-home-top">
             <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
               How to play
@@ -107,7 +106,7 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
       <div className="screen-foot">
         <button
           type="button"
-          className={`btn btn-xl ${home ? 'btn-home' : 'btn-blue'}`}
+          className={`btn btn-xl ${home ? 'btn-brand' : 'btn-blue'}`}
           disabled={code.length !== CODE_LENGTH || busy}
           onClick={() => void lookUp(code)}
         >

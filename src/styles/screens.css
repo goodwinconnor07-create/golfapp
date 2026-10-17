@@ -2,471 +2,156 @@
 
 /* ── Home ────────────────────────────────────────────────────────────────── */
 
-/* The iPhone app's Home: the icon's sky across the top, then your game, how you play and New game. */
-.home::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: var(--bg);
-}
-
-.home-sky {
+/* The iPhone app's Home: the logo, your game or Play again, then New game. */
+.home-corner {
   position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: -1;
-  width: 100vw;
-  height: calc(var(--safe-top) + 320px);
-  transform: translateX(-50%);
-  overflow: hidden;
-  background: var(--bg);
-  pointer-events: none;
+  top: calc(var(--safe-top) + 12px);
+  right: 16px;
+  z-index: 2;
 }
 
-/* The sun: only in the demo now. */
-.demo-sun {
-  content: '';
-  position: absolute;
-  top: -64px;
-  right: 56px;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--sun-hi) 0%, var(--sun) 30%, transparent 70%);
+.home-body {
+  justify-content: center;
+  gap: 24px;
 }
 
-.demo-cloud {
-  content: '';
-  position: absolute;
-  top: 22%;
-  left: 8%;
-  width: 88px;
-  height: 24px;
-  border-radius: var(--r-pill);
-  background: var(--cloud);
-  box-shadow: 24px -12px 0 -2px var(--cloud);
-}
-
-.home-head {
+.home-hero {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0 20px;
+  gap: 8px;
+  text-align: center;
 }
 
 .home-icon {
   display: block;
-  flex: none;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--r-sm);
-  box-shadow: var(--shadow-sky);
+  width: 104px;
+  height: 104px;
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+  animation:
+    pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both,
+    float 3.2s ease-in-out 0.6s infinite alternate;
 }
 
-.home-title {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  color: var(--ink);
+@keyframes float {
+  to {
+    transform: translateY(-8px) rotate(-3deg);
+  }
 }
 
-.home-title span {
-  font-size: var(--fs-small);
-  font-weight: 700;
-  color: var(--ink-3);
-}
-
-.home-title h1 {
-  margin: 0;
-  font-size: var(--fs-h1);
+.logo-word {
+  margin: 8px 0 0;
+  padding-right: 8px;
+  font-size: var(--fs-display-3);
   font-weight: 900;
-  letter-spacing: -0.02em;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  background: var(--logo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* Glass buttons on the sky: Past games, How to play. */
-.home-round-btn,
-.home-pill {
-  flex: none;
-  display: grid;
-  place-items: center;
-  height: 44px;
-  border: 0;
-  border-radius: var(--r-pill);
-  color: var(--ink);
-  background: var(--bg-2);
-  font: inherit;
-  font-size: var(--fs-small);
-  font-weight: 800;
-}
-
-.home-round-btn {
-  width: 44px;
-}
-
-.home-pill {
-  padding: 0 16px;
-}
-
-.home-body {
-  gap: 20px;
-}
-
-.home-empty {
-  margin: 0;
-  padding: 20px;
-  border-radius: var(--r-md);
-  background: var(--bg-2);
-  color: var(--ink-3);
-  font-weight: 700;
-  text-align: center;
-}
-
-/* The round in progress: navy, with a ring for how far through it is. */
-.live-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  padding: 16px 20px;
-  border: 0;
-  border-radius: var(--r-lg);
-  background: var(--home-accent);
-  color: var(--on-color);
-  box-shadow: var(--shadow-soft);
-  font: inherit;
-  text-align: left;
-}
-
-.live-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.live-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--fs-caption);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.live-label i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--red-hi);
-}
-
-.live-resume {
-  font-size: var(--fs-small);
-  font-weight: 800;
-  color: var(--home-accent-hi);
-}
-
-.live-main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.live-ring {
-  --p: 0;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: conic-gradient(var(--home-accent-hi) calc(var(--p) * 360deg), var(--on-sky) 0);
-}
-
-.live-ring b {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--home-accent);
-  font-size: var(--fs-lead);
-  font-weight: 900;
-}
-
-.live-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.live-text b {
-  font-size: var(--fs-lead);
-  font-weight: 900;
-}
-
-.live-text small {
-  font-size: var(--fs-small);
-  font-weight: 700;
-  color: var(--on-sky-text);
-}
-
-.live-faces,
-.play-again-faces {
-  flex: none;
-  display: flex;
-}
-
-.live-faces .avatar,
-.play-again-faces .avatar {
-  box-shadow: 0 0 0 2px var(--home-accent);
-}
-
-.live-faces .avatar + .avatar,
-.play-again-faces .avatar + .avatar {
-  margin-left: -8px;
-}
-
-.play-again-faces .avatar {
-  box-shadow: 0 0 0 2px var(--surface);
-}
-
-.home-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.home-section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.home-section-head h2 {
+.home-tag {
   margin: 0;
   font-size: var(--fs-lead);
-  font-weight: 900;
-}
-
-.home-section-head span {
-  font-size: var(--fs-small);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--ink-3);
 }
 
-.home-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  border: 0;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 2px var(--line);
-  font: inherit;
-  text-align: left;
-}
-
-.home-tile > b {
-  font-size: var(--fs-h3);
-  font-weight: 900;
-}
-
-.home-tile > b.home-tile-card {
-  font-size: var(--fs-body);
-  line-height: 1.2;
-}
-
-.home-tile > small {
-  font-size: var(--fs-caption);
-  font-weight: 700;
-  color: var(--ink-3);
-}
-
-.home-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.home-mix {
-  gap: 12px;
-}
-
-.home-mix-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.home-mix-head b {
-  font-size: var(--fs-body);
-  font-weight: 900;
-}
-
-.home-mix-head small {
-  font-size: var(--fs-caption);
-  font-weight: 700;
-  color: var(--ink-3);
-}
-
-.home-mix-bar {
-  display: flex;
-  gap: 4px;
-  height: 12px;
-  border-radius: var(--r-pill);
-  overflow: hidden;
-}
-
-.home-mix-bar i {
-  flex: 1 1 0;
-}
-
-.home-mix-safe {
-  background: var(--safe);
-}
-
-.home-mix-bold {
-  background: var(--bold);
-}
-
-.home-mix-insane {
-  background: var(--insane);
-}
-
-.home-mix-key {
+.tier-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  font-size: var(--fs-caption);
-  font-weight: 800;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.home-ink-safe {
-  color: var(--safe-ink);
-}
-
-.home-ink-bold {
-  color: var(--bold-ink);
-}
-
-.home-ink-insane {
-  color: var(--insane);
-}
-
-.play-again {
-  flex-direction: row;
+/* Back to your game / Play again: one row, never both. */
+.home-row {
+  display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   min-height: 64px;
   padding: 12px 16px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
   color: var(--ink);
+  font: inherit;
+  text-align: left;
 }
 
-.play-again-text {
+.home-live {
+  background: var(--brand-bg);
+  color: var(--brand-ink);
+}
+
+.home-row-text {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
-.play-again-text b {
+.home-row-text b {
   font-size: var(--fs-body);
-  font-weight: 800;
+  font-weight: 900;
 }
 
-.play-again-text small {
-  font-size: var(--fs-caption);
+.home-row-text small {
+  font-size: var(--fs-small);
   font-weight: 700;
-  color: var(--ink-3);
+  opacity: 0.75;
 }
 
-.play-again-go {
-  font-size: var(--fs-h3);
-  font-weight: 800;
-  color: var(--ink-4);
+.home-faces {
+  flex: none;
+  display: flex;
 }
 
-/* Hosts rarely join someone else's game, so it's a quiet link under New game. */
+.home-faces .avatar {
+  box-shadow: 0 0 0 2px var(--bg-2);
+}
+
+.home-faces .avatar + .avatar {
+  margin-left: -8px;
+}
+
 .home-foot {
   gap: 4px;
 }
 
-.home-join,
-.first-home-links .btn-link {
-  min-height: 44px;
-  font-size: var(--fs-small);
-  color: var(--home-accent-ink);
-}
-
-/* Before a first round: the logo, the demo and a way in. */
-.first-home-body {
-  align-items: center;
-  gap: 12px;
-}
-
-.first-home-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.first-home-logo .home-icon {
-  width: 56px;
-  height: 56px;
-}
-
-.first-home-logo .logo-word {
-  margin: 0;
-  font-size: var(--fs-display-1);
-  font-style: italic;
-  letter-spacing: -0.04em;
-  padding-right: 8px;
-  background: none;
-  color: var(--home-accent);
-}
-
-.first-home-tag {
-  margin: 0;
-  font-size: var(--fs-h3);
-  font-weight: 800;
-  color: var(--ink-2);
-}
-
-.first-home-foot {
-  gap: 4px;
-}
-
-.first-home-links {
+.home-links {
   display: flex;
   justify-content: center;
 }
 
-.first-home-links .btn-link {
+.home-links .btn-link {
   width: auto;
-  padding: 0 12px;
+  padding: 0 16px;
+  font-size: var(--fs-body);
 }
 
-.first-home-links .quiet {
-  color: var(--ink-3);
-}
-
-/* The website's Home: the join screen. */
-.join-sky {
-  height: calc(var(--safe-top) + 380px);
-}
-
+/* The website's Home: the join screen, with How to play in the corner. */
 .join-home-top {
   display: flex;
   justify-content: flex-end;
   padding-top: 8px;
+}
+
+.home-pill {
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 800;
 }
 
 .join-home-hero {
@@ -474,16 +159,15 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 12px 0 64px;
+  padding: 12px 0 24px;
   text-align: center;
-  color: var(--ink);
 }
 
 .join-home-icon {
-  width: 96px;
-  height: 96px;
+  width: 88px;
+  height: 88px;
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sky);
+  box-shadow: var(--shadow);
   animation: pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
 }
 
@@ -506,520 +190,6 @@
   min-height: 44px;
   font-size: var(--fs-small);
   color: var(--ink-3);
-}
-
-/* ── Game demo (first Home) ──────────────────────────────────────────────── */
-
-.demo-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.demo {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  /* As tall as the phone allows once the logo, tagline and buttons fit. */
-  height: clamp(280px, calc(100dvh - 360px - var(--safe-top) - var(--safe-bottom)), 480px);
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  background: var(--home-accent-bg);
-}
-
-.demo-sun {
-  top: -40px;
-  right: -40px;
-}
-
-.demo-turf {
-  position: absolute;
-  left: -10%;
-  bottom: -40%;
-  width: 120%;
-  height: 62%;
-  border-radius: 50%;
-  background: var(--bg-3);
-}
-
-.demo-scene {
-  position: absolute;
-  inset: 0;
-  animation: fade-in 0.3s ease-out both;
-}
-
-.demo-caption {
-  margin: 0;
-  padding: 20px 16px 0;
-  text-align: center;
-  font-size: var(--fs-h3);
-  font-weight: 900;
-  color: var(--home-accent);
-}
-
-.demo-bubble {
-  display: inline-flex;
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 4px var(--surface),
-    var(--shadow-sky);
-}
-
-/* One-shot entrances. Each ends on the finished picture, so Reduce Motion shows that. */
-.demo-pop {
-  display: inline-flex;
-  animation: demo-pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
-}
-
-.demo-up {
-  animation: demo-up 0.35s ease-out both;
-}
-
-.demo-rise {
-  animation: demo-rise 0.45s ease-out both;
-}
-
-.demo-grow {
-  transform-origin: 50% 100%;
-  animation: demo-grow 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-}
-
-@keyframes demo-pop {
-  from {
-    transform: scale(0);
-  }
-}
-
-@keyframes demo-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-@keyframes demo-rise {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-}
-
-@keyframes demo-grow {
-  from {
-    transform: scaleY(0);
-  }
-}
-
-/* 1. Picks */
-.demo-picks {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 36%;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.demo-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-/* 2. Draw: the back flips over to the card. */
-.demo-drawer {
-  position: absolute;
-  left: 8%;
-  bottom: 16%;
-}
-
-.demo-card-spot {
-  position: absolute;
-  left: 50%;
-  top: 24%;
-  width: 136px;
-  height: 188px;
-  margin-left: -68px;
-}
-
-.demo-card {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 16px;
-  border: 4px solid var(--surface);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow);
-  color: var(--on-color);
-}
-
-.demo-card-back {
-  align-items: center;
-  justify-content: center;
-  background: var(--home-accent);
-  /* Rises in, then turns edge-on; it ends hidden so the front is what stays. */
-  animation:
-    demo-rise 0.45s ease-out both,
-    demo-flip-out 0.2s ease-in 1.1s both;
-}
-
-.demo-card-back img {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-sm);
-}
-
-.demo-card-front {
-  background: linear-gradient(160deg, var(--bold) 0%, var(--bold-lo) 100%);
-  animation: demo-flip-in 0.25s ease-out both;
-}
-
-@keyframes demo-flip-out {
-  to {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes demo-flip-in {
-  from {
-    transform: scaleX(0);
-  }
-}
-
-.demo-card-tier {
-  font-size: var(--fs-caption);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.demo-card-title {
-  font-size: var(--fs-h3);
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.demo-card-stakes {
-  font-size: var(--fs-caption);
-  font-weight: 800;
-}
-
-/* 3. Play: Sam swings and the ball flies to the flag. */
-.demo-green {
-  position: absolute;
-  right: 10%;
-  bottom: 20%;
-  width: 72px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--turf-hi);
-}
-
-.demo-pole {
-  position: absolute;
-  right: calc(10% + 34px);
-  bottom: calc(20% + 10px);
-  width: 4px;
-  height: 76px;
-  border-radius: var(--r-xs);
-  background: var(--pole);
-}
-
-.demo-flag {
-  position: absolute;
-  right: calc(10% + 4px);
-  bottom: calc(20% + 60px);
-  width: 0;
-  height: 0;
-  border-top: 13px solid transparent;
-  border-bottom: 13px solid transparent;
-  border-left: 30px solid var(--flag);
-}
-
-.demo-waiting {
-  position: absolute;
-  bottom: 18%;
-  opacity: 0.85;
-}
-
-.demo-waiting-1 {
-  left: 4%;
-  bottom: 34%;
-}
-
-.demo-waiting-2 {
-  left: 6%;
-}
-
-.demo-swing {
-  position: absolute;
-  left: 26%;
-  bottom: 22%;
-  transform-origin: 50% 100%;
-  animation: demo-swing 0.5s ease-in-out both;
-}
-
-@keyframes demo-swing {
-  40% {
-    transform: rotate(-25deg);
-  }
-  70% {
-    transform: rotate(20deg);
-  }
-}
-
-/* The ball's path: the mover slides across (it's as wide as the gap), the ball inside goes up and down. */
-.demo-flight {
-  position: absolute;
-  left: calc(26% + 44px);
-  right: calc(10% + 44px);
-  bottom: calc(20% + 6px);
-  height: 14px;
-}
-
-.demo-mover {
-  width: 100%;
-  height: 14px;
-  animation: demo-across 1.2s linear both;
-}
-
-.demo-ball {
-  display: block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  animation: demo-arc 1.2s both;
-}
-
-@keyframes demo-across {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes demo-arc {
-  0% {
-    transform: translateY(0);
-    animation-timing-function: ease-out;
-  }
-  50% {
-    transform: translateY(-120px);
-    animation-timing-function: ease-in;
-  }
-  85% {
-    transform: translateY(0);
-  }
-  92% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-.demo-shout {
-  position: absolute;
-  right: 6%;
-  bottom: calc(20% + 100px);
-  padding: 4px 12px;
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--green);
-  font-size: var(--fs-body);
-  font-weight: 900;
-}
-
-/* 4. Score */
-.demo-score {
-  position: absolute;
-  left: 50%;
-  top: 22%;
-  width: min(84%, 296px);
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.demo-score-who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--fs-lead);
-}
-
-.demo-score-row,
-.demo-score-total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: var(--fs-body);
-  font-weight: 700;
-}
-
-.demo-score-row span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.demo-score-card {
-  color: var(--bold-ink);
-}
-
-.demo-tick {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--green);
-  color: var(--on-color);
-}
-
-.demo-score-total {
-  padding-top: 12px;
-  border-top: 2px solid var(--line);
-  font-weight: 800;
-}
-
-.demo-score-total b {
-  font-size: var(--fs-display-1);
-  font-weight: 900;
-  color: var(--home-accent);
-}
-
-/* 5. Win */
-.demo-podium {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.demo-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.demo-block {
-  display: flex;
-  justify-content: center;
-  width: 84px;
-  padding-top: 8px;
-  border-radius: var(--r-sm) var(--r-sm) 0 0;
-  color: var(--on-color);
-  font-size: var(--fs-h1);
-  font-weight: 900;
-}
-
-.demo-step-1 .demo-block {
-  height: 132px;
-  background: var(--gold);
-}
-
-.demo-step-2 .demo-block {
-  height: 92px;
-  background: var(--silver);
-}
-
-.demo-step-3 .demo-block {
-  height: 64px;
-  background: var(--bronze);
-}
-
-.demo-confetti {
-  position: absolute;
-  top: 12%;
-  width: 10px;
-  height: 16px;
-  border-radius: var(--r-xs);
-  opacity: 0;
-  animation: demo-fall 1.6s ease-in both;
-}
-
-.demo-confetti-0 {
-  left: 14%;
-  background: var(--red);
-}
-.demo-confetti-1 {
-  left: 30%;
-  background: var(--sun);
-}
-.demo-confetti-2 {
-  left: 46%;
-  background: var(--surface);
-}
-.demo-confetti-3 {
-  left: 60%;
-  background: var(--insane);
-}
-.demo-confetti-4 {
-  left: 74%;
-  background: var(--safe);
-}
-.demo-confetti-5 {
-  left: 88%;
-  background: var(--bold);
-}
-
-@keyframes demo-fall {
-  0% {
-    opacity: 0;
-    transform: translateY(-40px) rotate(0);
-  }
-  5% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(240px) rotate(320deg);
-  }
-}
-
-.demo-dots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.demo-dots span {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--bg-3);
-  transition:
-    width 0.25s ease,
-    background 0.25s ease;
-}
-
-.demo-dots span.on {
-  width: 24px;
-  background: var(--home-accent);
 }
 
 /* ── How to play ─────────────────────────────────────────────────────────── */
@@ -2197,7 +1367,7 @@
 
 @media (max-width: 360px) {
   .logo-word {
-    font-size: var(--fs-display-4);
+    font-size: var(--fs-display-2);
   }
   .hero {
     font-size: var(--fs-display-2);
@@ -4973,7 +4143,3 @@ button.roster-item:active {
   }
 }
 
-/* Home's main button: near-black. */
-.btn-home {
-  background: linear-gradient(180deg, var(--home-accent-ink) 0%, var(--home-accent) 100%);
-}

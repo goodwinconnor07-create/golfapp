@@ -15,7 +15,6 @@ import {
   cryptoRng,
   holeResult,
   standings,
-  playStats,
   newId,
   normalizeCode,
   type Action,
@@ -283,7 +282,6 @@ function recordIfFinished(game: Game | null): void {
   if (game?.status !== 'finished') return;
   const rows = standings(game);
   if (!rows.some((r) => r.totals.holes > 0)) return;
-  const me = game.hostDeviceId === state.deviceId ? rows.find((r) => r.player.deviceId === state.deviceId) : undefined;
   saveRecord({
     id: game.id,
     finishedAt: game.updatedAt,
@@ -298,7 +296,6 @@ function recordIfFinished(game: Game | null): void {
       toPar: r.totals.toPar,
       strokes: r.totals.real,
     })),
-    ...(me ? { mine: { ...playStats(game, me.player.id), name: me.player.name, rank: me.rank } } : {}),
   });
 }
 

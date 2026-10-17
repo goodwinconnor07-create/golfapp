@@ -155,7 +155,7 @@ test('how to play explains the stakes', async ({ page }) => {
     if (i < titles.length - 1) await page.getByRole('button', { name: 'Next' }).click();
   }
   await page.getByRole('button', { name: "Let's play" }).click();
-  await expect(page.getByRole('button', { name: 'Start your first game' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
 });
 
 test('picking a course fills in the pars', async ({ page }) => {

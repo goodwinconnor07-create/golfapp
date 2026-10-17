@@ -253,12 +253,18 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 
 ## Home: the app and the website split (Oct 2026)
 
-Asked for by the product owner.
+Asked for by the product owner, then simplified at their request (the first version had too much on it).
 
-- **The website opens on the join screen.** Under the icon's sky: "Join the game", the code box, Find game, and a small How to play button top right. While the website can still host (`VITE_WEB_HOSTING` isn't `off`), a quiet "Hosting? Start a game" link sits at the bottom. Once it's off, the link goes to the App Store instead.
-- **The iPhone app's Home is for the host.** Nearly everyone using the app is hosting, so it leads with New game, and joining someone else's game is a small link under it. From the top: a greeting and the icon on the sky, the round in progress as a big navy card (hole, how far through, your place, the players' pictures), "How you play", "Play again with…", then New game.
-- **How you play** counts only rounds this phone hosted, and only the host's own player in them: the mix of Safe, Bold and Insane picks ("Mostly Bold" once a level is at least 45% of picks), Insane cards made (or all cards made, if no Insane yet), and the best card (made most often, drawn at least twice). Each finished round now saves those numbers with it (`mine` in `GameRecord`). Rounds saved before this have none, so they don't count.
-- **Play again** starts a new game with last round's group already on the list (the newest round this phone hosted with other people). Friends tap their name when they join. With the host's name known it skips the name screen.
-- **Until a first round is finished**, Home shows a 17-second picture of a round instead: everyone picks a level, Jo draws a Bold card, Sam hits to the flag, the card comes off the score, and a podium for the winner. Players are picture bubbles, not drawn golfers. With Reduce Motion it's a slideshow of the finished scenes. How to play keeps its own slides; the demo isn't repeated there.
+- **The website opens on the join screen:** the icon, "Join the game", the code box and Find game, with How to play in the top corner. While the website can still host (`VITE_WEB_HOSTING` isn't `off`), a quiet "Hosting? Start a game" link sits at the bottom; once it's off, the link goes to the App Store.
+- **The iPhone app's Home** is the floating icon, CARDSHOT, "Golf, but riskier." and the three level chips, then one row: "Back to your game" while a round is on, or else "Play again" with last round's group. Then New game, with Join a game and How to play as small links. Past games is the clock in the corner.
+- **Play again** starts a new game with everyone from the newest saved round (other than you) already on the list. Friends tap their name when they join. With your name known it skips the name screen.
+- **Tried and dropped:** a greeting, a "How you play" stats panel, a live game card with a progress ring, and an animated demo for first-time hosts. Too much for a party game.
 - **Development:** `sendit.appHome` set to `true` in local storage shows the app's Home in a browser (dev builds only). The e2e tests set it; tests that need a friend on the website leave it out.
-- **Colours (follow-up):** the product owner didn't like the sky and navy on Home, then asked for plain white for now. Home, the website's join screen and the demo are white with near-black for the main button and the live game card (`--home-accent` tokens), and light grey for the demo panel.
+
+## Colours: party pink (Oct 2026)
+
+Replaces the Clubhouse navy. Asked for by the product owner: not basic, not loud, gives the idea of a party.
+
+- **Brand:** pink (`--brand-1` #ff4d8d to `--brand-3` #c41d5a) for New game, the CARDSHOT wordmark, text links and the results picture. `--brand-bg` / `--brand-ink` for tinted rows like "Back to your game". `--pop` yellow (#ffcf33) is there for small highlights.
+- **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
+- **Unchanged:** the Safe, Bold and Insane colours, green for go buttons, blue for Share, and the app icon.

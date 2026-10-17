@@ -1,6 +1,6 @@
 // Everything the app keeps on the phone between visits.
 
-import { isAvatarEmoji, isDeviceId, newId, PLAYER_COLORS, type Action, type Game, type PlayStats } from '../game';
+import { isAvatarEmoji, isDeviceId, newId, PLAYER_COLORS, type Action, type Game } from '../game';
 
 const KEYS = {
   device: 'sendit.device',
@@ -100,8 +100,6 @@ export interface GameRecord {
   holes: number;
   /** In finishing order. */
   players: { name: string; color: number; emoji?: string; rank: number; toPar: number; strokes: number }[];
-  /** The host's own player, on rounds this phone hosted: feeds "How you play" on Home. */
-  mine?: PlayStats & { name: string; rank: number };
 }
 
 const MAX_RECORDS = 50;

@@ -40,14 +40,14 @@
   --radius-sm: var(--r-md);
 
   /* ── Neutrals */
-  --ink: #0b0b12;
-  --ink-2: #33333f;
-  --ink-3: #5f5f6d;
+  --ink: #1a1230;
+  --ink-2: #3b3150;
+  --ink-3: #635a78;
   --ink-4: #a3a3b2;
   --line: #e9e9f1;
   --bg: #ffffff;
-  --bg-2: #f4f4f9;
-  --bg-3: #eaeaf2;
+  --bg-2: #f6f4f9;
+  --bg-3: #ece8f2;
   --surface: #ffffff;
   /* Black buttons and chips; they flip to light in dark mode. */
   --contrast: #0b0b12;
@@ -62,38 +62,15 @@
   --focus: #93c5fd;
   --badge: #ff3b30;
 
-  /* ── Brand */
-  --brand-1: #2b4f8f;
-  --brand-2: #1e3a6e;
-  --brand-3: #0b1d3f;
-  --brand: linear-gradient(100deg, var(--brand-1) 0%, var(--brand-2) 50%, var(--brand-3) 100%);
-  /* The logo word matches the icon's daytime sky. */
-  --sky-1: #2f7be0;
-  --sky-2: #4a9cf0;
-  --logo: linear-gradient(100deg, var(--sky-1) 0%, var(--sky-2) 100%);
-  /* Home's accent: plain white and near-black. */
-  --home-accent: #0b0b12;
-  --home-accent-lo: #000000;
-  --home-accent-hi: #ffffff;
-  --home-accent-bg: #f4f4f9;
-  --home-accent-ink: #0b0b12;
-  /* The rest of the icon's scene, for the game demo's turf. */
-  --sky-3: #5fa8f2;
-  --sky-4: #a9d6ff;
-  --sky: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-3) 55%, var(--sky-4) 100%);
-  --sun: #ffe27a;
-  --sun-hi: #fff3b8;
-  --cloud: rgba(255, 255, 255, 0.85);
-  --turf: #2fa35a;
-  --turf-lo: #0f5a2e;
-  --turf-hi: #5dd36a;
-  --flag: #c8102e;
-  --pole: #e8ecf2;
-  /* Soft white fills on the sky: glass buttons, the cursor on a card. */
-  --on-sky: rgba(255, 255, 255, 0.25);
-  --on-sky-text: rgba(255, 255, 255, 0.92);
-  --shadow-sky: 0 6px 14px rgba(11, 42, 92, 0.3);
-  --shadow-sky-text: 0 1px 2px rgba(11, 42, 92, 0.35);
+  /* ── Brand: party pink, with a pop of yellow for small highlights. */
+  --brand-1: #ff4d8d;
+  --brand-2: #e8336f;
+  --brand-3: #c41d5a;
+  --brand: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-3) 100%);
+  --brand-bg: #fff0f5;
+  --brand-ink: #b0174f;
+  --pop: #ffcf33;
+  --logo: linear-gradient(100deg, var(--brand-3) 0%, var(--brand-1) 100%);
 
   /* ── States. -lo shades are for gradients under white text; -ink is text on a tinted -bg. */
   --green: #15803d;
@@ -513,7 +490,7 @@ input {
 
 .btn-link {
   background: none;
-  color: var(--blue);
+  color: var(--brand-ink);
   box-shadow: none;
   text-shadow: none;
   min-height: 48px;

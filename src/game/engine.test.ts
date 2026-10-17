@@ -22,7 +22,6 @@ import {
   judgeFromStrokes,
   makeHoles,
   parseAction,
-  playStats,
   recap,
   redactForDevice,
   sanitizeUpload,
@@ -924,23 +923,5 @@ describe('skins, overtakes and reactions', () => {
     // Kept on upload, minus anything not on the list.
     g.entries[entryKey('player00', 0)].reactions = { player01: '😂', nobody99: '🔥' };
     expect(sanitizeUpload(g, HOST, 5, seeded())!.entries[entryKey('player00', 0)].reactions).toEqual({ player01: '😂' });
-  });
-});
-
-describe('play stats', () => {
-  it('counts picks, cards made and each card', () => {
-    let g = run(newGame(['Sam'], [4, 4, 4]), { type: 'start' });
-    g = giveCard(g, 'player00', 0, 'B18');
-    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
-    g = run(g, { type: 'nextHole', from: 0 });
-    g = giveCard(g, 'player00', 1, 'B18');
-    g = run(g, { type: 'score', playerId: 'player00', hole: 1, strokes: 5, outcome: 'missed' });
-    g = run(g, { type: 'nextHole', from: 1 });
-    g = giveCard(g, 'player00', 2, 'S02');
-    g = run(g, { type: 'score', playerId: 'player00', hole: 2, strokes: 4, outcome: 'made' });
-    const s = playStats(g, 'player00');
-    expect(s.picks).toEqual({ safe: 1, bold: 2, insane: 0 });
-    expect(s.made).toEqual({ safe: 1, bold: 1, insane: 0 });
-    expect(s.cards).toEqual({ B18: [2, 1], S02: [1, 1] });
   });
 });

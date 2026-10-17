@@ -19,11 +19,11 @@ export async function shot(page: Page, name: string): Promise<void> {
 }
 
 /**
- * Taps whichever button starts a game on Home: New game, Start your first game (no rounds yet),
- * or the website's Hosting link (phones without the app's Home, like the online tests' extra phones).
+ * Taps whichever button starts a game on Home: New game, or the website's Hosting link
+ * (phones without the app's Home, like the online tests' extra phones).
  */
 export async function startGame(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^(New game|Start your first game|Hosting\? Start a game)$/ }).first().click();
+  await page.getByRole('button', { name: /^(New game|Hosting\? Start a game)$/ }).first().click();
 }
 
 /** On the new game screen: tap the picture, type the name in the sheet, close it. */
