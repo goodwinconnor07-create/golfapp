@@ -142,7 +142,7 @@ export function JoinWho({ info }: { info: GameInfo }) {
         </div>
 
         {info.canJoinAsNew ? (
-          <HeroPicture name={name} look={look} onChange={() => openSheet({ name: 'look' })} />
+          <HeroPicture name={name} look={look} onChange={() => openSheet({ name: 'look', typed: name })} />
         ) : (
           free.length === 0 && (
             <p className="tile-flat" style={{ margin: 0 }}>

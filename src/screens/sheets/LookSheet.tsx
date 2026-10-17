@@ -2,9 +2,10 @@ import { closeSheet, setProfileLook, useApp } from '../../state/store';
 import { Avatar, LookPicker, Sheet } from '../../ui/components';
 
 /** Your picture for new and joined games: a big live preview, then emoji and colour. Changes save as you tap. */
-export function LookSheet() {
+export function LookSheet({ typed }: { typed?: string }) {
   const look = useApp((s) => s.profileLook);
-  const name = useApp((s) => s.draft.names[0] || s.profileName || '?');
+  const stored = useApp((s) => s.draft.names[0] || s.profileName || '?');
+  const name = typed?.trim() ? typed : stored;
   return (
     <Sheet title="Your picture">
       <div className="look-preview">
