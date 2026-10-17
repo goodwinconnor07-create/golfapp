@@ -33,9 +33,9 @@ const ogPage = `<!doctype html><html><head><style>
   .wrap{display:flex;align-items:center;gap:56px;height:100%;padding:0 90px;box-sizing:border-box;position:relative;overflow:hidden}
   .blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35}
   .icon{width:300px;height:300px;flex:none;position:relative}
-  .icon svg{width:100%;height:100%;filter:drop-shadow(0 24px 40px rgba(11,29,63,.35))}
+  .icon svg{width:100%;height:100%;filter:drop-shadow(0 24px 40px rgba(20,14,38,.35))}
   h1{margin:0;font-size:132px;line-height:.95;font-weight:900;font-style:italic;letter-spacing:-4px;
-     background:linear-gradient(90deg,#2F7BE0,#4A9CF0);-webkit-background-clip:text;color:transparent}
+     background:linear-gradient(90deg,#0F766E,#EA580C,#7C3AED);-webkit-background-clip:text;color:transparent}
   p{margin:22px 0 0;font-size:40px;font-weight:800;color:#0b0b12;line-height:1.2}
   .chips{display:flex;gap:14px;margin-top:28px}
   .chip{font-size:28px;font-weight:900;color:#fff;padding:12px 22px;border-radius:999px}
@@ -73,7 +73,7 @@ await render(ogPage, 1200, 630, 'og-image.png', false, true);
 const ios = '../ios/App/App/Assets.xcassets';
 await render(page(fullBleed(1), 1024, 1024), 1024, 1024, `${ios}/AppIcon.appiconset/AppIcon-512@2x.png`, false);
 const splash = `<!doctype html><html><head><style>html,body{margin:0;width:2732px;height:2732px;background:#fff;display:grid;place-items:center}
-  .icon{width:560px;height:560px;filter:drop-shadow(0 30px 50px rgba(11,29,63,.3))}.icon svg{width:100%;height:100%}</style></head>
+  .icon{width:560px;height:560px;filter:drop-shadow(0 30px 50px rgba(20,14,38,.3))}.icon svg{width:100%;height:100%}</style></head>
   <body><div class="icon">${svg}</div></body></html>`;
 for (const name of ['splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']) {
   await render(splash, 2732, 2732, `${ios}/Splash.imageset/${name}`, false);

@@ -23,5 +23,5 @@ export const CONFETTI_COLORS = {
 /** The join-code letter tiles. */
 export const TILE_COLORS = ['var(--brand-1)', 'var(--brand-2)', 'var(--brand-3)', 'var(--blue)', 'var(--safe)'];
 
-/** Soft colour blobs behind the home screen. */
+/** Soft colour blobs behind Home: the three levels. */
 export const BLOB_COLORS = ['#14b8a6', '#f97316', '#8b5cf6'];

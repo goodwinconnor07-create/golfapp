@@ -55,10 +55,15 @@ test.describe('first time', () => {
   // A phone that has never opened How to play (the other tests start as if it had).
   test.use({ storageState: phone({ 'sendit.appHome': 'true' }) });
 
-  test('Home is the logo and New game', async ({ page }) => {
+  test('Home has News, and the story opens in a sheet', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'CARDSHOT' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'CardShot' })).toBeVisible();
     await shot(page, '01a-home');
+    await page.getByRole('button', { name: /Version 1.0 is here/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('Pick your risk');
+    await shot(page, '01d-news');
+    await page.getByRole('button', { name: "Let's play" }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
   });
 
   test('a new host sees How to play once and can skip it', async ({ page }) => {

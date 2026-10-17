@@ -256,7 +256,8 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 Asked for by the product owner, then simplified at their request (the first version had too much on it).
 
 - **The website opens on the join screen:** the icon, "Join the game", the code box and Find game, with How to play in the top corner. While the website can still host (`VITE_WEB_HOSTING` isn't `off`), a quiet "Hosting? Start a game" link sits at the bottom; once it's off, the link goes to the App Store.
-- **The iPhone app's Home** is the floating icon, CARDSHOT, "Golf, but riskier." and the three level chips, then one row: "Back to your game" while a round is on, or else "Play again" with last round's group. Then New game, with Join a game and How to play as small links. Past games is the clock in the corner.
+- **The iPhone app's Home** (style A from the options board): light, with the three level colours softly blurred behind. A big "CardShot" title with the Past games clock, a **News** card (glass, with the fanned-cards art) that opens a sheet with the story, then one row: "Back to your game" while a round is on, or else "Play again". Then a black New game button, with Join a game and How to play as small links. The first story is "Version 1.0 is here" listing the main features; edit `NEWS` and the list in `src/screens/sheets/NewsSheet.tsx` for the next one.
+- **No app icon on Home.** Apple's guidelines say not to show your logo around the app, since people already know which app they're in; the title and colours carry the brand. The website's join screen dropped it too.
 - **Play again** starts a new game with everyone from the newest saved round (other than you) already on the list. Friends tap their name when they join. With your name known it skips the name screen.
 - **Tried and dropped:** a greeting, a "How you play" stats panel, a live game card with a progress ring, and an animated demo for first-time hosts. Too much for a party game.
 - **Development:** `sendit.appHome` set to `true` in local storage shows the app's Home in a browser (dev builds only). The e2e tests set it; tests that need a friend on the website leave it out.
@@ -266,6 +267,6 @@ Asked for by the product owner, then simplified at their request (the first vers
 Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the product owner: the app's own colours are the Safe, Bold and Insane colours.
 
 - **Brand:** `--brand` runs Safe teal into Bold orange into Insane purple. It's on New game, the CARDSHOT wordmark and the results picture. Text links and tinted rows like "Back to your game" use the Insane purple (`--brand-ink`, `--brand-bg`).
-- **Icon:** the same card flying off a tee, recoloured: a teal-to-purple sky, an orange sun and flag, and a teal fairway. PNGs, the iPhone icon and the launch screen are regenerated with `npm run icons`.
+- **Icon:** three fanned cards (Safe teal with the shield, Bold orange with the flame on top, Insane purple with the bolt) on deep plum with soft glows. Regenerate the PNGs, iPhone icon and launch screen with `npm run icons`.
 - **Text:** a deep plum ink (#1a1230) instead of near-black, and slightly warmer greys.
 - **Unchanged:** green for go buttons and blue for Share.

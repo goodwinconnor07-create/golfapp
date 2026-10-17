@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { loadHistory, type GameRecord } from '../state/persist';
 import { appHome } from '../state/platform';
-import { navigate, startNewGame, useApp } from '../state/store';
-import { Avatar, TierChip } from '../ui/components';
+import { navigate, openSheet, startNewGame, useApp } from '../state/store';
+import { Avatar, Blobs } from '../ui/components';
 import { colourWipe } from '../ui/effects';
 import { joinNames } from '../ui/format';
 import { ArrowIcon, ClockIcon } from '../ui/Icons';
 import { Join } from './Join';
+import { NEWS } from './sheets/NewsSheet';
 
 /** The iPhone app opens on the host's Home; the website opens straight on the join screen. */
 export function Home() {
@@ -33,22 +34,32 @@ function HostHome() {
 
   return (
     <div className="screen home">
-      <button type="button" className="icon-btn press home-corner" aria-label="Past games" onClick={() => navigate({ name: 'history' })}>
-        <ClockIcon width={24} height={24} />
-      </button>
+      <Blobs />
+      <div className="home-head">
+        <h1>CardShot</h1>
+        <button type="button" className="icon-btn press" aria-label="Past games" onClick={() => navigate({ name: 'history' })}>
+          <ClockIcon width={24} height={24} />
+        </button>
+      </div>
       <div className="screen-body home-body">
-        <div className="home-hero">
-          <img className="home-icon" src="/icons/icon.svg" alt="" width={104} height={104} />
-          <h1 className="logo-word">CARDSHOT</h1>
-          <p className="home-tag">Golf, but riskier.</p>
-          <div className="tier-row">
-            <TierChip tier="safe" />
-            <TierChip tier="bold" />
-            <TierChip tier="insane" />
-          </div>
-        </div>
+        <section className="home-news" aria-label="News">
+          <p className="section-title">News</p>
+          <button type="button" className="news-card press" onClick={() => openSheet({ name: 'news' })}>
+            <span className="news-art" aria-hidden>
+              <i className="news-card-safe" />
+              <i className="news-card-insane" />
+              <i className="news-card-bold" />
+            </span>
+            <span className="news-text">
+              <span className="news-tag">{NEWS.tag}</span>
+              <b>{NEWS.title}</b>
+              <small>{NEWS.text}</small>
+            </span>
+          </button>
+        </section>
+        <div className="home-spacer" />
         {active && (
-          <button type="button" className="home-row home-live press" onClick={() => navigate({ name: 'game' })}>
+          <button type="button" className="home-row press" onClick={() => navigate({ name: 'game' })}>
             <ArrowIcon width={22} height={22} />
             <span className="home-row-text">
               <b>Back to your game</b>
@@ -74,8 +85,8 @@ function HostHome() {
           </button>
         )}
       </div>
-      <div className="screen-foot clear home-foot">
-        <button type="button" className="btn btn-xl btn-brand" onClick={(e) => colourWipe(e, () => startNewGame())}>
+      <div className="screen-foot home-foot">
+        <button type="button" className="btn btn-xl btn-dark" onClick={(e) => colourWipe(e, () => startNewGame())}>
           New game
         </button>
         <div className="home-links">

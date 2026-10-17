@@ -120,6 +120,11 @@
   --insane-lo: #a21caf;
   --insane-bg: #f4ecff;
   --insane-ink: #a21caf;
+  --safe-hi: #2dd4bf;
+  --insane-hi: #a78bfa;
+  /* The News card's art: the icon's deep plum. */
+  --news-art-top: #2a1f4d;
+  --news-art-bottom: #140e26;
 
   /* ── Elevation: three soft levels. */
   --shadow-sm: 0 2px 8px -4px rgba(18, 18, 40, 0.3);

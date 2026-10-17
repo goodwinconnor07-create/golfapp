@@ -4,7 +4,7 @@ import { fetchGameInfo } from '../state/api';
 import { APP_STORE_URL, canHost } from '../state/platform';
 import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, startNewGame, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar, HeroPicture } from '../ui/components';
+import { Avatar, BackBar, Blobs, HeroPicture } from '../ui/components';
 
 /**
  * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
@@ -53,6 +53,7 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
     <div className={`screen${home ? ' join-home' : ''}`}>
       {home ? (
         <>
+          <Blobs />
           <div className="join-home-top">
             <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
               How to play
@@ -65,7 +66,7 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
       <div className="screen-body">
         {home ? (
           <div className="join-home-hero">
-            <img className="join-home-icon" src="/icons/icon.svg" alt="CardShot" width={96} height={96} />
+            <p className="join-home-brand">CardShot</p>
             <h1>Join the game</h1>
             <p>Get the 5-letter code from the host, or scan their QR code.</p>
           </div>
