@@ -239,3 +239,8 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 - Game options moved from the footer to a gear icon in the header, beside the menu. Only the host sees it in the lobby.
 - Join links are now `https://cardshot.link/CODE`. Old `/j/CODE` links still work. `cardshot.link` has to be a zone in the Cloudflare account; the Worker is attached to it in `wrangler.jsonc`. Set `VITE_SHORT_LINK_HOST` to use a different domain.
 - Not done yet: the iPhone app opening `cardshot.link` links directly (needs the domain added to the app's associated domains and an `apple-app-site-association` file served there).
+
+## The iPhone app uses cardshot.link (Oct 2026)
+
+- `npm run build:ios` now points the app at `https://cardshot.link` (it was the `workers.dev` address). Links shared from the app use it too. The old address still works, so older TestFlight builds keep running.
+- Invite links open the app from both addresses: `applinks:cardshot.link` was added to the entitlements next to the old one.

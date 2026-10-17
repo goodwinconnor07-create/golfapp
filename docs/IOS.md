@@ -9,7 +9,7 @@ same Cloudflare server as the website.
 - `capacitor.config.ts`: app ID `app.cardshot.ios`, name, splash screen.
 - `ios/`: the Xcode project (Swift Package Manager, no CocoaPods). iPhone only, portrait only.
 - `src/state/platform.ts`: knows if it's running in the app, and where the server is
-  (`VITE_SERVER_URL`, baked in by `npm run build:ios`).
+  (`VITE_SERVER_URL`, baked in by `npm run build:ios`; it defaults to `https://cardshot.link`).
 - `src/state/native.ts`: real haptics, the iOS share sheet, a native backup of saved games (iOS
   can clear a web view's storage), the status bar, and invite links that open the app.
 - `worker/index.ts`: lets the app's pages (`capacitor://localhost`) call the API.

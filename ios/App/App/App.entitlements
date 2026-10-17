@@ -9,6 +9,7 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>applinks:cardshot.link</string>
 		<string>applinks:send-it.kavishahtemu11.workers.dev</string>
 	</array>
 </dict>
