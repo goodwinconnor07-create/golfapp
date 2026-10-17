@@ -107,7 +107,7 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
       <div className="screen-foot">
         <button
           type="button"
-          className={`btn btn-xl ${home ? 'btn-brand' : 'btn-blue'}`}
+          className={`btn btn-xl ${home ? 'btn-pine' : 'btn-blue'}`}
           disabled={code.length !== CODE_LENGTH || busy}
           onClick={() => void lookUp(code)}
         >

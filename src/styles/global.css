@@ -71,7 +71,13 @@
   --sky-1: #2f7be0;
   --sky-2: #4a9cf0;
   --logo: linear-gradient(100deg, var(--sky-1) 0%, var(--sky-2) 100%);
-  /* The rest of the icon's scene, for Home's header and the game demo. */
+  /* Home's accent: white, with a little dark green. */
+  --pine: #14532d;
+  --pine-lo: #0f3d22;
+  --pine-hi: #86efac;
+  --pine-bg: #f1f7f3;
+  --pine-ink: #166534;
+  /* The rest of the icon's scene, for the game demo's turf. */
   --sky-3: #5fa8f2;
   --sky-4: #a9d6ff;
   --sky: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-3) 55%, var(--sky-4) 100%);
