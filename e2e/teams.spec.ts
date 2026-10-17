@@ -51,7 +51,9 @@ test('2v2 teams: a team shares one card and scores as a pair', async ({ page }) 
   await pickAndReveal(page, 'Bold');
   await expect(page.getByRole('heading', { name: 'Jo' })).toBeVisible();
   await pickAndReveal(page, 'Safe');
-  await passGroupReveal(page);
+  await expect(page.locator('.reveal-row')).toHaveCount(2);
+  await expect(page.locator('.reveal-row').first()).toContainText('Sam & Alex');
+  await passGroupReveal(page, 'teams-group-reveal');
   await shot(page, 'teams-play');
   await page.getByRole('button', { name: /Hole done/ }).click();
 

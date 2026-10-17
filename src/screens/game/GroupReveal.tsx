@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEntry, isDoubleHole, type Game } from '../../game';
+import { getEntry, isDoubleHole, units, type Game } from '../../game';
 import { doneGroupReveal } from '../../state/store';
 import { Avatar, TierChip } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
@@ -61,12 +61,22 @@ export function GroupReveal({ game }: { game: Game }) {
           </div>
         ) : (
           <div className="stack">
-            {game.players.map((p, i) => {
-              const e = getEntry(game, p.id, h);
-              const open = i < shown;
+            {/* In 2v2 a team shares one card, so each team is one row with both pictures. */}
+            {units(game).map((p) => {
+              const members = p.members ?? [p];
+              const e = getEntry(game, members[0].id, h);
+              const open = Math.min(...members.map((m) => game.players.indexOf(m))) < shown;
               return (
                 <div key={p.id} className={`reveal-row ${open ? 'open' : ''} ${open && e?.tier ? `reveal-${e.tier}` : ''}`}>
-                  <Avatar player={p} size={44} />
+                  {p.members ? (
+                    <span className="reveal-pair">
+                      {p.members.map((m) => (
+                        <Avatar key={m.id} player={m} size={44} />
+                      ))}
+                    </span>
+                  ) : (
+                    <Avatar player={p} size={44} />
+                  )}
                   <span className="reveal-name">
                     {p.name}
                     {open && e?.freePass && <small className="reveal-free">🛟 Free shot</small>}
