@@ -47,5 +47,20 @@ export function joinLink(code: string): string {
  */
 export const canHost = isNative || import.meta.env.VITE_WEB_HOSTING !== 'off';
 
+/**
+ * Which Home to show. The iPhone app gets the host's Home (your game, how you play, New game);
+ * the website opens straight on the join screen. In development, sendit.appHome in localStorage
+ * shows the app's Home in a browser, which is how the e2e tests drive it.
+ */
+export const appHome = isNative || (import.meta.env.DEV && devFlag('sendit.appHome'));
+
+function devFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 /** Where the website sends would-be hosts once web hosting is off. */
 export const APP_STORE_URL = import.meta.env.VITE_APP_STORE_URL ?? 'https://apps.apple.com/';

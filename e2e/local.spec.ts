@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { enterName, enterScore, passGroupReveal, pickAndReveal, shot } from './helpers';
+import { enterName, enterScore, passGroupReveal, pickAndReveal, shot, startGame } from './helpers';
 
 test('a one-phone round: setup, picks, scores, fixes and final results', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CARDSHOT' })).toBeVisible();
   await shot(page, '01-home');
 
-  await page.getByRole('button', { name: 'New game' }).click();
+  await startGame(page);
   await shot(page, '02-setup-players-empty');
   await enterName(page, 'Sam');
   await shot(page, '02-setup-players');
@@ -155,7 +155,7 @@ test('how to play explains the stakes', async ({ page }) => {
     if (i < titles.length - 1) await page.getByRole('button', { name: 'Next' }).click();
   }
   await page.getByRole('button', { name: "Let's play" }).click();
-  await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start your first game' })).toBeVisible();
 });
 
 test('picking a course fills in the pars', async ({ page }) => {
@@ -190,7 +190,7 @@ test('picking a course fills in the pars', async ({ page }) => {
       }),
   );
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
+  await startGame(page);
   await enterName(page, 'Sam');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByLabel('Search for your course').fill('palmer');
@@ -304,7 +304,7 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
 
 test('pick a picture: emoji and colour, remembered and changeable in the lobby', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
+  await startGame(page);
   await page.getByRole('button', { name: 'Add your name and picture' }).click();
   await page.getByRole('textbox', { name: 'Your name' }).fill('Sam');
   await page.getByRole('radio', { name: '🐐' }).click();
@@ -336,7 +336,7 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
 
 test('sheets slide away: swipe down to close, a short drag springs back', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
+  await startGame(page);
   await page.getByRole('button', { name: 'Add your name and picture' }).click();
   const sheet = page.getByRole('dialog');
   await expect(sheet).toBeVisible();

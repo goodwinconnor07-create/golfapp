@@ -15,6 +15,7 @@ import {
   cryptoRng,
   holeResult,
   standings,
+  playStats,
   newId,
   normalizeCode,
   type Action,
@@ -282,6 +283,7 @@ function recordIfFinished(game: Game | null): void {
   if (game?.status !== 'finished') return;
   const rows = standings(game);
   if (!rows.some((r) => r.totals.holes > 0)) return;
+  const me = game.hostDeviceId === state.deviceId ? rows.find((r) => r.player.deviceId === state.deviceId) : undefined;
   saveRecord({
     id: game.id,
     finishedAt: game.updatedAt,
@@ -291,10 +293,12 @@ function recordIfFinished(game: Game | null): void {
     players: rows.map((r) => ({
       name: r.player.name,
       color: r.player.color,
+      ...(r.player.emoji ? { emoji: r.player.emoji } : {}),
       rank: r.rank,
       toPar: r.totals.toPar,
       strokes: r.totals.real,
     })),
+    ...(me ? { mine: { ...playStats(game, me.player.id), name: me.player.name, rank: me.rank } } : {}),
   });
 }
 
@@ -445,11 +449,16 @@ export function setDraftNames(names: string[]): void {
   set({ draft: { ...state.draft, names } });
 }
 
-export function startNewGame(): void {
+/**
+ * `others`: "Play again" on Home starts with last round's group already on the list, so each
+ * friend just taps their name when they join. With the host's name known it skips the name screen.
+ */
+export function startNewGame(others: string[] = []): void {
   const begin = () => {
-    set({ draft: { names: [state.profileName], course: null } });
+    set({ draft: { names: [state.profileName, ...others], course: null } });
     // A first-time host sees the rules once, ahead of the name screen. Finishing or skipping lands on it.
     if (needsHowTo()) resetTo({ name: 'setupPlayers' }, { name: 'howto', intro: true });
+    else if (others.length > 0 && cleanName(state.profileName)) resetTo({ name: 'setupCourse' });
     else resetTo({ name: 'setupPlayers' });
   };
   const g = state.game;

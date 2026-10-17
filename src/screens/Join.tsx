@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { cleanName, CODE_LENGTH, isNameBlocked, LIMITS, NAME_BLOCKED, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
-import { confirm, joinGame, navigate, openSheet, resetTo, useApp } from '../state/store';
+import { APP_STORE_URL, canHost } from '../state/platform';
+import { confirm, joinGame, navigate, openSheet, resetTo, startNewGame, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
 import { Avatar, BackBar, HeroPicture } from '../ui/components';
 
-/** Step 1: type (or arrive with) the 5-letter code. */
-export function Join({ initialCode }: { initialCode?: string }) {
+/**
+ * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
+ * screen under a sky header, with How to play and a way for hosts to get started.
+ */
+export function Join({ initialCode, home = false }: { initialCode?: string; home?: boolean }) {
   const [code, setCode] = useState(normalizeCode(initialCode ?? ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -46,13 +50,34 @@ export function Join({ initialCode }: { initialCode?: string }) {
   }, []);
 
   return (
-    <div className="screen">
-      <BackBar title="Join a game" />
+    <div className={`screen${home ? ' join-home' : ''}`}>
+      {home ? (
+        <>
+          <span className="home-sky join-sky" aria-hidden />
+          <div className="join-home-top">
+            <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
+              How to play
+            </button>
+          </div>
+        </>
+      ) : (
+        <BackBar title="Join a game" />
+      )}
       <div className="screen-body">
-        <h1 className="h1">Enter the code</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          Get the 5-letter code from whoever started the game, or scan their QR code.
-        </p>
+        {home ? (
+          <div className="join-home-hero">
+            <img className="join-home-icon" src="/icons/icon.svg" alt="CardShot" width={96} height={96} />
+            <h1>Join the game</h1>
+            <p>Get the 5-letter code from the host, or scan their QR code.</p>
+          </div>
+        ) : (
+          <>
+            <h1 className="h1">Enter the code</h1>
+            <p className="muted" style={{ margin: 0 }}>
+              Get the 5-letter code from whoever started the game, or scan their QR code.
+            </p>
+          </>
+        )}
         <div className="code-input">
           <input
             value={code}
@@ -69,7 +94,7 @@ export function Join({ initialCode }: { initialCode?: string }) {
             maxLength={10}
             placeholder="CODE"
             aria-label="Game code"
-            autoFocus={!initialCode}
+            autoFocus={!initialCode && !home}
           />
         </div>
         {error && (
@@ -82,12 +107,22 @@ export function Join({ initialCode }: { initialCode?: string }) {
       <div className="screen-foot">
         <button
           type="button"
-          className="btn btn-xl btn-blue"
+          className={`btn btn-xl ${home ? 'btn-brand' : 'btn-blue'}`}
           disabled={code.length !== CODE_LENGTH || busy}
           onClick={() => void lookUp(code)}
         >
           {busy ? <span className="spinner" aria-label="Looking for the game" /> : 'Find game'}
         </button>
+        {home &&
+          (canHost ? (
+            <button type="button" className="btn btn-link join-home-host" onClick={() => startNewGame()}>
+              Hosting? Start a game
+            </button>
+          ) : (
+            <a className="btn btn-link join-home-host" href={APP_STORE_URL}>
+              Hosting? Get the iPhone app
+            </a>
+          ))}
       </div>
     </div>
   );

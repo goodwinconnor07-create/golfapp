@@ -4,13 +4,14 @@ import { BackBar, HeroPicture } from '../ui/components';
 
 /** Setup step 1: just the host's name. Everyone else joins from their own phone with the code. */
 export function SetupPlayers() {
-  const name = useApp((s) => s.draft.names[0] ?? '');
+  const names = useApp((s) => s.draft.names);
+  const name = names[0] ?? '';
   const blocked = isNameBlocked(name);
   const valid = Boolean(cleanName(name)) && !blocked;
   const look = useApp((s) => s.profileLook);
   const next = () => {
-    // Older drafts could hold other players' names: only the host's carries on.
-    setDraftNames([name]);
+    // Anyone after the host came from "Play again" and stays on the list.
+    setDraftNames([name, ...names.slice(1)]);
     navigate({ name: 'setupCourse' });
   };
 

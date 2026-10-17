@@ -18,6 +18,14 @@ export async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
+/**
+ * Taps whichever button starts a game on Home: New game, Start your first game (no rounds yet),
+ * or the website's Hosting link (phones without the app's Home, like the online tests' extra phones).
+ */
+export async function startGame(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^(New game|Start your first game|Hosting\? Start a game)$/ }).first().click();
+}
+
 /** On the new game screen: tap the picture, type the name in the sheet, close it. */
 export async function enterName(page: Page, name: string) {
   await page.getByRole('button', { name: /your name and picture/ }).click();
@@ -27,7 +35,7 @@ export async function enterName(page: Page, name: string) {
 }
 
 export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'Back 9' | '18 holes' = 'Front 9') {
-  await page.getByRole('button', { name: 'New game' }).click();
+  await startGame(page);
   await enterName(page, names[0]);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();

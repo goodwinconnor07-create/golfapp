@@ -1,23 +1,27 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { enterScore, gameCode, holeDoneAndScore, newGame, passGroupReveal, passResultsReveal, pickAndReveal, shot } from './helpers';
 
-async function phone(browser: Browser): Promise<Page> {
+/** web: a phone on the website (no app Home), like a friend opening the link. */
+async function phone(browser: Browser, web = false): Promise<Page> {
   const { viewport, deviceScaleFactor, isMobile, hasTouch, baseURL } = test.info().project.use;
-  const context = await browser.newContext({ viewport, deviceScaleFactor, isMobile, hasTouch, baseURL });
+  // Left out, a new phone gets the config's storage (the app's Home); passed, it replaces it.
+  const storage = web
+    ? { storageState: { cookies: [], origins: [{ origin: new URL(baseURL!).origin, localStorage: [{ name: 'sendit.howto', value: 'true' }] }] } }
+    : {};
+  const context = await browser.newContext({ viewport, deviceScaleFactor, isMobile, hasTouch, baseURL, ...storage });
   return context.newPage();
 }
 
 test('a friend claims the name the host already typed in', async ({ browser }) => {
   const host = await phone(browser);
-  const friend = await phone(browser);
+  const friend = await phone(browser, true);
 
   await host.goto('/');
   await newGame(host, ['Hana', 'Ollie']);
   const code = await gameCode(host, '.invite-panel');
 
-  // Typing the code by hand works too (lowercase and spaces are fine).
+  // Typing the code by hand works too (lowercase and spaces are fine). The website opens on it.
   await friend.goto('/');
-  await friend.getByRole('button', { name: 'Join a game' }).click();
   await friend.getByLabel('Game code').fill(code.toLowerCase().split('').join(' '));
   await expect(friend.getByText('Who are you?')).toBeVisible();
   await friend.locator('.player-row', { hasText: 'Ollie' }).click();

@@ -17,10 +17,18 @@ export default defineConfig({
     baseURL,
     browserName: (process.env.BROWSER as 'webkit') ?? 'chromium',
     // A first-time host is shown How to play before the name screen. Tests start as if they've seen it;
-    // the first-time test clears this.
+    // the first-time test clears this. sendit.appHome shows the iPhone app's Home (development only).
     storageState: {
       cookies: [],
-      origins: [{ origin: new URL(baseURL).origin, localStorage: [{ name: 'sendit.howto', value: 'true' }] }],
+      origins: [
+        {
+          origin: new URL(baseURL).origin,
+          localStorage: [
+            { name: 'sendit.howto', value: 'true' },
+            { name: 'sendit.appHome', value: 'true' },
+          ],
+        },
+      ],
     },
     // SMALL=1 checks a small phone (360×740) instead of a typical one.
     viewport: process.env.SMALL ? { width: 360, height: 740 } : { width: 390, height: 844 },

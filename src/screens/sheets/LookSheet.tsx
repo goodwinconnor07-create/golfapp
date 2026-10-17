@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { isNameBlocked, LIMITS, NAME_BLOCKED } from '../../game';
-import { closeSheet, setDraftNames, setProfileLook, useApp } from '../../state/store';
+import { closeSheet, getState, setDraftNames, setProfileLook, useApp } from '../../state/store';
 import { Avatar, LookPicker, Sheet } from '../../ui/components';
 
 /**
@@ -33,7 +33,8 @@ export function LookSheet({ typed, editName = false }: { typed?: string; editNam
             autoCapitalize="words"
             enterKeyHint="done"
             aria-label="Your name"
-            onChange={(e) => setDraftNames([e.target.value])}
+            // Anyone after the host came from "Play again" and stays on the list.
+            onChange={(e) => setDraftNames([e.target.value, ...getState().draft.names.slice(1)])}
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur();
             }}
