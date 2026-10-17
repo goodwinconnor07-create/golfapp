@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { enterScore, passGroupReveal, pickAndReveal, shot } from './helpers';
+import { enterName, enterScore, passGroupReveal, pickAndReveal, shot, startGame } from './helpers';
 
 test('a one-phone round: setup, picks, scores, fixes and final results', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CARDSHOT' })).toBeVisible();
   await shot(page, '01-home');
 
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill('Sam');
+  await startGame(page);
+  await shot(page, '02-setup-players-empty');
+  await enterName(page, 'Sam');
   await shot(page, '02-setup-players');
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Where are you playing?')).toBeVisible();
@@ -26,7 +27,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.getByRole('button', { name: /No phone\? Add them/ }).click();
   await page.getByLabel('Name').fill('Alex');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.locator('.player-row', { hasText: 'Alex' })).toBeVisible();
+  await expect(page.locator('.roster-item', { hasText: 'Alex' })).toBeVisible();
   await shot(page, '04b-lobby-with-guest');
   await page.getByRole('button', { name: 'Game options' }).click();
   await shot(page, '05-options');
@@ -71,12 +72,15 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await expect(rows).toHaveCount(2);
 
   // Leaderboard and scorecard keep real strokes separate from game score.
-  await page.getByRole('button', { name: 'Leaderboard' }).click();
+  await page.getByRole('button', { name: /^Standings/ }).click();
   await shot(page, '13-leaderboard');
   // One golf-style leaderboard; strokes taken show as a detail line.
   await expect(page.getByRole('tab')).toHaveCount(0);
-  await expect(page.locator('.board-row', { hasText: 'Sam' })).toContainText('5 strokes');
-  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' })).toContainText('5 strokes');
+  // Tap a row: the round hole by hole, and how golf and cards add up.
+  await page.locator('.standings-row', { hasText: 'Sam' }).getByRole('button').click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.sum-line')).toContainText('Golf +1');
+  await page.getByRole('button', { name: 'Close' }).click();
 
   await page.getByRole('button', { name: 'Fix a score' }).click();
   await expect(page.getByRole('heading', { name: 'Scorecard' }).or(page.getByText('Scorecard'))).toBeVisible();
@@ -186,19 +190,18 @@ test('picking a course fills in the pars', async ({ page }) => {
       }),
   );
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByRole('textbox').first().fill('Sam');
+  await startGame(page);
+  await enterName(page, 'Sam');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByLabel('Search for your course').fill('palmer');
   await page.getByRole('button', { name: /Palmer Links/ }).click();
-  await expect(page.getByText('pars filled in for you')).toBeVisible();
   await expect(page.getByRole('button', { name: /Front 9/ })).toContainText('par 36');
   await shot(page, '27-holes-with-course');
   await page.getByRole('button', { name: /Front 9/ }).click();
   await page.getByRole('button', { name: "Let's go!" }).click();
   await page.getByRole('button', { name: 'Start anyway' }).click();
   // No par question: hole 1's par came from the course.
-  await expect(page.locator('.par-chip')).toHaveText('PAR 4');
+  await expect(page.locator('.par-tile')).toHaveAccessibleName('Par 4');
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
 
   // The course is remembered for next time.
@@ -253,14 +256,14 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
 
   // The leaderboard shows who moved after the last hole.
   await page.reload();
-  await page.getByRole('button', { name: 'Leaderboard' }).click();
-  await expect(page.locator('.board-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
-  await expect(page.locator('.board-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
-  // Race style: big places, and a chip for places gained or lost.
-  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.race-place')).toContainText('1st');
-  await expect(page.locator('.board-row', { hasText: 'Sam' }).locator('.move-chip.up')).toHaveText('▲1');
+  await page.getByRole('button', { name: /^Standings/ }).click();
+  await expect(page.locator('.standings-row', { hasText: 'Sam' })).toHaveClass(/climbed/);
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.move-chip')).toHaveText('▲1');
+  await expect(page.locator('.standings-row', { hasText: 'Alex' })).toHaveClass(/dropped/);
+  // Race style: places as "1st", and a chip for places gained or lost.
+  await expect(page.locator('.standings-row', { hasText: 'Sam' }).locator('.standings-rank')).toContainText('1st');
   await shot(page, '34-leaderboard-moves');
-  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
 
   // The scorecard marks skins in the winner's colour: hole 1 went to Alex, hole 2 tied and
   // rolled over, so Sam's win on hole 3 is worth 2.
@@ -301,23 +304,23 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
 
 test('pick a picture: emoji and colour, remembered and changeable in the lobby', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill('Sam');
-  await page.getByRole('button', { name: 'Pick a picture' }).click();
-  await page.getByRole('radio', { name: '🦈' }).click();
+  await startGame(page);
+  await page.getByRole('button', { name: 'Add your name and picture' }).click();
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Sam');
+  await page.getByRole('radio', { name: '🐐' }).click();
   await page.getByRole('radio', { name: 'Colour 4' }).click();
-  await expect(page.locator('.look-preview .avatar')).toHaveText('🦈');
+  await expect(page.locator('.look-preview .avatar')).toHaveText('🐐');
   await shot(page, '40-pick-picture');
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(page.locator('.name-row .avatar')).toHaveText('🦈');
+  await expect(page.locator('.hero-pic .avatar')).toHaveText('🐐');
   await shot(page, '41-name-with-picture');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: /Front 9/ }).click();
 
-  const sam = page.locator('.player-row', { hasText: 'Sam' });
-  await expect(sam.locator('.avatar')).toHaveText('🦈');
+  const sam = page.locator('.roster-item', { hasText: 'Sam' });
+  await expect(sam.locator('.avatar')).toHaveText('🐐');
 
   // Change it from the lobby: back to the letter, new colour.
   await sam.click();
@@ -333,9 +336,8 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
 
 test('sheets slide away: swipe down to close, a short drag springs back', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill('Sam');
-  await page.getByRole('button', { name: 'Change your picture' }).click();
+  await startGame(page);
+  await page.getByRole('button', { name: 'Add your name and picture' }).click();
   const sheet = page.getByRole('dialog');
   await expect(sheet).toBeVisible();
   await page.waitForTimeout(400); // let it finish sliding up before measuring

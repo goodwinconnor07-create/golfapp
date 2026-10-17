@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { shot } from './helpers';
+import { enterName, shot, startGame } from './helpers';
 
 // While something loads, a skeleton of what's coming shows instead of a blank screen.
 
@@ -9,8 +9,8 @@ test('course search shows skeleton rows while it waits', async ({ page }) => {
     await route.fulfill({ json: { courses: [] } });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill('Ava');
+  await startGame(page);
+  await enterName(page, 'Ava');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByLabel('Search for your course').fill('Karana');
   await expect(page.getByRole('status', { name: 'Searching' })).toBeVisible();
@@ -23,8 +23,8 @@ test('the lobby shows a skeleton invite while the code is on its way', async ({ 
     await route.continue();
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill('Ava');
+  await startGame(page);
+  await enterName(page, 'Ava');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: /Front 9/ }).click();

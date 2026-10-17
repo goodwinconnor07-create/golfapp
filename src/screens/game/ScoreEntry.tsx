@@ -31,6 +31,15 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
           </h1>
         </div>
 
+        {/* Cards the strokes settle on their own: a small note above the counter, no taps needed. */}
+        {settled && (
+          <div className={`auto-result ${auto} pop`} key={auto} role="status">
+            {auto === 'made' ? <CheckIcon width={18} height={18} /> : <CrossIcon width={18} height={18} />}
+            <b>{auto === 'made' ? 'Completed' : 'Failed'}</b>
+            <span>{auto === 'made' ? 'your strokes prove it' : 'not possible with that many strokes'}</span>
+          </div>
+        )}
+
         <div className="tile score-tile">
           <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label="Strokes taken" />
         </div>
@@ -48,15 +57,10 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
         <ChallengeCard compact tier={entry.tier} cardId={entry.cardId} stakes={cardStakes(game, h, entry.tier, entry.freePass)} />
       </div>
 
-      <div className="screen-foot">
+      <div className="screen-foot score-foot">
         {settled ? (
           <>
-            <div className={`auto-result ${auto} pop`} key={auto}>
-              {auto === 'made' ? <CheckIcon width={28} height={28} /> : <CrossIcon width={28} height={28} />}
-              {auto === 'made' ? 'Completed' : 'Failed'}
-              <small>{auto === 'made' ? '· your strokes prove it' : '· not possible with that many strokes'}</small>
-            </div>
-            <button type="button" className="btn btn-xl btn-green" onClick={() => send()}>
+            <button type="button" className="btn btn-green" onClick={() => send()}>
               Save score
             </button>
             {card.situational && (
@@ -68,10 +72,10 @@ export function ScoreEntry({ game, playerId }: { game: Game; playerId: string })
         ) : (
           <>
             <div className="made-missed">
-              <button type="button" className="btn btn-xl btn-green" onClick={() => send('made')}>
+              <button type="button" className="btn btn-green" onClick={() => send('made')}>
                 <CheckIcon /> Completed
               </button>
-              <button type="button" className="btn btn-xl btn-red" onClick={() => send('missed')}>
+              <button type="button" className="btn btn-red" onClick={() => send('missed')}>
                 <CrossIcon /> Failed
               </button>
             </div>

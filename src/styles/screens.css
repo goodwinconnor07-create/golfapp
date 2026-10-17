@@ -2,45 +2,285 @@
 
 /* ── Home ────────────────────────────────────────────────────────────────── */
 
-.home-hero {
-  gap: 12px;
-  padding-top: 7vh;
-}
-
-.home-icon {
-  width: 112px;
-  height: 112px;
-  /* The app icon itself (public/icons/icon.svg): a card shot out of a cannon. */
-  display: block;
-  border-radius: var(--r-xl);
-  box-shadow: 0 24px 40px -18px rgba(139, 92, 246, 0.7);
-  animation:
-    pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both,
-    float 3.2s ease-in-out 0.6s infinite alternate;
-  color: var(--on-color);
-}
-
-@keyframes float {
-  to {
-    transform: translateY(-8px) rotate(-3deg);
-  }
-}
-
-.logo-word {
-  /* CARDSHOT is one long word: this size fits it on a 360px phone with room to spare. */
-  font-size: var(--fs-display-4);
-  font-style: italic;
-  letter-spacing: -0.04em;
-  padding-right: 8px;
-  margin-top: 12px;
-}
-
-.tier-row {
+/* The iPhone app's Home: light, with the level colours blurred behind. A big title, News, then New game. */
+.home-head {
   display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 16px;
+}
+
+.home-head h1 {
+  margin: 0;
+  font-size: var(--fs-display-1);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.home-body {
+  gap: 12px;
+  /* Clears the footer's glass edge, so Play again never tucks under it. */
+  padding-bottom: 32px;
+}
+
+.home-news .section-title {
+  margin: 0 0 8px;
+}
+
+/* The News card: a feature card, like the App Store's Today tab. The art is the icon's fanned hand. */
+.news-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-xl);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-edge),
+    var(--shadow-soft);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.news-art {
+  position: relative;
+  display: block;
+  height: 200px;
+  background: linear-gradient(160deg, var(--news-art-top) 0%, var(--news-art-bottom) 100%);
+}
+
+.news-art i {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 84px;
+  height: 120px;
+  margin-left: -42px;
+  border: 3px solid var(--surface);
+  border-radius: var(--r-sm);
+  transform-origin: 50% 160%;
+  box-shadow: var(--shadow);
+}
+
+.news-card-safe {
+  background: linear-gradient(160deg, var(--safe-hi) 0%, var(--safe) 100%);
+  transform: rotate(-22deg);
+}
+
+.news-card-insane {
+  background: linear-gradient(160deg, var(--insane-hi) 0%, var(--insane) 100%);
+  transform: rotate(22deg);
+}
+
+.news-card-bold {
+  background: linear-gradient(160deg, var(--bold-hi) 0%, var(--bold) 100%);
+  top: 28px !important;
+}
+
+.news-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 20px 20px;
+}
+
+.news-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-micro);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.news-text b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+}
+
+.news-text small {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 8px 0 24px;
+}
+
+.news-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.news-item-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--bg-2);
+  color: var(--ink);
+}
+
+.news-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.news-item-text b {
+  font-size: var(--fs-body);
+  font-weight: 800;
+}
+
+.news-item-text small {
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+}
+
+.home-spacer {
+  flex: 1;
+}
+
+/* Back to your game / Play again: one glass row, never both. */
+.home-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    var(--glass-shine),
+    0 0 0 1px var(--glass-edge);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.home-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-row-text b {
+  font-size: var(--fs-body);
+  font-weight: 900;
+}
+
+.home-row-text small {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.home-faces {
+  flex: none;
+  display: flex;
+}
+
+.home-faces .avatar {
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.home-faces .avatar + .avatar {
+  margin-left: -8px;
+}
+
+.home-foot {
+  gap: 0;
+  padding-top: 12px;
+}
+
+.home-links {
+  display: flex;
+  justify-content: space-between;
+}
+
+.home-links .btn-link {
+  width: auto;
+  min-height: 40px;
+  padding: 0 8px;
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+
+/* The website's Home: the join screen, with How to play in the corner. */
+.join-home-top {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.home-pill {
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 800;
+}
+
+.join-home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 24px;
+  text-align: center;
+}
+
+.join-home-brand {
+  margin: 0;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--ink-3);
+}
+
+.join-home-hero h1 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.join-home-hero p {
+  margin: 0;
+  max-width: 300px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+.join-home-busy {
+  align-self: center;
 }
 
 /* ── How to play ─────────────────────────────────────────────────────────── */
@@ -328,6 +568,28 @@
   gap: 16px;
 }
 
+.who-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.who-score b {
+  font-size: var(--fs-title);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.who-score small {
+  margin-top: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
 .who .h1 {
   overflow-wrap: anywhere;
 }
@@ -350,6 +612,8 @@
   width: 100%;
   min-height: 122px;
   padding: 16px 20px;
+  overflow: hidden;
+  isolation: isolate;
   border: 0;
   border-radius: var(--r-lg);
   color: var(--on-color);
@@ -363,6 +627,150 @@
     opacity 0.2s ease,
     filter 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+.tier-btn-icon,
+.tier-btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+.tier-btn-check {
+  z-index: 1;
+}
+
+/* Live shapes behind each level: decoration only, kept faint and to the right. */
+.tier-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--on-color);
+}
+
+.tier-fx-i {
+  position: absolute;
+  display: block;
+  opacity: 0.12;
+}
+
+.tier-fx-i0 {
+  right: 8px;
+  top: 12px;
+  width: 64px;
+  height: 64px;
+}
+.tier-fx-i1 {
+  right: 72px;
+  bottom: -12px;
+  width: 44px;
+  height: 44px;
+}
+.tier-fx-i2 {
+  right: 40%;
+  top: -16px;
+  width: 36px;
+  height: 36px;
+}
+
+/* Safe: light glances off each shield in turn, left to right, like the flashes on Insane. */
+.tier-fx-safe .tier-fx-i {
+  animation: fx-gleam 4.5s ease-in-out infinite;
+}
+.tier-fx-safe .tier-fx-i2 {
+  animation-delay: 0.25s;
+}
+.tier-fx-safe .tier-fx-i1 {
+  animation-delay: 0.5s;
+}
+.tier-fx-safe .tier-fx-i0 {
+  animation-delay: 0.75s;
+}
+
+.tier-fx-bold .tier-fx-i {
+  transform-origin: 50% 100%;
+  animation: fx-flicker 1.6s ease-in-out infinite;
+}
+.tier-fx-bold .tier-fx-i1 {
+  animation-delay: -0.5s;
+}
+.tier-fx-bold .tier-fx-i2 {
+  animation-delay: -1.1s;
+}
+
+.tier-fx-insane .tier-fx-i {
+  animation: fx-zap 3.2s linear infinite;
+}
+.tier-fx-insane .tier-fx-i1 {
+  animation-delay: -1.1s;
+}
+.tier-fx-insane .tier-fx-i2 {
+  animation-delay: -2.2s;
+}
+
+@keyframes fx-breathe {
+  0%,
+  100% {
+    opacity: 0.08;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.18;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes fx-gleam {
+  0%,
+  60%,
+  100% {
+    opacity: 0.1;
+    filter: none;
+  }
+  70% {
+    opacity: 0.38;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+  }
+}
+
+@keyframes fx-flicker {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(1, 1) translateY(0);
+  }
+  30% {
+    opacity: 0.2;
+    transform: scale(0.94, 1.08) translateY(-3px);
+  }
+  60% {
+    opacity: 0.13;
+    transform: scale(1.04, 0.95) translateY(-1px);
+  }
+}
+
+@keyframes fx-zap {
+  0%,
+  88%,
+  100% {
+    opacity: 0.08;
+  }
+  90% {
+    opacity: 0.32;
+  }
+  92% {
+    opacity: 0.1;
+  }
+  94% {
+    opacity: 0.28;
+  }
+}
+
+/* Reduce Motion: keep the shapes, still and faint. */
+@media (prefers-reduced-motion: reduce) {
+  .tier-fx-i {
+    animation: none !important;
+  }
 }
 
 .tier-btn-bold {
@@ -483,14 +891,20 @@
   flex: none;
 }
 
+/* "Completed · your strokes prove it": a slim banner above the stroke counter. */
 .auto-result {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  min-height: 60px;
-  border-radius: var(--r-md);
-  font-size: var(--fs-h3);
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  text-align: center;
+}
+
+.auto-result b {
   font-weight: 900;
 }
 
@@ -504,10 +918,8 @@
   color: var(--red-ink);
 }
 
-.auto-result small {
-  font-size: var(--fs-body);
-  font-weight: 800;
-  opacity: 0.85;
+.score-foot {
+  gap: 8px;
 }
 
 /* ── Score splash ────────────────────────────────────────────────────────── */
@@ -1038,9 +1450,6 @@
 }
 
 @media (max-width: 360px) {
-  .logo-word {
-    font-size: var(--fs-display-4);
-  }
   .hero {
     font-size: var(--fs-display-2);
   }
@@ -1064,6 +1473,37 @@
 
 .course-row {
   min-height: 76px;
+}
+
+/* A picked course: its row stays on top and the hole choices open under it. */
+.course-open {
+  display: grid;
+  gap: 8px;
+}
+
+.hole-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.hole-choice {
+  display: grid;
+  gap: 2px;
+  min-height: 72px;
+  padding: 12px 8px;
+  color: var(--on-color);
+}
+
+.hole-choice b {
+  font-size: var(--fs-h3);
+  font-weight: 900;
+}
+
+.hole-choice small {
+  font-size: var(--fs-small);
+  font-weight: 800;
+  opacity: 0.92;
 }
 
 .course-icon {
@@ -1097,20 +1537,7 @@
   color: var(--ink-3);
 }
 
-/* Past games: a small corner button on Home, and the list it opens. */
-
-.home-corner {
-  position: absolute;
-  top: calc(env(safe-area-inset-top) + 14px);
-  right: 16px;
-  z-index: 2;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-  background: transparent;
-}
-
+/* Past games. */
 .history-row {
   display: flex;
   flex-direction: column;
@@ -1224,7 +1651,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 12px;
-  padding: 20px 16px 8px;
+  padding: 16px;
   border-radius: var(--r-lg);
   background: var(--blue-bg);
   text-align: center;
@@ -1234,55 +1661,43 @@
   margin: 0;
 }
 
-/* "Back to your game" on Home: a slim strip at the top, beside the Past games button. */
-.resume-strip {
-  position: absolute;
-  top: calc(env(safe-area-inset-top) + 14px);
-  left: 16px;
-  right: 72px;
-  z-index: 2;
+/* The short link, tap to copy: cardshot.link/ABCDE */
+.link-chip {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 48px;
-  padding: 0 16px;
+  justify-content: center;
+  gap: 4px;
+  min-height: 48px;
   border: 0;
   border-radius: var(--r-md);
-  color: var(--on-color);
-  background: linear-gradient(120deg, var(--brand-1), var(--brand-2) 55%, var(--brand-3));
-  box-shadow: 0 10px 24px -14px rgba(236, 72, 153, 0.8);
-  text-align: left;
-  font: inherit;
+  background: var(--surface);
+  color: var(--blue-ink);
+  font-size: var(--fs-lead);
+  font-weight: 700;
 }
 
-.resume-strip svg {
-  flex: none;
-}
-
-.resume-strip-text {
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.resume-strip-text b {
-  font-size: var(--fs-body);
+.link-chip b {
+  color: var(--ink);
   font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
-.resume-strip-text small {
-  font-size: var(--fs-small);
-  font-weight: 800;
-  opacity: 0.85;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.link-chip svg {
+  margin-left: 8px;
 }
 
-.home-hero.with-strip {
-  padding-top: calc(7vh + 44px);
+.invite-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.invite-actions .btn {
+  flex: 1;
+}
+
+.invite-actions .btn.icon-only {
+  flex: 0 0 64px;
+  padding: 0;
 }
 
 /* Group reveal: 3-2-1, then everyone's tier flips over. */
@@ -1541,16 +1956,6 @@
 
 .rank-move.down {
   color: var(--red);
-}
-
-.lead-banner {
-  padding: 12px 16px;
-  border-radius: var(--r-md);
-  background: linear-gradient(120deg, var(--gold-hi), var(--gold-line));
-  color: var(--gold-ink-2);
-  font-size: var(--fs-h3);
-  font-weight: 900;
-  text-align: center;
 }
 
 .tag-double {
@@ -1879,7 +2284,8 @@
   gap: 8px;
 }
 
-.topbar:has(.bell-btn) .icon-btn {
+.topbar:has(.bell-btn) .icon-btn,
+.topbar:has(.bell-btn) .par-tile {
   width: 48px;
   height: 48px;
   border-radius: var(--r-md);
@@ -2056,32 +2462,6 @@
   line-height: 1;
 }
 
-/* First open: the wordmark, tagline and level chips rise in after the logo pops. */
-.home-hero.intro .logo-word,
-.home-hero.intro .logo-word + p,
-.home-hero.intro .tier-row {
-  animation: intro-rise 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) both;
-}
-
-.home-hero.intro .logo-word {
-  animation-delay: 0.12s;
-}
-
-.home-hero.intro .logo-word + p {
-  animation-delay: 0.2s;
-}
-
-.home-hero.intro .tier-row {
-  animation-delay: 0.28s;
-}
-
-@keyframes intro-rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
 /* "2/3 cards · 13 strokes": one line under the name, never wrapping into a second. */
 .board-detail {
   font-size: var(--fs-caption);
@@ -2101,11 +2481,6 @@
   .result-row .tier-chip {
     padding: 8px;
   }
-}
-
-/* The par chip never breaks "PAR 4" over two lines. */
-.par-chip {
-  white-space: nowrap;
 }
 
 /* Dark mode: a hairline ring keeps dark avatars and swatches visible against the page. */
@@ -2386,23 +2761,25 @@
 /* The rank sits on the avatar's corner, like a notification badge. */
 .prow-rank {
   position: absolute;
-  left: -10px;
-  bottom: -8px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  left: -8px;
+  top: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  white-space: nowrap;
   border-radius: var(--r-pill);
   background: var(--contrast);
   color: var(--on-contrast);
   font-size: var(--fs-caption);
   font-weight: 900;
-  line-height: 20px;
+  line-height: 24px;
   text-align: center;
   box-shadow: 0 0 0 2.5px var(--bg-2);
   font-variant-numeric: tabular-nums;
 }
 
-.prow.first .prow-rank {
+.prow.first .prow-rank,
+.prow-avatar.first .prow-rank {
   background: var(--gold);
   color: var(--gold-ink-2);
   box-shadow: 0 0 0 2px var(--gold-bg);
@@ -3097,6 +3474,750 @@
   .move-chip,
   .overtake,
   .react-tally {
+    animation: none;
+  }
+}
+
+/* ── Results reveal: one list (Oct 2026 review) ──────────────────────────── */
+
+.reveal-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* "Total" once over the score column, instead of "To par" under every number. */
+.col-label {
+  padding: 0 16px 4px 0;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.prow-name {
+  display: flex;
+  align-items: center;
+}
+
+/* Your own row: a blue edge, so you find yourself at a glance. */
+.prow.mine {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.prow.first.mine {
+  box-shadow:
+    0 0 0 3px var(--gold-line),
+    inset 0 0 0 2px var(--blue);
+}
+
+.result-row {
+  position: relative;
+}
+
+.result-row .prow-score {
+  gap: 4px;
+}
+
+/* The hole's score landing on the total while it counts. */
+.prow-score .tick {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-caption);
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.hidden-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--ink-3);
+  letter-spacing: 0.2em;
+}
+
+.best-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* With Reduce Motion the moment's fade would jump straight to its last (invisible) frame: just show it. */
+@media (prefers-reduced-motion: reduce) {
+  .moment {
+    animation: none;
+  }
+}
+
+/* ── Live hole screen and waiting room (Oct 2026 review) ──────────────────── */
+
+.group-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.group-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 32px auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.group-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.you-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: var(--on-color);
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The level as a coloured disc with its icon (the icon carries it for colour-blind players). */
+.tier-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--on-color);
+}
+
+.tier-dot-safe {
+  background: var(--safe);
+}
+
+.tier-dot-bold {
+  background: var(--bold);
+}
+
+.tier-dot-insane {
+  background: var(--insane);
+}
+
+.group-st {
+  min-width: 88px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.group-st.st-done {
+  color: var(--blue-ink);
+}
+
+.group-st.st-scored {
+  color: var(--green-ink);
+}
+
+.group-act {
+  justify-self: end;
+}
+
+.play-who-static {
+  gap: 8px;
+}
+
+/* Your own result while you wait: the stamp lands here online. */
+.my-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.my-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.my-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.my-result-row b {
+  font-size: var(--fs-display-1);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.stamp-in {
+  animation: pop 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.room-note {
+  margin: 0;
+  font-size: var(--fs-small);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.group-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.group-card {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+/* ── Rank pill and standings sheet (Oct 2026 review) ─────────────────────── */
+
+.rank-pill {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.1;
+}
+
+.rank-pill b {
+  font-size: var(--fs-small);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-pill.lead {
+  background: var(--gold-bg);
+  box-shadow: inset 0 0 0 2px var(--gold-line);
+  color: var(--gold-ink-2);
+}
+
+.standings-sub {
+  margin: -8px 0 12px;
+  font-size: var(--fs-small);
+  font-weight: 800;
+}
+
+.you-line {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--blue-bg);
+  color: var(--blue-ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  text-align: center;
+}
+
+.standings-rows {
+  gap: 8px;
+}
+
+.standings-row {
+  display: block;
+  min-height: 0;
+  position: relative;
+  padding: 8px 16px 8px 12px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+}
+
+.standings-row.first {
+  background: linear-gradient(120deg, var(--gold-bg), var(--gold-bg-2));
+  box-shadow: 0 0 0 2px var(--gold-line);
+}
+
+.standings-row.mine {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.standings-row.first.mine {
+  box-shadow:
+    0 0 0 2px var(--gold-line),
+    inset 0 0 0 2px var(--blue);
+}
+
+.standings-line {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.standings-rank {
+  min-width: 44px;
+  text-align: center;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+}
+
+.standings-rank.p1 {
+  color: var(--gold-ink);
+}
+
+.standings-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.standings-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.standings-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.standings-total {
+  font-size: var(--fs-h1);
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Hole by hole: nine to a row, double-stakes holes marked 2×. */
+.hbh {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px 0 4px;
+}
+
+.hbh-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.hbh-cell small {
+  font-size: var(--fs-micro);
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.hbh-cell small.dbl {
+  color: var(--gold-ink);
+}
+
+.hbh-cell b {
+  font-size: var(--fs-small);
+  font-weight: 900;
+}
+
+.hbh-cell.now {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.hbh-card {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--fs-micro);
+  font-weight: 900;
+}
+
+.hbh-cell.missed .hbh-card {
+  color: var(--red-ink);
+}
+
+.hbh-empty {
+  color: var(--ink-4);
+}
+
+.sum-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+  font-weight: 900;
+  color: var(--ink-3);
+}
+
+.sum-pill {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-small);
+}
+
+.sum-line b {
+  font-size: var(--fs-h3);
+  color: var(--ink);
+}
+
+/* ── Final podium (Oct 2026 review) ──────────────────────────────────────── */
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Laid out 2-1-3; read 1-2-3. */
+.pod-1 {
+  order: 2;
+}
+
+.pod-2 {
+  order: 1;
+}
+
+.pod-3 {
+  order: 3;
+}
+
+.pod {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pod.shown > :not(.pod-block) {
+  animation: rise 0.4s ease-out both;
+}
+
+.pod-crown {
+  font-size: var(--fs-h1);
+  line-height: 1;
+  margin-bottom: -8px;
+}
+
+.pod-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-lead);
+  font-weight: 900;
+}
+
+.pod-score {
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pod-q {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  color: var(--ink-3);
+  font-size: var(--fs-h2);
+  font-weight: 900;
+}
+
+.pod-block {
+  width: 100%;
+  margin-top: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-h1);
+  font-weight: 900;
+}
+
+.pod-1 .pod-block {
+  height: 120px;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  box-shadow: none;
+  color: var(--gold-ink-2);
+}
+
+.pod-2 .pod-block {
+  height: 84px;
+}
+
+.pod-3 .pod-block {
+  height: 60px;
+}
+
+/* Lobby roster: pictures with names underneath, popping in and floating. */
+.h1-sm {
+  font-size: var(--fs-h1);
+}
+
+.roster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px 12px;
+  /* Room above and around for the float and the host's glow. */
+  padding: 16px 0 8px;
+}
+
+.roster-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 92px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.09s ease;
+}
+
+button.roster-item:active {
+  transform: scale(0.95);
+}
+
+.roster-pic {
+  display: block;
+  animation: pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+/* The picture, its shadow and the host's glow all float as one. Nothing clips it: no overflow here. */
+.roster-float {
+  position: relative;
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.45);
+  animation: roster-float 3.6s ease-in-out var(--float-delay, 0.6s) infinite;
+}
+
+.roster-float.is-host {
+  box-shadow: 0 0 0 3px var(--gold-line), 0 0 22px 6px rgba(245, 158, 11, 0.5);
+  animation: roster-float 3.6s ease-in-out var(--float-delay, 0.6s) infinite, roster-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes roster-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--gold-line), 0 0 18px 4px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--gold-hi), 0 0 30px 10px rgba(245, 158, 11, 0.65);
+  }
+}
+
+.roster-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  font-weight: 800;
+}
+
+@keyframes roster-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.waiting-line.slim {
+  min-height: 32px;
+  background: none;
+  font-size: var(--fs-body);
+  color: var(--ink-3);
+}
+
+.rules-line {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roster-pic,
+  .roster-float,
+  .roster-float.is-host {
+    animation: none;
+  }
+}
+
+/* "You" sits on the picture (and floats with it) so every name lines up. */
+.roster-float .tag-you {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 10px;
+  font-size: 12px;
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+/* Setup "What's your name?": a big picture that reacts to what you pick and type. */
+.hero-pic {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.hero-button {
+  overflow: visible;
+  transition: transform 0.09s ease;
+}
+
+.hero-button:active {
+  transform: scale(0.96);
+}
+
+.hero-tagged {
+  position: relative;
+  padding-top: 24px;
+}
+
+/* Your name in a pill over the top edge of the picture. */
+.hero-name-pill {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  /* A shade darker than the page so it reads as its own tag, not a bite out of the picture. */
+  background: var(--bg-3);
+  border: 2px solid var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-h3);
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+
+.hero-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A pencil on the picture says it can be changed. */
+.hero-edit-badge {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--btn-dark);
+  color: var(--on-contrast);
+  border: 4px solid var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.hero-name-pill.empty {
+  color: var(--ink-3);
+}
+
+.hero-pop {
+  display: block;
+  animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.hero-float {
+  position: relative;
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 18px 28px -14px rgba(0, 0, 0, 0.45);
+  animation: roster-float 3.6s ease-in-out 0.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-pop,
+  .hero-float {
     animation: none;
   }
 }

@@ -63,9 +63,15 @@ test('2v2 teams: a team shares one card and scores as a pair', async ({ page }) 
   await expect(page.getByText('Hole 1 done!')).toBeVisible();
   await shot(page, 'teams-results');
   await expect(page.locator('.board-row')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Leaderboard' }).click();
-  await shot(page, 'teams-leaderboard');
-  await page.getByRole('button', { name: 'Back' }).click();
+  // Sam & Alex: golf (+1, +2) averages to +1½, the Bold card counts once at −4, so −2½.
+  await page.getByRole('button', { name: /^Standings/ }).click();
+  const team1 = page.locator('.standings-row', { hasText: 'Sam & Alex' });
+  await expect(team1.locator('.standings-total')).toHaveText('−2½');
+  await team1.getByRole('button').click();
+  await expect(team1.locator('.sum-line')).toContainText('Golf +1½');
+  await expect(team1.locator('.sum-line')).toContainText('Cards −4');
+  await shot(page, 'teams-standings');
+  await page.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Fix a score' }).click();
   await shot(page, 'teams-scorecard');
   await page.getByRole('button', { name: 'Back' }).click();

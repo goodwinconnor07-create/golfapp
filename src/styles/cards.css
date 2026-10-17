@@ -27,11 +27,27 @@
   position: relative;
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 0.62s cubic-bezier(0.3, 1.25, 0.45, 1);
+  transition: transform 0.4s cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 .ccard.flipped .ccard-inner {
   transform: rotateY(180deg);
+}
+
+/* Only one face is ever drawn, swapped at the halfway point of the flip (the flip's easing is
+   symmetric, so halfway in time is exactly edge-on). Safari doesn't
+   always respect backface-visibility while things animate, and showed the back mirrored
+   through the front. */
+.ccard .ccard-front,
+.ccard.flipped .ccard-back {
+  visibility: hidden;
+  transition: visibility 0s linear 0.2s;
+}
+
+.ccard .ccard-back,
+.ccard.flipped .ccard-front {
+  visibility: visible;
+  transition: visibility 0s linear 0.2s;
 }
 
 .ccard-face {
@@ -243,22 +259,255 @@
   font-size: var(--fs-h2);
 }
 
-/* Tier wind-up before the flip: Bold flips with more bounce, Insane shakes and glows first. */
+/* Tier wind-up before the flip. Each level has its own: Safe shakes a little and a glint
+   sweeps the shield, Bold catches fire from the bottom, Insane shakes hard while lightning
+   strikes. Times match flipDelay() in ChallengeCard.tsx. */
 
-.ccard-bold .ccard-inner {
-  transition-timing-function: cubic-bezier(0.25, 1.6, 0.4, 1);
+.ccard {
+  position: relative;
 }
 
-.ccard-insane .ccard-inner {
-  transition: transform 0.55s cubic-bezier(0.2, 1.8, 0.4, 1);
+/* Sits over the card, not inside the flip. Gone once the card is face up. */
+.ccard-fx {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.ccard-insane.winding .ccard-inner {
-  animation: wind-up 0.46s ease-in-out;
+.ccard.flipped .ccard-fx {
+  display: none;
+}
+
+.ccard-fx > * {
+  opacity: 0;
+}
+
+
+/* Safe: a small shake and a glint. */
+.ccard-safe.winding {
+  animation: wind-safe 0.3s ease-in-out;
+}
+
+.ccard-glint {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  transform: skewX(-18deg);
+}
+
+.ccard-safe.winding .ccard-glint {
+  animation: glint 0.3s ease-in-out;
+}
+
+@keyframes wind-safe {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-1.5deg);
+  }
+  40% {
+    transform: rotate(1.5deg);
+  }
+  60% {
+    transform: rotate(-1deg) scale(1.02);
+  }
+  80% {
+    transform: rotate(0.5deg) scale(1.02);
+  }
+}
+
+@keyframes glint {
+  0% {
+    opacity: 1;
+    left: -60%;
+  }
+  100% {
+    opacity: 1;
+    left: 130%;
+  }
+}
+
+/* Bold: flames lick up from the bottom while the card heats up and swells. */
+.ccard-bold.winding {
+  animation: wind-bold 0.36s ease-in;
+}
+
+.ccard-bold.winding .ccard-back {
+  animation: heat 0.36s ease-in-out;
+}
+
+.ccard-flame {
+  position: absolute;
+  bottom: -40px;
+  width: 34%;
+  height: 70%;
+  border-radius: 50% 50% 45% 45% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 80%, var(--gold-hi), var(--gold) 35%, var(--bold-hi) 60%, transparent 72%);
+  filter: blur(2px);
+  transform-origin: 50% 100%;
+}
+
+.ccard-flame0 {
+  left: -8%;
+}
+.ccard-flame1 {
+  left: 18%;
+  height: 85%;
+}
+.ccard-flame2 {
+  left: 40%;
+  height: 95%;
+}
+.ccard-flame3 {
+  left: 62%;
+  height: 80%;
+}
+.ccard-flame4 {
+  left: 82%;
+}
+
+.ccard-bold.winding .ccard-flame {
+  animation: flame 0.36s ease-out both;
+}
+.ccard-bold.winding .ccard-flame1,
+.ccard-bold.winding .ccard-flame3 {
+  animation-delay: 0.06s;
+}
+.ccard-bold.winding .ccard-flame2 {
+  animation-delay: 0.1s;
+}
+
+@keyframes flame {
+  0% {
+    opacity: 0;
+    transform: scale(0.6, 0.2);
+  }
+  40% {
+    opacity: 0.9;
+    transform: scale(1, 0.8) translateY(-4%);
+  }
+  60% {
+    transform: scale(0.9, 1) translateY(-8%);
+  }
+  75% {
+    opacity: 0.95;
+    transform: scale(1.05, 0.9) translateY(-12%);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1, 1.1) translateY(-20%);
+  }
+}
+
+@keyframes wind-bold {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.01) translateY(1px);
+  }
+  50% {
+    transform: scale(1.02) translateY(-1px);
+  }
+  75% {
+    transform: scale(1.04) translateY(1px);
+  }
+}
+
+@keyframes heat {
+  0%,
+  100% {
+    box-shadow: 0 22px 40px -22px var(--tier-lo);
+  }
+  60% {
+    box-shadow:
+      0 0 0 6px var(--bold-bg),
+      0 0 48px 6px var(--bold-hi);
+  }
+}
+
+/* Insane: a hard shake, two lightning strikes and a white flash. */
+.ccard-insane.winding {
+  animation: wind-up 0.42s ease-in-out;
 }
 
 .ccard-insane.winding .ccard-back {
-  animation: glow 0.46s ease-in;
+  animation: glow 0.42s ease-in;
+}
+
+.ccard-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--on-color);
+}
+
+.ccard-bolt {
+  position: absolute;
+  top: 0;
+  left: 20%;
+  width: 60%;
+  height: 100%;
+  fill: none;
+  stroke: var(--on-color);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px var(--on-color));
+}
+
+.ccard-insane.winding .ccard-flash {
+  animation: strike-flash 0.42s linear;
+}
+
+.ccard-insane.winding .ccard-bolt {
+  animation: strike 0.42s linear;
+}
+
+@keyframes strike {
+  0%,
+  18%,
+  30%,
+  62%,
+  100% {
+    opacity: 0;
+  }
+  20%,
+  26% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  64%,
+  72% {
+    opacity: 1;
+    transform: scaleX(-1);
+  }
+  76% {
+    opacity: 0;
+  }
+}
+
+@keyframes strike-flash {
+  0%,
+  19%,
+  34%,
+  63%,
+  84%,
+  100% {
+    opacity: 0;
+  }
+  21% {
+    opacity: 0.5;
+  }
+  65% {
+    opacity: 0.6;
+  }
 }
 
 @keyframes wind-up {
@@ -276,18 +525,19 @@
     transform: rotate(-4deg) scale(1.03);
   }
   60% {
-    transform: rotate(4deg) scale(1.04);
+    transform: rotate(3deg) scale(1.03);
   }
-  75% {
-    transform: rotate(-2deg) scale(1.05);
+  80% {
+    transform: rotate(-1deg) scale(1.01);
   }
 }
 
 @keyframes glow {
-  from {
+  0%,
+  100% {
     box-shadow: 0 22px 40px -22px var(--tier-lo);
   }
-  to {
+  60% {
     box-shadow:
       0 0 0 6px var(--tier-bg),
       0 0 48px 6px var(--tier);

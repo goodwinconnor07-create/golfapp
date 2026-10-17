@@ -79,6 +79,12 @@ export const PlusIcon = (p: P) => (
   </svg>
 );
 
+export const PencilIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <path d="M4 20l1-5L16.5 3.5a2.1 2.1 0 013 3L8 18l-4 2z" />
+  </svg>
+);
+
 export const MinusIcon = (p: P) => (
   <svg {...stroke(p)}>
     <path d="M5 12h14" />
@@ -108,6 +114,15 @@ export const CopyIcon = (p: P) => (
   <svg {...stroke(p)}>
     <rect x="8" y="8" width="12" height="12" rx="3" />
     <path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" />
+  </svg>
+);
+
+export const QrIcon = (p: P) => (
+  <svg {...stroke(p)}>
+    <rect x="4" y="4" width="6" height="6" rx="1.2" />
+    <rect x="14" y="4" width="6" height="6" rx="1.2" />
+    <rect x="4" y="14" width="6" height="6" rx="1.2" />
+    <path d="M14 14h2.5v2.5H14zM19 14v.01M14 19.5v.01M17.5 19h2.5v-2.5" />
   </svg>
 );
 

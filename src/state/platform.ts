@@ -28,12 +28,39 @@ export function publicOrigin(): string {
   return SERVER || location.origin;
 }
 
+export const SHORT_HOST =import.meta.env.VITE_SHORT_LINK_HOST ?? 'cardshot.link';
+
+/** The short join link for a game code, as typed or shared: cardshot.link/ABCDE. */
+export function joinLinkLabel(code: string): string {
+  return `${SHORT_HOST}/${code}`;
+}
+
+/** The same link with https, for sharing and QR codes. */
+export function joinLink(code: string): string {
+  return `https://${joinLinkLabel(code)}`;
+}
+
 /**
- * Who can start games. The host pays for the iPhone app; friends join free on the website.
- * The website keeps hosting until the app is in the App Store: build with VITE_WEB_HOSTING=off
- * to switch it off then.
+ * Which Home to show. The iPhone app gets the host's Home (your game, how you play, New game);
+ * the website opens straight on the join screen. In development, sendit.appHome in localStorage
+ * shows the app's Home in a browser, which is how the e2e tests drive it.
  */
-export const canHost = isNative || import.meta.env.VITE_WEB_HOSTING !== 'off';
+export const appHome = isNative || (import.meta.env.DEV && devFlag('sendit.appHome'));
+
+function devFlag(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Who can start games. The host pays for the iPhone app; friends join free on the website, which
+ * doesn't host (build with VITE_WEB_HOSTING=on to let it). Development builds showing the app's
+ * Home can host, so the e2e tests can play rounds in a browser.
+ */
+export const canHost = isNative || appHome || import.meta.env.VITE_WEB_HOSTING === 'on';
 
 /** Where the website sends would-be hosts once web hosting is off. */
 export const APP_STORE_URL = import.meta.env.VITE_APP_STORE_URL ?? 'https://apps.apple.com/';

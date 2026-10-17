@@ -9,7 +9,7 @@ same Cloudflare server as the website.
 - `capacitor.config.ts`: app ID `app.cardshot.ios`, name, splash screen.
 - `ios/`: the Xcode project (Swift Package Manager, no CocoaPods). iPhone only, portrait only.
 - `src/state/platform.ts`: knows if it's running in the app, and where the server is
-  (`VITE_SERVER_URL`, baked in by `npm run build:ios`).
+  (`VITE_SERVER_URL`, baked in by `npm run build:ios`; it defaults to `https://cardshot.link`).
 - `src/state/native.ts`: real haptics, the iOS share sheet, a native backup of saved games (iOS
   can clear a web view's storage), the status bar, and invite links that open the app.
 - `worker/index.ts`: lets the app's pages (`capacitor://localhost`) call the API.
@@ -36,8 +36,8 @@ is in the App Store, the website can still start games. On launch day:
 ## One-time setup (you)
 
 1. **Apple Developer Program** ($99 a year): developer.apple.com/programs.
-2. **Team ID**: developer.apple.com → Account → Membership details. Then replace `TEAMID` in
-   `public/.well-known/apple-app-site-association` with it and deploy the website.
+2. **Team ID**: developer.apple.com → Account → Membership details. Ours is `9FAJRHL979`, already set in
+   `public/.well-known/apple-app-site-association`. Deploy the website after changing it.
 3. **App record**: App Store Connect → Apps → + → New App. Platform iOS, name CardShot, bundle ID
    `app.cardshot.ios` (register it under Certificates, Identifiers & Profiles first, with
    Associated Domains switched on), SKU `cardshot`.
@@ -45,14 +45,18 @@ is in the App Store, the website can still start games. On launch day:
    paid app can go live, and approval can take a few days. Also apply for the App Store Small
    Business Program (15% commission instead of 30%).
 5. **API key for the build**: App Store Connect → Users and Access → Integrations → App Store
-   Connect API → Team Keys → +, access "App Manager". Download the `.p8` file (only once).
-6. **GitHub secrets** (Settings → Secrets and variables → Actions → New repository secret):
+   Connect API → Team Keys → +, access **Admin** (App Manager can't use Apple's cloud signing, and the upload fails with "Cloud signing permission error"). Download the `.p8` file (only once).
+6. **Register one iPhone**: developer.apple.com → Devices → +, with the phone's UDID. The build
+   signs with automatic signing, and Apple won't make a signing profile for a team with no devices.
+   Get the UDID by plugging the phone into a Mac (Finder → the phone → click the line under its
+   name until it shows UDID, then right-click to copy), or from Xcode → Window → Devices.
+7. **GitHub secrets** (Settings → Secrets and variables → Actions → New repository secret):
    - `APPLE_TEAM_ID`: the Team ID
    - `APP_STORE_CONNECT_KEY_ID`: the key's ID
    - `APP_STORE_CONNECT_ISSUER_ID`: the Issuer ID above the keys list
    - `APP_STORE_CONNECT_KEY`: the whole contents of the `.p8` file
 
-7. **Push notifications**:
+8. **Push notifications**:
    - developer.apple.com → Identifiers → `app.cardshot.ios`: tick **Push Notifications**.
    - developer.apple.com → Keys → +: name it "CardShot push", tick **Apple Push Notifications
      service (APNs)**, then download the `.p8` (only once) and note its Key ID. This is a

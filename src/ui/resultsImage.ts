@@ -4,6 +4,7 @@
 import { formatToPar, toParWords, type Game, type Recap } from '../game';
 import { publicOrigin } from '../state/platform';
 import { playerColor } from './components';
+import { avatarInk } from './theme';
 import { joinNames, plural } from './format';
 
 const W = 1080;
@@ -58,9 +59,9 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
 
   // Header: logo word and the round.
   const brand = ctx.createLinearGradient(80, 0, 560, 0);
-  brand.addColorStop(0, '#f97316');
-  brand.addColorStop(0.5, '#ec4899');
-  brand.addColorStop(1, '#8b5cf6');
+  brand.addColorStop(0, '#0f766e');
+  brand.addColorStop(0.5, '#c2410c');
+  brand.addColorStop(1, '#7c3aed');
   ctx.fillStyle = brand;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
@@ -107,7 +108,7 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     ctx.beginPath();
     ctx.arc(205, top + rowH / 2, 34, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = avatarInk(playerColor(r.player.color));
     ctx.font = r.player.emoji ? '38px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' : font(34);
     ctx.fillText(r.player.emoji ?? [...r.player.name.trim()][0]?.toUpperCase() ?? '?', 205, top + rowH / 2 + 13);
 

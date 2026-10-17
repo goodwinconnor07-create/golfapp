@@ -5,7 +5,12 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "send-it",
   "main": "./worker/index.ts",
+  // Keep the old address working: the iPhone app and links already shared point at it.
+  "workers_dev": true,
+  "preview_urls": false,
   "compatibility_date": "2026-10-01",
+  // The site's own address and the short join link (cardshot.link/ABCDE). The domain has to be a zone in this Cloudflare account.
+  "routes": [{ "pattern": "cardshot.link", "custom_domain": true }],
   "assets": {
     // Unknown paths (like /j/BCDFG join links) fall back to index.html.
     "not_found_handling": "single-page-application",

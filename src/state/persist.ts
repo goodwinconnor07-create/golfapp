@@ -8,6 +8,7 @@ const KEYS = {
   look: 'sendit.look',
   session: 'sendit.session',
   history: 'sendit.history',
+  howto: 'sendit.howto',
 } as const;
 
 export interface PendingAction {
@@ -98,7 +99,7 @@ export interface GameRecord {
   course: string;
   holes: number;
   /** In finishing order. */
-  players: { name: string; color: number; rank: number; toPar: number; strokes: number }[];
+  players: { name: string; color: number; emoji?: string; rank: number; toPar: number; strokes: number }[];
 }
 
 const MAX_RECORDS = 50;
@@ -117,4 +118,13 @@ export function saveRecord(record: GameRecord): GameRecord[] {
 
 export function clearHistory(): void {
   write(KEYS.history, null);
+}
+
+/** Whether this phone has opened How to play. Someone with past games already knows the rules. */
+export function needsHowTo(): boolean {
+  return read<boolean>(KEYS.howto) !== true && loadHistory().length === 0;
+}
+
+export function markHowToSeen(): void {
+  write(KEYS.howto, true);
 }

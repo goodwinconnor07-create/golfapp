@@ -3,6 +3,13 @@ import { mkdirSync } from 'node:fs';
 
 const SHOTS = process.env.SHOTS_DIR;
 
+/** Reads the join code from the invite tiles, waiting past the skeleton that shows while it's on its way. */
+export async function gameCode(page: Page, scope = ''): Promise<string> {
+  const tiles = page.locator(`${scope} .code-tiles[aria-label^="Game code"]`.trim());
+  await expect(tiles).toBeVisible();
+  return ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
+}
+
 /** Saves a screenshot when SHOTS_DIR is set (used to review the design). */
 export async function shot(page: Page, name: string): Promise<void> {
   if (!SHOTS) return;
@@ -11,9 +18,25 @@ export async function shot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
+/**
+ * Taps whichever button starts a game on Home: New game, or the website's Hosting link
+ * (phones without the app's Home, like the online tests' extra phones).
+ */
+export async function startGame(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^(New game|Hosting\? Start a game)$/ }).first().click();
+}
+
+/** On the new game screen: tap the picture, type the name in the sheet, close it. */
+export async function enterName(page: Page, name: string) {
+  await page.getByRole('button', { name: /your name and picture/ }).click();
+  await page.getByRole('textbox', { name: 'Your name' }).fill(name);
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+}
+
 export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'Back 9' | '18 holes' = 'Front 9') {
-  await page.getByRole('button', { name: 'New game' }).click();
-  await page.getByLabel('Your name').fill(names[0]);
+  await startGame(page);
+  await enterName(page, names[0]);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: new RegExp(holes) }).click();
@@ -25,7 +48,7 @@ export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'B
     await page.getByRole('button', { name: /No phone\? Add them/ }).click();
     await page.getByLabel('Name').fill(name);
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.locator('.player-row', { hasText: name })).toBeVisible();
+    await expect(page.locator('.roster-item', { hasText: name })).toBeVisible();
   }
 }
 
@@ -53,7 +76,10 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   // Cards drawn at random can be settled by strokes alone ("The Clean Par" fails on a bogey
   // whatever you tap). Then the splash must match what the score screen said, not what we wanted.
   const settled = page.locator('.auto-result');
-  if (await settled.isVisible()) made = (await settled.getAttribute('class'))?.includes('made') ?? made;
+  if (await settled.isVisible()) {
+    made = (await settled.getAttribute('class'))?.includes('made') ?? made;
+    await shot(page, '11a-score-settled');
+  }
   if (await save.isVisible()) await save.click();
   else await page.getByRole('button', { name: made ? /Completed/ : /Failed/ }).click();
   // Online with friends there's no splash: the shared reveal shows results instead.
@@ -91,10 +117,11 @@ export async function holeDoneAndScore(page: Page, strokes: number, made: boolea
   await enterScore(page, strokes, made, undefined, false);
 }
 
-/** Everyone has scored: results flip over one by one, then the standings and Next hole appear. */
+/** Everyone has scored: results flip over one by one, then the rows re-sort into the standings. */
 export async function passResultsReveal(page: Page, shotName?: string) {
-  await expect(page.getByRole('heading', { name: /results$/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeEnabled({ timeout: 8_000 });
-  await expect(page.locator('.board-row').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
+  // Settled: the list is no longer hidden from screen readers.
+  await expect(page.locator('.reveal-list')).toHaveAttribute('aria-hidden', 'false', { timeout: 8_000 });
+  await expect(page.getByRole('button', { name: /Next hole|Final results/ })).toBeVisible();
   if (shotName) await shot(page, shotName);
 }

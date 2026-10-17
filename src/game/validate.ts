@@ -92,7 +92,8 @@ export function parseAction(input: unknown): Action | null {
       };
     case 'holeDone':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
-      return { type: 'holeDone', playerId: a.playerId, hole: a.hole };
+      if (a.undo !== undefined && typeof a.undo !== 'boolean') return null;
+      return { type: 'holeDone', playerId: a.playerId, hole: a.hole, ...(a.undo ? { undo: true } : {}) };
     case 'redraw':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;

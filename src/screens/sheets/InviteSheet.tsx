@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { nativeShare } from '../../state/native';
-import { isNative, publicOrigin } from '../../state/platform';
+import { isNative, joinLink, joinLinkLabel } from '../../state/platform';
 import { goOnline, toast, useApp } from '../../state/store';
 import { Sheet, SkeletonInvite } from '../../ui/components';
 import { CopyIcon, ShareIcon } from '../../ui/Icons';
@@ -8,7 +8,7 @@ import { QRCode } from '../../ui/QRCode';
 import { TILE_COLORS } from '../../ui/theme';
 
 
-async function copy(text: string) {
+export async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text);
     toast('Link copied', 'success');
@@ -19,7 +19,7 @@ async function copy(text: string) {
 
 /** Opens the phone's share sheet with the join link, or copies it. */
 export async function shareInvite(code: string) {
-  const link = `${publicOrigin()}/j/${code}`;
+  const link = joinLink(code);
   if (isNative) {
     await nativeShare({ title: 'Join my CardShot game', text: `Join my golf game on CardShot. Code: ${code}`, url: link });
     return;
@@ -86,7 +86,7 @@ export function InviteSheet() {
     );
   }
 
-  const link = `${publicOrigin()}/j/${game.code}`;
+  const link = joinLink(game.code);
   const code = game.code;
   const share = () => shareInvite(code);
 
@@ -94,7 +94,7 @@ export function InviteSheet() {
     <Sheet title="Invite friends">
       <div className="stack" style={{ gap: 16 }}>
         <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
-          Friends scan this, open the link, or type the code.
+          Friends scan this, type {joinLinkLabel(code)} into their browser, or enter the code.
         </p>
         <CodeTiles code={code} />
         <div className="qr-box">

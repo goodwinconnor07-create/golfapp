@@ -7,11 +7,22 @@ import {
   type ReactNode,
   type SVGProps,
 } from 'react';
-import { AVATAR_EMOJIS, CODE_LENGTH, formatDelta, formatToPar, LIMITS, TIERS, type Outcome, type Par, type Player, type Tier } from '../game';
+import {
+  AVATAR_EMOJIS,
+  CODE_LENGTH,
+  formatDelta,
+  formatToPar,
+  LIMITS,
+  TIERS,
+  type Outcome,
+  type Par,
+  type Player,
+  type Tier,
+} from '../game';
 import { haptic, reducedMotion } from './effects';
-import { BLOB_COLORS, PLAYER_COLORS } from './theme';
+import { avatarInk, BLOB_COLORS, PLAYER_COLORS } from './theme';
 import { back, closeSheet, useApp } from '../state/store';
-import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PlusIcon, ShieldIcon } from './Icons';
+import { BackIcon, BoltIcon, CloseIcon, FlameIcon, MinusIcon, PencilIcon, PlusIcon, ShieldIcon } from './Icons';
 
 // ── Tiers ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +45,24 @@ export function Pips({ n, of = 3 }: { n: number; of?: number }) {
 export function TierIcon({ tier, size = 24 }: { tier: Tier; size?: number }) {
   const { Icon } = TIER_LOOK[tier];
   return <Icon width={size} height={size} />;
+}
+
+/**
+ * Soft moving shapes behind a tier's colour, so the screen feels live: light glancing off
+ * Safe's shields, flames flickering up behind Bold, lightning flashing behind Insane.
+ * Decoration only. They sit on the right, behind the text, and stop with Reduce Motion.
+ */
+export function TierFx({ tier }: { tier: Tier }) {
+  const { Icon } = TIER_LOOK[tier];
+  return (
+    <span className={`tier-fx tier-fx-${tier}`} aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={`tier-fx-i tier-fx-i${i}`}>
+          <Icon width="100%" height="100%" />
+        </span>
+      ))}
+    </span>
+  );
 }
 
 /** Coloured tier label, e.g. [⚡ INSANE]. Optional stakes: "−6 / +3". */
@@ -66,11 +95,75 @@ export function Avatar({ player, size = 44 }: { player: Pick<Player, 'name' | 'c
   return (
     <span
       className={`avatar${player.emoji ? ' avatar-emoji' : ''}`}
-      style={{ width: size, height: size, fontSize: size * (player.emoji ? 0.56 : 0.46), background: playerColor(player.color) }}
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * (player.emoji ? 0.56 : 0.46),
+        background: playerColor(player.color),
+        color: avatarInk(playerColor(player.color)),
+      }}
       aria-hidden
     >
       {player.emoji ?? initial}
     </span>
+  );
+}
+
+/**
+ * A big picture of you with "Change your picture" under it. It pops when the look changes, then floats.
+ * With `nameTag`, your name sits in a pill over the top of the picture instead, and the whole thing is one button.
+ */
+export function HeroPicture({
+  name,
+  look,
+  onChange,
+  nameTag = false,
+}: {
+  name: string;
+  look: { emoji: string | null; color: number };
+  onChange: () => void;
+  nameTag?: boolean;
+}) {
+  const initial = [...name.trim()][0]?.toUpperCase() ?? '?';
+  if (nameTag) {
+    const shown = name.trim();
+    return (
+      <div className="hero-pic">
+        <button
+          type="button"
+          className="avatar-button hero-button hero-tagged"
+          aria-label={shown ? `${shown}: edit your name and picture` : 'Add your name and picture'}
+          onClick={onChange}
+        >
+          <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+            {/* The pill and pencil ride inside the float, so they bob with the picture. */}
+            <span className="hero-float">
+              <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={164} />
+              <span className="hero-edit-badge" aria-hidden>
+                <PencilIcon width={20} height={20} />
+              </span>
+              <span className={`hero-name-pill${shown ? '' : ' empty'}`} aria-hidden>
+                <span className="hero-name-text">{shown || 'Add your name'}</span>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="hero-pic">
+      <button type="button" className="avatar-button hero-button" aria-label="Change your picture" onClick={onChange}>
+        <span key={`${look.emoji ?? initial}-${look.color}`} className="hero-pop">
+          <span className="hero-float">
+            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={152} />
+          </span>
+        </span>
+      </button>
+      <button type="button" className="btn-link-small" onClick={onChange}>
+        {look.emoji ? 'Change your picture' : 'Pick a picture'}
+      </button>
+    </div>
   );
 }
 

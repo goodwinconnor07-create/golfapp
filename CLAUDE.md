@@ -7,7 +7,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 - `npm run dev`: app plus the Worker and Durable Object, all local (http://localhost:5173)
 - `npm run typecheck`: `tsc -b` over app, worker and tooling projects
 - `npm test`: Vitest unit tests for `src/game`
-- `npm run e2e`: Playwright, phone-sized Chromium, starts its own dev server on 5174. In the cloud sandbox, Chromium is at `/opt/pw-browsers` and `@playwright/test` is pinned to 1.56.1 to match it. Set `SHOTS_DIR=/some/dir` to save a screenshot of each screen.
+- `npm run e2e`: Playwright, phone-sized Chromium, starts its own dev server on 5174. In the cloud sandbox, Chromium is at `/opt/pw-browsers` and `@playwright/test` is pinned to 1.56.1 to match it. Set `SHOTS_DIR=/some/dir` to save a screenshot of each screen. `BROWSER=webkit` runs them in WebKit (Safari's engine) to catch iPhone-only bugs like the card flip; run `npx playwright install-deps webkit` first in the sandbox. Two tests (offline mode, and a page crash on `goto` after a reload) fail in headless WebKit even on older code.
 - `npm run check`: typecheck + unit tests + build. Run it before committing.
 - `npm run balance`: simulates thousands of rounds with the current deck and values and checks the balance targets in `docs/GAME_BALANCE.md`. Run it for any change to values, cards or scoring rules.
 - `npm run deploy`: build and `wrangler deploy` (needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`)

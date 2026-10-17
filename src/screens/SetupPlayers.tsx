@@ -1,16 +1,17 @@
-import { cleanName, isNameBlocked, LIMITS, NAME_BLOCKED } from '../game';
+import { cleanName, isNameBlocked } from '../game';
 import { navigate, openSheet, setDraftNames, useApp } from '../state/store';
-import { Avatar, BackBar } from '../ui/components';
+import { BackBar, HeroPicture } from '../ui/components';
 
 /** Setup step 1: just the host's name. Everyone else joins from their own phone with the code. */
 export function SetupPlayers() {
-  const name = useApp((s) => s.draft.names[0] ?? '');
+  const names = useApp((s) => s.draft.names);
+  const name = names[0] ?? '';
   const blocked = isNameBlocked(name);
   const valid = Boolean(cleanName(name)) && !blocked;
   const look = useApp((s) => s.profileLook);
   const next = () => {
-    // Older drafts could hold other players' names: only the host's carries on.
-    setDraftNames([name]);
+    // Anyone after the host came from "Play again" and stays on the list.
+    setDraftNames([name, ...names.slice(1)]);
     navigate({ name: 'setupCourse' });
   };
 
@@ -22,38 +23,7 @@ export function SetupPlayers() {
         <p className="muted" style={{ margin: 0 }}>
           Next you'll get a code. Your group joins on their own phones and picks their own cards.
         </p>
-        <div className="name-row">
-          <button
-            type="button"
-            className="avatar-button press"
-            aria-label="Change your picture"
-            onClick={() => openSheet({ name: 'look' })}
-          >
-            <Avatar player={{ name: name || '?', color: look.color, emoji: look.emoji ?? undefined }} size={50} />
-          </button>
-          <input
-            className="field"
-            value={name}
-            placeholder="Your name"
-            maxLength={LIMITS.maxNameLength}
-            autoComplete="off"
-            autoCapitalize="words"
-            enterKeyHint="next"
-            aria-label="Your name"
-            onChange={(e) => setDraftNames([e.target.value])}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && valid) next();
-            }}
-          />
-        </div>
-        {blocked && (
-          <p className="field-error" role="alert">
-            {NAME_BLOCKED}
-          </p>
-        )}
-        <button type="button" className="btn-link-small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet({ name: 'look' })}>
-          {look.emoji ? 'Change your picture' : 'Pick a picture'}
-        </button>
+        <HeroPicture name={name} look={look} nameTag onChange={() => openSheet({ name: 'look', editName: true })} />
       </div>
       <div className="screen-foot">
         <button type="button" className="btn btn-xl btn-green" disabled={!valid} onClick={next}>

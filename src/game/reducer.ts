@@ -45,12 +45,14 @@ export const DEFAULT_SETTINGS: Settings = {
 export const PLAYER_COLORS = 8;
 
 /** The avatar emojis players can pick from. Anything else from the network is dropped. */
-export const AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🐐', '🍺', '🎯', '👑', '🌵'] as const;
+export const AVATAR_EMOJIS = ['⛳️', '🏌️‍♂️', '🏌️‍♀️', '😈', '⭐️', '😀', '😤', '🥱', '🤫', '🫪', '🐐', '👑', '🍀'] as const;
+/** The earlier set. No longer offered, but players who already picked one keep it. */
+const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎', '🦈', '🍺', '🎯', '🌵'];
 /** One-tap reactions and heckles on someone's hole result. */
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
 
-export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && (AVATAR_EMOJIS as readonly string[]).includes(v);
+export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
 function freeColor(players: Player[], want?: number, exceptId?: string): number {
@@ -193,6 +195,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
   const isHost = ctx.deviceId === g.hostDeviceId;
   const unchanged: ApplyResult = { ok: true, game, changed: false };
   const findPlayer = (id: string) => g.players.find((p) => p.id === id);
+  // Online, a player's own phone (or the host, stepping in for a dead phone) acts for them.
+  const actsFor = (id: string) => !g.code || isHost || ownsPlayer(g, ctx.deviceId, id);
 
   switch (action.type) {
     case 'addPlayer': {
@@ -328,6 +332,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (action.hole !== g.current) return fail("That hole isn't being played.");
       if (!isTier(action.tier)) return fail('Pick Safe, Bold or Insane.');
       if (!findPlayer(action.playerId)) return fail('Player not found.');
+      if (!actsFor(action.playerId)) return fail('Only the host can pick for someone else.');
       if (g.holes[action.hole].par == null) return fail('Set the par first.');
       const key = entryKey(action.playerId, action.hole);
       const entry: Entry = g.entries[key] ?? {};
@@ -353,6 +358,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[key];
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
+      if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (!card.needsBunker) return fail('Only bunker cards can be swapped.');
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
       const oldId = card.id;
@@ -377,8 +383,9 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[key];
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
+      if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
-      if (redrawUsed(g, action.playerId)) return fail(g.teams ? "Your team has used its redraw this round." : "You've used your redraw this round.");
+      if (redrawUsed(g, action.playerId)) return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
       const oldId = card.id;
       const opts = { exclude: [oldId] };
       entry.redrawn = true;
@@ -413,6 +420,14 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.status !== 'playing' || action.hole !== g.current) return fail("That hole isn't being played.");
       const entry = g.entries[entryKey(action.playerId, action.hole)];
       if (!entry?.tier) return fail('Draw a card for this hole first.');
+      if (!actsFor(action.playerId)) return fail("That's not your hole to finish.");
+      // "Not done yet": back to playing, as long as no score is in.
+      if (action.undo) {
+        if (entry.strokes != null) return fail('This hole is already scored.');
+        if (!entry.done) return unchanged;
+        delete entry.done;
+        break;
+      }
       if (entry.done) return unchanged;
       entry.done = true;
       break;

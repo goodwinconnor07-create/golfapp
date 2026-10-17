@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { isNative } from './state/platform';
 import { boot, openJoinLink } from './state/store';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { installPressEffects } from './ui/effects';
 import './styles/global.css';
 import './styles/cards.css';
@@ -16,7 +17,9 @@ installPressEffects();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
 

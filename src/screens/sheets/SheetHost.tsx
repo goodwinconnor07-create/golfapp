@@ -18,8 +18,10 @@ import { EditSheet } from './EditSheet';
 import { InviteSheet } from './InviteSheet';
 import { OptionsSheet, ParsSheet } from './OptionsSheet';
 import { LookSheet } from './LookSheet';
+import { NewsSheet } from './NewsSheet';
 import { NotificationsSheet } from './NotificationsSheet';
 import { PlayerSheet } from './PlayerSheet';
+import { StandingsSheet } from './StandingsSheet';
 
 export function SheetHost({ sheet }: { sheet: SheetSpec }) {
   switch (sheet.name) {
@@ -33,8 +35,12 @@ export function SheetHost({ sheet }: { sheet: SheetSpec }) {
       return <MenuSheet />;
     case 'notifications':
       return <NotificationsSheet />;
+    case 'news':
+      return <NewsSheet />;
+    case 'standings':
+      return <StandingsSheet />;
     case 'look':
-      return <LookSheet />;
+      return <LookSheet typed={sheet.typed} editName={sheet.editName} />;
     case 'player':
       return <PlayerSheet playerId={sheet.playerId} />;
     case 'edit':
@@ -87,7 +93,7 @@ function MenuSheet() {
 
   const items: Item[] = [];
   if (started) {
-    items.push({ label: 'Leaderboard', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => navigate({ name: 'leaderboard' }) });
+    items.push({ label: 'Standings', Icon: TrophyIcon, color: 'var(--gold)', onClick: () => openSheet({ name: 'standings' }) });
     items.push({ label: 'Scorecard & fixes', Icon: ListIcon, color: 'var(--blue)', onClick: () => navigate({ name: 'scorecard' }) });
   }
   if (host || online)

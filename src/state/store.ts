@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react';
 import {
   applyAction,
+  completedHoles,
   cleanName,
   CODE_LENGTH,
   createGame,
@@ -37,6 +38,7 @@ import {
   loadLook,
   loadName,
   loadSession,
+  needsHowTo,
   saveLook,
   saveName,
   saveRecord,
@@ -48,14 +50,12 @@ import { freshUi, myPlayers, reactorFor, type HoleUi } from './view';
 
 export type Route =
   | { name: 'home' }
-  | { name: 'howto' }
+  | { name: 'howto'; intro?: boolean }
   | { name: 'setupPlayers' }
   | { name: 'setupCourse' }
-  | { name: 'setupHoles' }
   | { name: 'join'; code?: string }
   | { name: 'joinWho'; info: GameInfo }
   | { name: 'game' }
-  | { name: 'leaderboard' }
   | { name: 'scorecard' }
   | { name: 'history' };
 
@@ -64,8 +64,11 @@ export type Sheet =
   | { name: 'options' }
   | { name: 'menu' }
   | { name: 'pars' }
-  | { name: 'look' }
+  /** `typed` is a name still being typed (the join screen), so the picker shows it. */
+  | { name: 'look'; typed?: string; editName?: boolean }
   | { name: 'notifications' }
+  | { name: 'news' }
+  | { name: 'standings' }
   | { name: 'player'; playerId: string }
   | { name: 'edit'; playerId: string; hole: number }
   | { name: 'confirm'; title: string; body?: string; confirm: string; danger?: boolean; onConfirm: () => void };
@@ -114,6 +117,8 @@ export interface AppState {
   /** Setup in progress: player names and the chosen course (null = no course picked). */
   draft: { names: string[]; course: CourseDetail | null };
   busy: string | null;
+  /** Online results this phone has dealt with, as "gameId:hole": shown = the reveal has played, done = moved on from it. */
+  results: { shown: string; done: string };
 }
 
 // ── Store core ──────────────────────────────────────────────────────────────
@@ -153,6 +158,7 @@ let state: AppState = {
   flash: null,
   draft: { names: [''], course: null },
   busy: null,
+  results: { shown: readMark('sendit.resultsRevealed'), done: readMark('sendit.resultsDone') },
 };
 
 function set(patch: Partial<AppState>): void {
@@ -287,6 +293,7 @@ function recordIfFinished(game: Game | null): void {
     players: rows.map((r) => ({
       name: r.player.name,
       color: r.player.color,
+      ...(r.player.emoji ? { emoji: r.player.emoji } : {}),
       rank: r.rank,
       toPar: r.totals.toPar,
       strokes: r.totals.real,
@@ -328,6 +335,7 @@ function onServerMessage(msg: ServerMessage): void {
   if (msg.t === 'state') {
     const pending = msg.ack ? s.pending.filter((p) => p.id !== msg.ack) : s.pending;
     announceMulligans(s.game, msg.game);
+    announceScoredForMe(s.game, msg.game, s.pending);
     setSession({ ...s, game: msg.game, pending });
   } else if (msg.t === 'reject') {
     setSession({ ...s, pending: s.pending.filter((p) => p.id !== msg.id) });
@@ -343,6 +351,19 @@ function announceMulligans(before: Game | null, after: Game): void {
     if (ownsPlayer(after, state.deviceId, p.id)) continue;
     const was = getEntry(before, p.id, after.current)?.mulligan;
     if (getEntry(after, p.id, after.current)?.mulligan && !was) toast(`${p.name} took a mulligan 🔁`, 'info');
+  }
+}
+
+/** Online: the host entered a score for one of this phone's players (say, while they were still typing it). */
+function announceScoredForMe(before: Game | null, after: Game, pending: { action: Action }[]): void {
+  if (!before || before.id !== after.id || after.hostDeviceId === state.deviceId) return;
+  const h = before.current;
+  for (const p of myPlayers(after, state.deviceId, true)) {
+    if (getEntry(before, p.id, h)?.strokes != null || getEntry(after, p.id, h)?.strokes == null) continue;
+    if (pending.some((x) => x.action.type === 'score' && x.action.playerId === p.id)) continue;
+    const r = holeResult(after, p.id, h);
+    const mine = myPlayers(after, state.deviceId, true).length === 1;
+    toast(`The host entered ${mine ? 'your' : `${p.name}'s`} score${r ? `: ${r.strokes}` : ''}`, 'info');
   }
 }
 
@@ -427,10 +448,17 @@ export function setDraftNames(names: string[]): void {
   set({ draft: { ...state.draft, names } });
 }
 
-export function startNewGame(): void {
+/**
+ * `others`: "Play again" on Home starts with last round's group already on the list, so each
+ * friend just taps their name when they join. With the host's name known it skips the name screen.
+ */
+export function startNewGame(others: string[] = []): void {
   const begin = () => {
-    set({ draft: { names: [state.profileName], course: null } });
-    resetTo({ name: 'setupPlayers' });
+    set({ draft: { names: [state.profileName, ...others], course: null } });
+    // A first-time host sees the rules once, ahead of the name screen. Finishing or skipping lands on it.
+    if (needsHowTo()) resetTo({ name: 'setupPlayers' }, { name: 'howto', intro: true });
+    else if (others.length > 0 && cleanName(state.profileName)) resetTo({ name: 'setupCourse' });
+    else resetTo({ name: 'setupPlayers' });
   };
   const g = state.game;
   if (g && g.status !== 'finished') {
@@ -693,25 +721,87 @@ export function enterScoreFor(playerId: string): void {
   set({ ui: { ...state.ui, scoring: true, scoreFor: playerId } });
 }
 
-const RESULTS_KEY = 'sendit.resultsRevealed';
+/** Back out of entering a score from the waiting room (the host stepping in for someone). */
+export function cancelScoreFor(): void {
+  set({ ui: { ...state.ui, scoreFor: null } });
+}
 
-export function resultsRevealSeen(gameId: string, hole: number): boolean {
+/** "Not done yet": tapped Hole done too soon. Back to the card, as long as no score is in. */
+export function notDoneYet(): void {
+  const g = state.game;
+  if (!g) return;
+  if (state.session?.mode === 'online') {
+    for (const p of myPlayers(g, state.deviceId, true)) {
+      const e = getEntry(g, p.id, g.current);
+      if (e?.done && e.strokes == null) dispatch({ type: 'holeDone', playerId: p.id, hole: g.current, undo: true });
+    }
+  }
+  set({ ui: { ...state.ui, scoring: false, scoreFor: null } });
+  haptic('light');
+}
+
+const RESULTS_KEY = 'sendit.resultsRevealed';
+const RESULTS_DONE_KEY = 'sendit.resultsDone';
+
+function readMark(key: string): string {
   try {
-    return localStorage.getItem(RESULTS_KEY) === `${gameId}:${hole}`;
+    return localStorage.getItem(key) ?? '';
   } catch {
-    return false;
+    return '';
   }
 }
 
-/** The reveal has played on this phone: after a reload, go straight to the standings. */
-export function markResultsRevealed(): void {
-  const g = state.game;
-  if (!g) return;
+function writeMark(key: string, value: string): void {
   try {
-    localStorage.setItem(RESULTS_KEY, `${g.id}:${g.current}`);
+    localStorage.setItem(key, value);
   } catch {
     // Storage blocked: the reveal may replay after a reload, which is harmless.
   }
+}
+
+/** Has this phone already played the results reveal for this hole? (Survives a reload.) */
+export function resultsRevealSeen(gameId: string, hole: number): boolean {
+  return state.results.shown === `${gameId}:${hole}` || resultsDone(gameId, hole);
+}
+
+/**
+ * Finished holes this phone has seen the results of. Online, the latest hole only counts once its
+ * reveal has played here, so the rank pill and standings never give the result away.
+ */
+export function shownHoles(g: Game): number[] {
+  const holes = completedHoles(g);
+  const last = holes.at(-1);
+  if (last != null && inRoom(g) && !resultsRevealSeen(g.id, last)) return holes.slice(0, -1);
+  return holes;
+}
+
+/** Has this phone moved on from this hole's results? Until it has, it keeps showing them, even if the group has moved on. */
+export function resultsDone(gameId: string, hole: number): boolean {
+  return state.results.done === `${gameId}:${hole}`;
+}
+
+/** The reveal has played on this phone: after a reload, go straight to the standings. */
+export function markResultsRevealed(hole: number): void {
+  const g = state.game;
+  if (!g) return;
+  const shown = `${g.id}:${hole}`;
+  if (state.results.shown === shown) return;
+  writeMark(RESULTS_KEY, shown);
+  set({ results: { ...state.results, shown } });
+}
+
+/**
+ * "Next hole" on a hole's results. The first phone to tap it moves the group on; every other phone
+ * finishes its own reveal first and moves on when its player taps.
+ */
+export function leaveResults(hole: number): void {
+  const g = state.game;
+  if (!g) return;
+  const done = `${g.id}:${hole}`;
+  writeMark(RESULTS_DONE_KEY, done);
+  set({ results: { shown: done, done } });
+  if (g.status === 'playing' && g.current === hole) nextHole();
+  else haptic('medium');
 }
 
 /** "Pick for them": this phone picks for someone else this hole (say their phone died). */
@@ -774,8 +864,9 @@ export function nextHole(): void {
 export function boot(): void {
   window.addEventListener('popstate', onPopState);
 
-  const path = location.pathname.match(/^\/j\/([A-Za-z]+)\/?$/);
-  const code = normalizeCode(path?.[1] ?? new URLSearchParams(location.search).get('join') ?? '');
+  // /j/CODE (older links) or just /CODE (the short cardshot.link/CODE form).
+  const path = location.pathname.match(/^\/(?:j\/([A-Za-z]+)|([A-Za-z]{5}))\/?$/);
+  const code = normalizeCode(path?.[1] ?? path?.[2] ?? new URLSearchParams(location.search).get('join') ?? '');
   try {
     history.scrollRestoration = 'manual';
     if (path || location.search) history.replaceState(null, '', '/');

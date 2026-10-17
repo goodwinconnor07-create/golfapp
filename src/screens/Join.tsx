@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { cleanName, CODE_LENGTH, isNameBlocked, LIMITS, NAME_BLOCKED, normalizeCode, type GameInfo } from '../game';
+import { cleanName, CODE_LENGTH, isNameBlocked, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
-import { confirm, joinGame, navigate, resetTo, useApp } from '../state/store';
+import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar } from '../ui/components';
+import { Avatar, BackBar, Blobs, HeroPicture } from '../ui/components';
 
-/** Step 1: type (or arrive with) the 5-letter code. */
-export function Join({ initialCode }: { initialCode?: string }) {
+/**
+ * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
+ * screen with How to play in the corner and no footer.
+ */
+export function Join({ initialCode, home = false }: { initialCode?: string; home?: boolean }) {
   const [code, setCode] = useState(normalizeCode(initialCode ?? ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -46,13 +49,34 @@ export function Join({ initialCode }: { initialCode?: string }) {
   }, []);
 
   return (
-    <div className="screen">
-      <BackBar title="Join a game" />
+    <div className={`screen${home ? ' join-home' : ''}`}>
+      {home ? (
+        <>
+          <Blobs />
+          <div className="join-home-top">
+            <button type="button" className="home-pill press" onClick={() => navigate({ name: 'howto' })}>
+              How to play
+            </button>
+          </div>
+        </>
+      ) : (
+        <BackBar title="Join a game" />
+      )}
       <div className="screen-body">
-        <h1 className="h1">Enter the code</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          Get the 5-letter code from whoever started the game, or scan their QR code.
-        </p>
+        {home ? (
+          <div className="join-home-hero">
+            <p className="join-home-brand">CardShot</p>
+            <h1>Join the game</h1>
+            <p>Get the 5-letter code from the host, or scan their QR code.</p>
+          </div>
+        ) : (
+          <>
+            <h1 className="h1">Enter the code</h1>
+            <p className="muted" style={{ margin: 0 }}>
+              Get the 5-letter code from whoever started the game, or scan their QR code.
+            </p>
+          </>
+        )}
         <div className="code-input">
           <input
             value={code}
@@ -69,7 +93,7 @@ export function Join({ initialCode }: { initialCode?: string }) {
             maxLength={10}
             placeholder="CODE"
             aria-label="Game code"
-            autoFocus={!initialCode}
+            autoFocus={!initialCode && !home}
           />
         </div>
         {error && (
@@ -78,17 +102,21 @@ export function Join({ initialCode }: { initialCode?: string }) {
           </p>
         )}
         {server === 'down' && <p className="note">Can't reach the server right now. Check your signal.</p>}
+        {/* The website has no button: the code is looked up as soon as all 5 letters are in. */}
+        {home && busy && <span className="spinner join-home-busy" aria-label="Looking for the game" />}
       </div>
-      <div className="screen-foot">
-        <button
-          type="button"
-          className="btn btn-xl btn-blue"
-          disabled={code.length !== CODE_LENGTH || busy}
-          onClick={() => void lookUp(code)}
-        >
-          {busy ? <span className="spinner" aria-label="Looking for the game" /> : 'Find game'}
-        </button>
-      </div>
+      {!home && (
+        <div className="screen-foot">
+          <button
+            type="button"
+            className="btn btn-xl btn-blue"
+            disabled={code.length !== CODE_LENGTH || busy}
+            onClick={() => void lookUp(code)}
+          >
+            {busy ? <span className="spinner" aria-label="Looking for the game" /> : 'Find game'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -96,7 +124,12 @@ export function Join({ initialCode }: { initialCode?: string }) {
 /** Step 2: tap your name, or add yourself. */
 export function JoinWho({ info }: { info: GameInfo }) {
   const profileName = useApp((s) => s.profileName);
-  const [name, setName] = useState(profileName);
+  // The name lives in the draft so the picture sheet can edit it too. It starts as the remembered name.
+  const name = useApp((s) => s.draft.names[0] ?? '');
+  useEffect(() => {
+    setDraftNames([profileName]);
+  }, []);
+  const look = useApp((s) => s.profileLook);
   const free = info.players.filter((p) => !p.claimed);
   const taken = info.players.filter((p) => p.claimed);
 
@@ -141,30 +174,7 @@ export function JoinWho({ info }: { info: GameInfo }) {
         </div>
 
         {info.canJoinAsNew ? (
-          <div className="tile stack">
-            <h2 className="h3">{info.players.length ? 'Not on the list?' : 'Your name'}</h2>
-            <input
-              className="field"
-              value={name}
-              placeholder="Your name"
-              maxLength={LIMITS.maxNameLength}
-              autoCapitalize="words"
-              autoComplete="off"
-              aria-label="Your name"
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && cleanName(name) && !isNameBlocked(name)) joinGame(info, { name });
-              }}
-            />
-            {isNameBlocked(name) && (
-              <p className="field-error" role="alert">
-                {NAME_BLOCKED}
-              </p>
-            )}
-            <button type="button" className="btn btn-blue" disabled={!cleanName(name) || isNameBlocked(name)} onClick={() => joinGame(info, { name })}>
-              Join as {cleanName(name) || 'me'}
-            </button>
-          </div>
+          <HeroPicture name={name} look={look} nameTag onChange={() => openSheet({ name: 'look', editName: true })} />
         ) : (
           free.length === 0 && (
             <p className="tile-flat" style={{ margin: 0 }}>
@@ -173,6 +183,23 @@ export function JoinWho({ info }: { info: GameInfo }) {
           )
         )}
       </div>
+      {info.canJoinAsNew && (
+        <div className="screen-foot">
+          {info.players.length > 0 && (
+            <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
+              Not on the list? Tap the picture to add yourself.
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn btn-xl btn-blue"
+            disabled={!cleanName(name) || isNameBlocked(name)}
+            onClick={() => joinGame(info, { name })}
+          >
+            Join as {cleanName(name) || 'me'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

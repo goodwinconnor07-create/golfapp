@@ -1,17 +1,19 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { formatDelta, getCard, recap, type Game, type Recap, formatToPar, toParWords } from '../../game';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { formatDelta, getCard, recap, units, type Game, type Recap, type StandingRow, formatToPar, toParWords } from '../../game';
 import { nativeShare } from '../../state/native';
 import { APP_STORE_URL, canHost, isNative, publicOrigin } from '../../state/platform';
 import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { colourWipe, confetti, CONFETTI } from '../../ui/effects';
+import { Avatar } from '../../ui/components';
+import { colourWipe, confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { joinNames, plural } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
 import { resultsImage } from '../../ui/resultsImage';
 import { EditList } from './EditList';
 
 function names(game: Game, ids: string[]): string {
-  return joinNames(ids.map((id) => game.players.find((p) => p.id === id)?.name ?? '?'));
+  // Awards can name a team in 2v2 (the strokes award ranks teams).
+  return joinNames(ids.map((id) => (game.players.find((p) => p.id === id) ?? units(game).find((u) => u.id === id))?.name ?? '?'));
 }
 
 function shareText(game: Game, rc: Recap): string {
@@ -98,57 +100,85 @@ export function Final({ game }: { game: Game }) {
     };
   }, [game, rc, played]);
 
+  // With two or more players the podium builds up: 3rd, then 2nd, then 1st. Once per game; a tap skips it.
+  const podium = played && rc.byGame.length >= 2;
+  const first = rc.byGame.length >= 3 ? 0 : 1;
+  const [step, setStep] = useState(() => (!podium || reducedMotion() || finalSeen(game.id) ? 3 : first));
   useEffect(() => {
-    if (played) confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.22 }, 150);
-  }, [played]);
+    if (step >= 3) return;
+    const t = setTimeout(
+      () => {
+        haptic(step === 2 ? 'heavy' : 'medium');
+        setStep((x) => x + 1);
+      },
+      step === 0 ? 500 : step === 2 ? 1300 : 1000,
+    );
+    return () => clearTimeout(t);
+  }, [step]);
+  useEffect(() => {
+    if (!played || step < 3) return;
+    markFinalSeen(game.id);
+    confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.22 }, 150);
+  }, [played, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const winnerNames = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
+  const headline = rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`;
 
   return (
     <>
-      <div className="screen-body">
-        {played ? (
-          <div className="winner center pop">
-            <div className="trophy">
-              <TrophyIcon />
-            </div>
-            <h1 className="hero" style={{ fontSize: 46, marginTop: 10 }}>
-              {rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`}
+      <div className="screen-body final-body" onClick={step < 3 ? () => setStep(3) : undefined}>
+        {podium ? (
+          <>
+            <h1 className="h1 center" aria-live="polite">
+              {step >= 3 ? headline : step === 2 ? 'In 2nd…' : 'And in 3rd…'}
             </h1>
-            <p className="h3 muted" style={{ margin: 0 }}>
-              {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
-            </p>
-          </div>
+            {step >= 3 && (
+              <p className="h3 muted center" style={{ margin: '-8px 0 0' }}>
+                {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
+              </p>
+            )}
+            {/* Read in place order; laid out 2-1-3 like a real podium. */}
+            <ol className="podium">
+              {rc.byGame.slice(0, 3).map((row, i) => (
+                <PodiumStep key={row.player.id} row={row} pos={i} shown={step >= 3 - i} />
+              ))}
+            </ol>
+            {rc.byGame.slice(3).map((row) => (
+              <BoardRow key={row.player.id} row={row} sub={detail(row)} />
+            ))}
+          </>
         ) : (
-          <div className="tile-flat center">
-            <p className="h3" style={{ margin: 0 }}>
-              No holes were finished, so there's no winner this time.
-            </p>
-          </div>
+          <>
+            {played ? (
+              <div className="winner center pop">
+                <div className="trophy">
+                  <TrophyIcon />
+                </div>
+                <h1 className="hero" style={{ fontSize: 46, marginTop: 10 }}>
+                  {headline}
+                </h1>
+                <p className="h3 muted" style={{ margin: 0 }}>
+                  {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
+                </p>
+              </div>
+            ) : (
+              <div className="tile-flat center">
+                <p className="h3" style={{ margin: 0 }}>
+                  No holes were finished, so there's no winner this time.
+                </p>
+              </div>
+            )}
+
+            <p className="section-title">Against par · lowest wins</p>
+            <div className="board">
+              {rc.byGame.map((row, i) => (
+                <BoardRow key={row.player.id} row={row} delay={i * 70} sub={detail(row)} />
+              ))}
+            </div>
+          </>
         )}
 
-        <p className="section-title">Against par · lowest wins</p>
-        <div className="board">
-          {rc.byGame.map((row, i) => (
-            <BoardRow
-              key={row.player.id}
-              row={row}
-              delay={i * 70}
-              sub={
-                <>
-                  <span className="board-detail">
-                    <span>
-                      {row.totals.made} of {row.totals.holes} cards made
-                    </span>{' '}
-                    · <span>{row.totals.real} strokes</span>
-                  </span>
-                </>
-              }
-            />
-          ))}
-        </div>
-
-        {rc.awards.length > 0 && (
+        {step >= 3 && rc.awards.length > 0 && (
           <>
             <p className="section-title">Awards</p>
             <div className="awards">
@@ -181,12 +211,7 @@ export function Final({ game }: { game: Game }) {
           </>
         )}
         <EditList game={game} />
-      </div>
-
-      <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-blue" onClick={() => void share(game, rc, image.current)}>
-          <ShareIcon width={26} height={26} /> Share results
-        </button>
+        {/* Below everything, so the footer stays one button and never covers the awards. */}
         <div className="made-missed">
           <button type="button" className="btn btn-ghost" onClick={() => navigate({ name: 'scorecard' })}>
             Scorecard
@@ -202,6 +227,70 @@ export function Final({ game }: { game: Game }) {
           )}
         </div>
       </div>
+
+      <div className="screen-foot">
+        <button type="button" className="btn btn-xl btn-blue" onClick={() => void share(game, rc, image.current)}>
+          <ShareIcon width={26} height={26} /> Share results
+        </button>
+      </div>
     </>
   );
+}
+
+function detail(row: StandingRow) {
+  return (
+    <span className="board-detail">
+      <span>
+        {row.totals.made} of {row.totals.holes} cards made
+      </span>{' '}
+      · <span>{row.totals.real} strokes</span>
+    </span>
+  );
+}
+
+/** One podium step. pos 0 is 1st. Hidden steps show a "?" until their turn. */
+function PodiumStep({ row, pos, shown }: { row: StandingRow; pos: number; shown: boolean }) {
+  const place = `${row.tied ? '=' : ''}${row.rank}`;
+  return (
+    <li className={`pod pod-${pos + 1}${shown ? ' shown' : ''}`} aria-hidden={!shown}>
+      {shown ? (
+        <>
+          {pos === 0 && (
+            <span className="pod-crown" aria-hidden>
+              👑
+            </span>
+          )}
+          <Avatar player={row.player} size={pos === 0 ? 72 : 56} />
+          <b className="pod-name">{row.player.name}</b>
+          <span className="pod-score num">{formatToPar(row.totals.toPar)}</span>
+          <span className="sr-only">
+            {place}: {row.player.name}, {formatToPar(row.totals.toPar)}
+          </span>
+        </>
+      ) : (
+        <span className="pod-q">?</span>
+      )}
+      <span className="pod-block" aria-hidden>
+        {place}
+      </span>
+    </li>
+  );
+}
+
+const FINAL_KEY = 'sendit.finalShown';
+
+function finalSeen(gameId: string): boolean {
+  try {
+    return localStorage.getItem(FINAL_KEY) === gameId;
+  } catch {
+    return false;
+  }
+}
+
+function markFinalSeen(gameId: string): void {
+  try {
+    localStorage.setItem(FINAL_KEY, gameId);
+  } catch {
+    // Storage blocked: the podium may play again after a reload. Harmless.
+  }
 }

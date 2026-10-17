@@ -88,7 +88,7 @@ async function phone(browser: Browser, look: { emoji: string; color: number }): 
 
 test('lobby', async ({ browser }) => {
   test.setTimeout(120_000);
-  const host = await phone(browser, { emoji: '🦈', color: 0 });
+  const host = await phone(browser, { emoji: '🐐', color: 0 });
   await newGame(host, ['Maya']);
   const tiles = host.locator('.invite-panel .code-tiles');
   const code = ((await tiles.getAttribute('aria-label')) ?? '').replace('Game code', '').replace(/\s/g, '');
@@ -98,7 +98,7 @@ test('lobby', async ({ browser }) => {
     await guest.getByLabel('Your name').fill(name);
     await guest.getByRole('button', { name: `Join as ${name}` }).click();
     await expect(guest.getByText("You're in!")).toBeVisible();
-    await expect(host.locator('.player-row', { hasText: name })).toBeVisible();
+    await expect(host.locator('.roster-item', { hasText: name })).toBeVisible();
   }
   await host.waitForTimeout(1500);
   await snap(host, 'lobby');

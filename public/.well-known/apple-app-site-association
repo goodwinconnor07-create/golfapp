@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.app.cardshot.ios"],
+        "appIDs": ["9FAJRHL979.app.cardshot.ios"],
         "components": [{ "/": "/j/*", "comment": "Invite links open the app when it's installed." }]
       }
     ]

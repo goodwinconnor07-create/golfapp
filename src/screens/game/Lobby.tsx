@@ -3,8 +3,9 @@ import { confirm, dispatch, goOnline, openSheet, useApp } from '../../state/stor
 import { isHost } from '../../state/view';
 import { Avatar, SkeletonInvite } from '../../ui/components';
 import { colourWipe } from '../../ui/effects';
-import { GearIcon, ShareIcon } from '../../ui/Icons';
-import { CodeTiles, shareInvite } from '../sheets/InviteSheet';
+import { CopyIcon, QrIcon, ShareIcon } from '../../ui/Icons';
+import { joinLink, joinLinkLabel, SHORT_HOST } from '../../state/platform';
+import { CodeTiles, copy, shareInvite } from '../sheets/InviteSheet';
 import { TeamPicker } from './TeamPicker';
 
 export function Lobby({ game }: { game: Game }) {
@@ -36,26 +37,44 @@ export function Lobby({ game }: { game: Game }) {
     <>
       <div className="screen-body">
         <div>
-          <h1 className="h1">{host ? 'Ready to tee off?' : "You're in!"}</h1>
+          <h1 className={host && !alone ? 'h1 h1-sm' : 'h1'}>
+            {host ? (alone ? 'Ready to tee off?' : `${game.players.length} players ready`) : "You're in!"}
+          </h1>
           <p className="muted" style={{ margin: '6px 0 0' }}>
             {game.holes.length} hole{game.holes.length === 1 ? '' : 's'} · starting on hole {game.holes[0].number}
             {game.course ? ` · ${game.course}` : ''}
           </p>
         </div>
 
-        {/* Invite first: the code and a share button are the main thing on the host's lobby. */}
+        {/* Invite first: the code is the main thing on the host's lobby, with the list of friends right under it. */}
         {host && (
           <div className="invite-panel">
             {online && game.code ? (
               <>
-                <p className="label">Friends join with this code</p>
                 <CodeTiles code={game.code} />
-                <button type="button" className="btn btn-xl btn-blue" onClick={() => void shareInvite(game.code!)}>
-                  <ShareIcon width={26} height={26} /> Share invite
+                <button
+                  type="button"
+                  className="link-chip press"
+                  aria-label={`Copy link ${joinLinkLabel(game.code)}`}
+                  onClick={() => void copy(joinLink(game.code!))}
+                >
+                  <span className="link-host">{SHORT_HOST}/</span>
+                  <b>{game.code}</b>
+                  <CopyIcon width={20} height={20} />
                 </button>
-                <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'invite' })}>
-                  Show QR code
-                </button>
+                <div className="invite-actions">
+                  <button type="button" className="btn btn-blue" onClick={() => void shareInvite(game.code!)}>
+                    <ShareIcon width={24} height={24} /> Share invite
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost icon-only"
+                    aria-label="Show QR code"
+                    onClick={() => openSheet({ name: 'invite' })}
+                  >
+                    <QrIcon width={26} height={26} />
+                  </button>
+                </div>
               </>
             ) : busy ? (
               <SkeletonInvite label={busy} />
@@ -90,76 +109,75 @@ export function Lobby({ game }: { game: Game }) {
             </button>
           )}
         </div>
+        {/* Each player's picture pops in when they join, then floats gently. Tap yours (or anyone's, as host) to change it. */}
+        {game.teams && <TeamPicker game={game} editable={host} />}
+        <div className="roster" hidden={!!game.teams}>
+          {!game.teams && game.players.map((p, i) => {
+            const you = p.deviceId === deviceId;
+            const isHostPlayer = p.deviceId === game.hostDeviceId;
+            const inner = (
+              <>
+                <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ['--float-delay' as string]: `${0.6 + i * 0.4}s` }}>
+                  {/* The float (and the shadow and glow) move together, so nothing is left behind. */}
+                  <span className={`roster-float${isHostPlayer ? ' is-host' : ''}`}>
+                    <Avatar player={p} size={72} />
+                    {you && <span className="tag tag-you">You</span>}
+                  </span>
+                </span>
+                <span className="roster-name">{p.name}</span>
+              </>
+            );
+            return host || you ? (
+              <button
+                key={p.id}
+                type="button"
+                className="roster-item"
+                aria-label={`${p.name}${you ? ', you' : ''}${isHostPlayer ? ', host' : ''}`}
+                onClick={() => openSheet({ name: 'player', playerId: p.id })}
+              >
+                {inner}
+              </button>
+            ) : (
+              <div key={p.id} className="roster-item" aria-label={p.name}>
+                {inner}
+              </div>
+            );
+          })}
+        </div>
         {host && canTeam && (
           <button
             type="button"
-            className={`btn ${game.teams ? 'btn-blue' : 'btn-outline'}`}
+            className={`btn ${game.teams ? 'btn-blue' : 'btn-ghost'}`}
             aria-pressed={!!game.teams}
             onClick={() => setTeams(!game.teams)}
           >
             {game.teams ? '2v2 teams on' : 'Play as 2v2 teams'}
           </button>
         )}
-        {game.teams && <TeamPicker game={game} editable={host} />}
-        <div className="stack">
-          {!game.teams && game.players.map((p) => {
-            const tag =
-              p.deviceId === deviceId ? (
-                <span className="tag tag-you">You</span>
-              ) : p.deviceId ? (
-                <span className="tag tag-joined">Joined</span>
-              ) : online ? (
-                <span className="tag tag-waiting">On host's phone</span>
-              ) : null;
-            return host || p.deviceId === deviceId ? (
-              <button key={p.id} type="button" className="player-row press" onClick={() => openSheet({ name: 'player', playerId: p.id })}>
-                <Avatar player={p} size={48} />
-                <span className="name">{p.name}</span>
-                {tag}
-              </button>
-            ) : (
-              <div key={p.id} className="player-row">
-                <Avatar player={p} size={48} />
-                <span className="name">{p.name}</span>
-                {tag}
-              </div>
-            );
-          })}
-          {host && alone && (
-            <div className="waiting-line">
-              <span className="dots" aria-hidden>
-                <i />
-                <i />
-                <i />
-              </span>
-              Waiting for friends to join
-            </div>
-          )}
-        </div>
-
-        {/* Guests get the one-line rules; the host's lobby stays focused on inviting. */}
-        {!host && (
-          <div className="tile-flat explainer">
-            <span style={{ fontSize: 30 }} aria-hidden>
-              ⛳
+        {host && alone && (
+          <div className="waiting-line slim">
+            <span className="dots" aria-hidden>
+              <i />
+              <i />
+              <i />
             </span>
-            <span>
-              <b>Each hole</b>: your strokes ± your challenge, scored over or under par. Lowest total wins.
-            </span>
+            Waiting for friends to join
           </div>
+        )}
+
+        {/* Guests get the rules in one line; the host's lobby stays focused on inviting. */}
+        {!host && (
+          <p className="muted rules-line">
+            <b>Each hole</b>: strokes ± your challenge, over or under par. Lowest total wins.
+          </p>
         )}
       </div>
 
       <div className="screen-foot">
         {host ? (
-          <>
-            <button type="button" className="btn btn-xl btn-green" onClick={startClick}>
-              Let's go!
-            </button>
-            <button type="button" className="btn btn-link" onClick={() => openSheet({ name: 'options' })}>
-              <GearIcon width={22} height={22} /> Game options
-            </button>
-          </>
+          <button type="button" className="btn btn-xl btn-green" onClick={startClick}>
+            Let's go!
+          </button>
         ) : (
           <div className="waiting-line">
             <span className="dots" aria-hidden>

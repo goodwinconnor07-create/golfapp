@@ -1,179 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FB923C"/>
-      <stop offset="0.5" stop-color="#F43F5E"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#2A1F4D"/>
+      <stop offset="1" stop-color="#140E26"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.72" cy="0.26" r="0.62">
-      <stop offset="0" stop-color="#FFF7D6" stop-opacity="0.75"/>
-      <stop offset="0.35" stop-color="#FFE08A" stop-opacity="0.28"/>
-      <stop offset="1" stop-color="#FFE08A" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="barrel" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5B6478"/>
-      <stop offset="0.28" stop-color="#2E3445"/>
-      <stop offset="0.7" stop-color="#161A26"/>
-      <stop offset="1" stop-color="#0B0D14"/>
+    <linearGradient id="safe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#0F766E"/>
     </linearGradient>
-    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFE7A3"/>
-      <stop offset="0.35" stop-color="#F5B82E"/>
-      <stop offset="1" stop-color="#A86A06"/>
+    <linearGradient id="bold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDBA74"/>
+      <stop offset="1" stop-color="#EA580C"/>
     </linearGradient>
-    <radialGradient id="bore" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFF4C2"/>
-      <stop offset="0.35" stop-color="#FFB020"/>
-      <stop offset="0.75" stop-color="#7A2E00"/>
-      <stop offset="1" stop-color="#1A0A00"/>
-    </radialGradient>
-    <radialGradient id="wheel" cx="0.38" cy="0.32" r="0.75">
-      <stop offset="0" stop-color="#8A5A36"/>
-      <stop offset="0.6" stop-color="#5A3418"/>
-      <stop offset="1" stop-color="#2E1708"/>
-    </radialGradient>
-    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#9A6438"/>
-      <stop offset="1" stop-color="#4A2810"/>
+    <linearGradient id="insane" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#7C3AED"/>
     </linearGradient>
-    <radialGradient id="blast" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFBEA"/>
-      <stop offset="0.3" stop-color="#FFE066"/>
-      <stop offset="0.65" stop-color="#FF8A1F" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#FF5A1F" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="smoke" cx="0.4" cy="0.35" r="0.7">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="0.7" stop-color="#F1ECF7"/>
-      <stop offset="1" stop-color="#D9D0E6"/>
-    </radialGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="0.7" stop-color="#FBF8F2"/>
-      <stop offset="1" stop-color="#EDE6D8"/>
-    </linearGradient>
-    <linearGradient id="streak" x1="1" y1="0" x2="0" y2="0">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FF5A6E"/>
-      <stop offset="1" stop-color="#C8102E"/>
-    </linearGradient>
-    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5DD36A"/>
-      <stop offset="1" stop-color="#1F8A3B"/>
-    </linearGradient>
-    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#2A0A3A" flood-opacity="0.45"/>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+    <filter id="cardShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#05020D" flood-opacity="0.55"/>
     </filter>
-    <filter id="cardShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="-6" dy="14" stdDeviation="9" flood-color="#3B0A2A" flood-opacity="0.5"/>
-    </filter>
-    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
     <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
-    <linearGradient id="shaft" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#6B7385"/>
-      <stop offset="0.45" stop-color="#F4F6FA"/>
-      <stop offset="1" stop-color="#8D95A6"/>
-    </linearGradient>
-    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3A4256"/>
-      <stop offset="0.45" stop-color="#151925"/>
-      <stop offset="1" stop-color="#05070C"/>
-    </linearGradient>
-    <linearGradient id="face" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#B9C0CC"/>
-      <stop offset="0.5" stop-color="#E9EDF3"/>
-      <stop offset="1" stop-color="#8E96A6"/>
-    </linearGradient>
-    <linearGradient id="sole" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#FB923C"/>
-      <stop offset="1" stop-color="#F43F5E"/>
-    </linearGradient>
   </defs>
 
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
 
   <g clip-path="url(#tile)">
-    <!-- Light from the hit, up where the card is flying. -->
-    <rect width="512" height="512" fill="url(#glow)"/>
-    <!-- Ground shadow under the club and tee. -->
-    <ellipse cx="220" cy="472" rx="190" ry="30" fill="#2A0A3A" opacity="0.28" filter="url(#blur6)"/>
+    <!-- Soft light behind each card, in its level's colour. -->
+    <circle cx="130" cy="300" r="110" fill="#14B8A6" opacity="0.45" filter="url(#glow)"/>
+    <circle cx="256" cy="210" r="110" fill="#F97316" opacity="0.4" filter="url(#glow)"/>
+    <circle cx="382" cy="300" r="110" fill="#8B5CF6" opacity="0.5" filter="url(#glow)"/>
 
-    <!-- The tee the card was sitting on. -->
-    <g filter="url(#soft)">
-      <path d="M296 392 L 322 392 L 314 404 L 312 470 Q 309 478 306 470 L 304 404 Z" fill="#FFFFFF"/>
-      <ellipse cx="309" cy="392" rx="15" ry="5" fill="#F1ECF7"/>
-    </g>
-
-    <!-- Impact flash where the clubface meets the card. -->
-    <g transform="translate(300 318)">
-      <circle r="62" fill="url(#blast)"/>
-      <path d="M0 0 l 16 -64 l 6 56 l 50 -30 l -38 44 l 62 4 l -58 18 l 42 42 l -56 -26 l -8 58 l -14 -56 l -44 38 l 24 -52 l -60 -2 l 58 -20 l -44 -44 l 56 26 Z" fill="#FFE066" opacity="0.9"/>
-      <circle r="18" fill="#FFFBEA"/>
-    </g>
-    <g fill="#FFF3B0">
-      <circle cx="380" cy="318" r="5"/>
-      <circle cx="360" cy="352" r="3.5"/>
-      <circle cx="252" cy="250" r="4"/>
-      <circle cx="398" cy="282" r="3"/>
-      <circle cx="232" cy="300" r="3"/>
-    </g>
-
-    <!-- The driver: shaft from the top left, head swinging through the ball position. -->
-    <g filter="url(#soft)">
-      <path d="M-20 -40 L 176 300" stroke="#0B0D14" stroke-width="22" stroke-linecap="round" opacity="0.25"/>
-      <path d="M-24 -46 L 172 296" stroke="url(#shaft)" stroke-width="16" stroke-linecap="round"/>
-      <!-- Grip end, off the top of the picture. -->
-      <path d="M-30 -56 L 40 66" stroke="#14161E" stroke-width="22" stroke-linecap="round"/>
-      <g transform="rotate(-12 200 342)">
-        <!-- Hosel. -->
-        <path d="M158 288 L 186 284 L 200 316 L 168 322 Z" fill="#20242F"/>
-        <!-- Head: a big rounded crown, face to the right. -->
-        <path d="M92 352 C 92 300, 160 284, 230 288 C 270 290, 292 304, 296 332 L 298 382 C 292 398, 262 404, 220 404 C 150 404, 92 396, 92 352 Z" fill="url(#crown)"/>
-        <!-- Crown shine and an alignment stripe. -->
-        <path d="M116 330 C 140 304, 196 296, 246 300" fill="none" stroke="#9AA6BF" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
-        <path d="M200 296 L 214 296" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
-        <!-- Sole accent. -->
-        <path d="M108 376 C 150 394, 230 398, 286 388" fill="none" stroke="url(#sole)" stroke-width="9" stroke-linecap="round"/>
-        <!-- Clubface with grooves. -->
-        <path d="M284 302 C 296 310, 302 322, 302 334 L 302 384 C 300 392, 294 398, 286 400 Z" fill="url(#face)"/>
-        <g stroke="#7A8294" stroke-width="2" stroke-linecap="round" opacity="0.8">
-          <path d="M290 330 L 299 330"/><path d="M290 344 L 300 344"/><path d="M290 358 L 300 358"/><path d="M290 372 L 300 372"/>
-        </g>
+    <!-- Three cards fanned from a point below: Safe, Insane, then Bold on top. -->
+    <g transform="translate(256 470) rotate(-28)" filter="url(#cardShadow)">
+      <rect x="-82" y="-330" width="164" height="226" rx="24" fill="url(#safe)"/>
+      <rect x="-82" y="-330" width="164" height="226" rx="24" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity="0.9"/>
+      <g transform="translate(-70 -312) scale(2.5)" fill="#FFFFFF">
+        <path d="M12 1.8 20.5 5v6.4c0 5.3-3.6 9.6-8.5 11-4.9-1.4-8.5-5.7-8.5-11V5L12 1.8Z"/>
+        <path d="m8 12 2.8 2.8L16.4 9" fill="none" stroke="#0F766E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
     </g>
-
-    <!-- Motion streaks between the club and the card. -->
-    <g stroke="#FFFFFF" stroke-linecap="round">
-      <path d="M318 266 L 356 228" stroke-width="7" opacity="0.85"/>
-      <path d="M340 290 L 386 244" stroke-width="5" opacity="0.7"/>
-      <path d="M300 250 L 330 220" stroke-width="4" opacity="0.6"/>
-    </g>
-
-    <!-- The card, knocked off the tee and flying. -->
-    <g transform="translate(370 150) rotate(20) scale(1.1)" filter="url(#cardShadow)">
-      <rect x="-62" y="-86" width="124" height="172" rx="16" fill="url(#card)"/>
-      <rect x="-62" y="-86" width="124" height="172" rx="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
-      <rect x="-52" y="-76" width="104" height="152" rx="10" fill="none" stroke="#F43F5E" stroke-width="3" opacity="0.35"/>
-      <!-- Middle: a flag on a green. -->
-      <ellipse cx="0" cy="44" rx="42" ry="14" fill="url(#hill)"/>
-      <ellipse cx="0" cy="40" rx="9" ry="3.5" fill="#0B1A10"/>
-      <rect x="-2.5" y="-40" width="5" height="82" rx="2.5" fill="#9AA3AD"/>
-      <path d="M2.5 -40 C 18 -36, 26 -42, 40 -32 C 28 -24, 18 -26, 2.5 -14 Z" fill="url(#flag)"/>
-      <circle cx="0" cy="-41" r="4" fill="#FFFFFF"/>
-      <!-- Corner pips. -->
-      <g fill="#E11D48">
-        <path d="M-44 -66 h4 v20 h-4 Z"/>
-        <path d="M-40 -66 l 14 5 l -14 5 Z"/>
-        <g transform="rotate(180)">
-          <path d="M-44 -66 h4 v20 h-4 Z"/>
-          <path d="M-40 -66 l 14 5 l -14 5 Z"/>
-        </g>
+    <g transform="translate(256 470) rotate(28)" filter="url(#cardShadow)">
+      <rect x="-82" y="-330" width="164" height="226" rx="24" fill="url(#insane)"/>
+      <rect x="-82" y="-330" width="164" height="226" rx="24" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity="0.9"/>
+      <g transform="translate(10 -312) scale(2.5)" fill="#FFFFFF">
+        <path d="M13.8 1.5 3.6 13.6h6.9l-1.6 8.9 10.5-12.6h-7l1.4-8.4Z"/>
       </g>
-      <!-- A shine across the face. -->
-      <path d="M-62 -40 L 10 -86 L 40 -86 L -62 -12 Z" fill="#FFFFFF" opacity="0.45"/>
+    </g>
+    <g transform="translate(256 470)" filter="url(#cardShadow)">
+      <rect x="-82" y="-350" width="164" height="226" rx="24" fill="url(#bold)"/>
+      <rect x="-82" y="-350" width="164" height="226" rx="24" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity="0.9"/>
+      <g transform="translate(-40 -278) scale(3.33)" fill="#FFFFFF">
+        <path d="M12.6 1.6c.5 2.9 2.4 4.6 4.1 6.5 1.6 1.8 2.8 3.8 2.8 6.4A7.5 7.5 0 0 1 12 22a7.5 7.5 0 0 1-7.5-7.5c0-2.7 1.2-4.7 2.7-6.3.1 1.9 1 3.4 2.5 4.1-.4-4.1.9-7.8 2.9-10.7Z"/>
+      </g>
     </g>
   </g>
 </svg>

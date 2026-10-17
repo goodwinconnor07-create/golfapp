@@ -1,9 +1,9 @@
-import { isDoubleHole, type Game } from '../../game';
+import { getEntry, ordinal, ownsPlayer, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
-import { groupRevealSeen, navigate, openSheet, useApp } from '../../state/store';
-import { gameView, myPlayers, type GameView } from '../../state/view';
+import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
+import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
-import { BellIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
+import { BackIcon, BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
@@ -25,6 +25,8 @@ export function GameScreen() {
   const online = useApp((s) => s.session?.mode === 'online');
   const ui = useApp((s) => s.ui);
   const conn = useApp((s) => s.conn);
+  // Re-render when this phone moves on from a hole's results.
+  useApp((s) => s.results);
 
   if (!game) {
     return (
@@ -38,14 +40,23 @@ export function GameScreen() {
     );
   }
 
-  const view = gameView(game, deviceId, online, ui, groupRevealSeen);
+  const view = gameView(game, deviceId, online, ui, groupRevealSeen, resultsDone);
   const mine = myPlayers(game, deviceId, online);
   const helpers = game.players.filter((p) => ui.extraPick.includes(p.id) && !mine.includes(p));
-  const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${game.current}`;
+  // The hole on screen: a phone still showing the last hole's results stays on that hole.
+  const holeIdx = view.kind === 'resultsReveal' ? view.hole : game.current;
+  const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${holeIdx}`;
+  // Scoring: a back button by the par. The host scoring for someone on another phone cancels;
+  // anyone else goes back to playing ("Not done yet") until a score is saved.
+  let back: { label: string; run: () => void } | undefined;
+  if (view.kind === 'score') {
+    if (game.code && !ownsPlayer(game, deviceId, view.playerId)) back = { label: 'Cancel', run: cancelScoreFor };
+    else if (getEntry(game, view.playerId, game.current)?.strokes == null) back = { label: 'Not done yet', run: notDoneYet };
+  }
 
   return (
     <div className="screen">
-      <GameTopBar game={game} online={online} conn={conn} />
+      <GameTopBar game={game} online={online} conn={conn} holeIdx={holeIdx} final={view.kind === 'final'} back={back} />
       {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
       <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
     </div>
@@ -65,7 +76,7 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
     case 'scoreRoom':
       return <ScoreRoom game={game} />;
     case 'resultsReveal':
-      return <ResultsReveal game={game} />;
+      return <ResultsReveal game={game} hole={view.hole} />;
     case 'groupReveal':
       return <GroupReveal game={game} />;
     case 'reveal':
@@ -81,31 +92,56 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
   }
 }
 
-function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn: ConnStatus | 'none' }) {
+function GameTopBar({
+  game,
+  online,
+  conn,
+  holeIdx,
+  final,
+  back,
+}: {
+  game: Game;
+  online: boolean;
+  conn: ConnStatus | 'none';
+  holeIdx: number;
+  final: boolean;
+  back?: { label: string; run: () => void };
+}) {
   // Changes made with no signal, saved on this phone until they reach the server.
   const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
-  const hole = game.holes[game.current];
+  const hole = game.holes[holeIdx];
   const asks = useFixCount(game);
+  const host = isHost(
+    game,
+    useApp((s) => s.deviceId),
+  );
   return (
     <div className="topbar">
       <div className="topbar-title">
         {game.status === 'lobby' && <span className="h2">Lobby</span>}
-        {game.status === 'finished' && <span className="h2">Final results</span>}
-        {game.status === 'playing' && (
+        {final && <span className="h2">Final results</span>}
+        {game.status !== 'lobby' && !final && (
           <div className="hole-tag">
             <b>Hole {hole.number}</b>
-            {hole.par && <span className="par-chip">PAR {hole.par}</span>}
-            {isDoubleHole(game, game.current) && (
-              <span className="tag tag-double" aria-label="Double stakes">
-                2×
-              </span>
-            )}
           </div>
         )}
       </div>
-      {game.status === 'playing' && (
-        <button type="button" className="icon-btn press" aria-label="Leaderboard" onClick={() => navigate({ name: 'leaderboard' })}>
-          <TrophyIcon />
+      {back && (
+        <button type="button" className="icon-btn press" aria-label={back.label} onClick={back.run}>
+          <BackIcon />
+        </button>
+      )}
+      {game.status !== 'lobby' && !final && hole.par && (
+        <div className="par-tile" role="img" aria-label={`Par ${hole.par}`}>
+          <small>PAR</small>
+          <b>{hole.par}</b>
+        </div>
+      )}
+      {/* While scoring, the back button takes the trophy's place so the hole number keeps its room. */}
+      {game.status === 'playing' && !back && <RankPill game={game} online={online} />}
+      {game.status === 'lobby' && host && (
+        <button type="button" className="icon-btn press" aria-label="Game options" onClick={() => openSheet({ name: 'options' })}>
+          <GearIcon />
         </button>
       )}
       {online && game.status !== 'lobby' && (
@@ -153,5 +189,33 @@ function GameTopBar({ game, online, conn }: { game: Game; online: boolean; conn:
         </span>
       )}
     </div>
+  );
+}
+
+/**
+ * Your place, always on screen: "2nd" under a trophy (gold when you lead). Opens the standings.
+ * It only moves once this phone has seen the hole's results. With everyone on one phone there's
+ * no "you", so it's just the trophy.
+ */
+function RankPill({ game, online }: { game: Game; online: boolean }) {
+  const deviceId = useApp((s) => s.deviceId);
+  const holes = shownHoles(game);
+  const mine = online ? myPlayers(game, deviceId, true) : game.players.length === 1 ? game.players : [];
+  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id || r.player.members?.some((m) => m.id === mine[0].id)) : undefined;
+  const place = row ? `${row.tied ? '=' : ''}${ordinal(row.rank)}` : null;
+  return (
+    <button
+      type="button"
+      className={`icon-btn press rank-pill${row?.rank === 1 && game.players.length > 1 ? ' lead' : ''}`}
+      aria-label={place ? `Standings, you're ${place}` : 'Standings'}
+      onClick={() => openSheet({ name: 'standings' })}
+    >
+      <TrophyIcon width={place ? 20 : 26} height={place ? 20 : 26} />
+      {place && (
+        <b key={place} className="pop">
+          {place}
+        </b>
+      )}
+    </button>
   );
 }
