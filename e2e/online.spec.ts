@@ -22,9 +22,9 @@ test('a friend claims the name the host already typed in', async ({ browser }) =
   await expect(friend.getByText('Who are you?')).toBeVisible();
   await friend.locator('.player-row', { hasText: 'Ollie' }).click();
   await expect(friend.getByText("You're in!")).toBeVisible();
-  await expect(friend.locator('.player-row', { hasText: 'Ollie' }).getByText('You')).toBeVisible();
+  await expect(friend.locator('.roster-item', { hasText: 'Ollie' }).getByText('You')).toBeVisible();
 
-  await expect(host.locator('.player-row', { hasText: 'Ollie' }).getByText('Joined')).toBeVisible();
+  await expect(host.locator('.roster-item', { hasText: 'Ollie' })).toBeVisible();
 
   // Only the host can start; the friend sees who they're waiting for.
   await expect(friend.getByText('Waiting for Hana to start')).toBeVisible();
@@ -57,7 +57,7 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(guest.getByText("You're in!")).toBeVisible();
   await shot(guest, '23-guest-lobby');
 
-  await expect(host.locator('.player-row', { hasText: 'Gus' }).getByText('Joined')).toBeVisible();
+  await expect(host.locator('.roster-item', { hasText: 'Gus' })).toBeVisible();
   await shot(host, '24-host-lobby-online');
   await host.getByRole('button', { name: "Let's go!" }).click();
 
@@ -265,7 +265,7 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await guest.goto(`/j/${code}`);
   await guest.getByLabel('Your name').fill('Gus');
   await guest.getByRole('button', { name: 'Join as Gus' }).click();
-  await expect(host.locator('.player-row', { hasText: 'Gus' }).getByText('Joined')).toBeVisible();
+  await expect(host.locator('.roster-item', { hasText: 'Gus' })).toBeVisible();
   await host.getByRole('button', { name: "Let's go!" }).click();
   await host.getByRole('button', { name: /PAR\s*4/ }).click();
   await pickAndReveal(host, 'Safe');

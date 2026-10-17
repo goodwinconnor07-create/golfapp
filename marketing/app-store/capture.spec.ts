@@ -98,7 +98,7 @@ test('lobby', async ({ browser }) => {
     await guest.getByLabel('Your name').fill(name);
     await guest.getByRole('button', { name: `Join as ${name}` }).click();
     await expect(guest.getByText("You're in!")).toBeVisible();
-    await expect(host.locator('.player-row', { hasText: name })).toBeVisible();
+    await expect(host.locator('.roster-item', { hasText: name })).toBeVisible();
   }
   await host.waitForTimeout(1500);
   await snap(host, 'lobby');

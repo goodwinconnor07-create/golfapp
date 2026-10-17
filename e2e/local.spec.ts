@@ -26,7 +26,7 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await page.getByRole('button', { name: /No phone\? Add them/ }).click();
   await page.getByLabel('Name').fill('Alex');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.locator('.player-row', { hasText: 'Alex' })).toBeVisible();
+  await expect(page.locator('.roster-item', { hasText: 'Alex' })).toBeVisible();
   await shot(page, '04b-lobby-with-guest');
   await page.getByRole('button', { name: 'Game options' }).click();
   await shot(page, '05-options');
@@ -319,7 +319,7 @@ test('pick a picture: emoji and colour, remembered and changeable in the lobby',
   await page.getByRole('button', { name: /Skip/ }).click();
   await page.getByRole('button', { name: /Front 9/ }).click();
 
-  const sam = page.locator('.player-row', { hasText: 'Sam' });
+  const sam = page.locator('.roster-item', { hasText: 'Sam' });
   await expect(sam.locator('.avatar')).toHaveText('🦈');
 
   // Change it from the lobby: back to the letter, new colour.

@@ -32,7 +32,7 @@ export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'B
     await page.getByRole('button', { name: /No phone\? Add them/ }).click();
     await page.getByLabel('Name').fill(name);
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.locator('.player-row', { hasText: name })).toBeVisible();
+    await expect(page.locator('.roster-item', { hasText: name })).toBeVisible();
   }
 }
 

@@ -31,7 +31,9 @@ export function Lobby({ game }: { game: Game }) {
     <>
       <div className="screen-body">
         <div>
-          <h1 className="h1">{host ? 'Ready to tee off?' : "You're in!"}</h1>
+          <h1 className={host && !alone ? 'h1 h1-sm' : 'h1'}>
+            {host ? (alone ? 'Ready to tee off?' : `${game.players.length} players ready`) : "You're in!"}
+          </h1>
           <p className="muted" style={{ margin: '6px 0 0' }}>
             {game.holes.length} hole{game.holes.length === 1 ? '' : 's'} · starting on hole {game.holes[0].number}
             {game.course ? ` · ${game.course}` : ''}
@@ -96,52 +98,52 @@ export function Lobby({ game }: { game: Game }) {
             </button>
           )}
         </div>
-        <div className="stack">
-          {game.players.map((p) => {
-            const tag =
-              p.deviceId === deviceId ? (
-                <span className="tag tag-you">You</span>
-              ) : p.deviceId ? (
-                <span className="tag tag-joined">Joined</span>
-              ) : online ? (
-                <span className="tag tag-waiting">On host's phone</span>
-              ) : null;
-            return host || p.deviceId === deviceId ? (
-              <button key={p.id} type="button" className="player-row press" onClick={() => openSheet({ name: 'player', playerId: p.id })}>
-                <Avatar player={p} size={48} />
-                <span className="name">{p.name}</span>
-                {tag}
+        {/* Each player's picture pops in when they join, then floats gently. Tap yours (or anyone's, as host) to change it. */}
+        <div className="roster">
+          {game.players.map((p, i) => {
+            const you = p.deviceId === deviceId;
+            const inner = (
+              <>
+                <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ["--float-delay" as string]: `${0.6 + i * 0.4}s` }}>
+                  <Avatar player={p} size={72} />
+                </span>
+                <span className="roster-name">{p.name}</span>
+                {you && <span className="tag tag-you">You</span>}
+              </>
+            );
+            return host || you ? (
+              <button
+                key={p.id}
+                type="button"
+                className="roster-item press"
+                aria-label={`${p.name}${you ? ', you' : ''}`}
+                onClick={() => openSheet({ name: 'player', playerId: p.id })}
+              >
+                {inner}
               </button>
             ) : (
-              <div key={p.id} className="player-row">
-                <Avatar player={p} size={48} />
-                <span className="name">{p.name}</span>
-                {tag}
+              <div key={p.id} className="roster-item" aria-label={p.name}>
+                {inner}
               </div>
             );
           })}
-          {host && alone && (
-            <div className="waiting-line">
-              <span className="dots" aria-hidden>
-                <i />
-                <i />
-                <i />
-              </span>
-              Waiting for friends to join
-            </div>
-          )}
         </div>
-
-        {/* Guests get the one-line rules; the host's lobby stays focused on inviting. */}
-        {!host && (
-          <div className="tile-flat explainer">
-            <span style={{ fontSize: 30 }} aria-hidden>
-              ⛳
+        {host && alone && (
+          <div className="waiting-line slim">
+            <span className="dots" aria-hidden>
+              <i />
+              <i />
+              <i />
             </span>
-            <span>
-              <b>Each hole</b>: your strokes ± your challenge, scored over or under par. Lowest total wins.
-            </span>
+            Waiting for friends to join
           </div>
+        )}
+
+        {/* Guests get the rules in one line; the host's lobby stays focused on inviting. */}
+        {!host && (
+          <p className="muted rules-line">
+            <b>Each hole</b>: strokes ± your challenge, over or under par. Lowest total wins.
+          </p>
         )}
       </div>
 
