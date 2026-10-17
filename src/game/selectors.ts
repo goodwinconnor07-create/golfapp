@@ -1,6 +1,6 @@
 import { getCard } from './cards';
-import { allPicked, entryKey, freePassUsed, holeComplete, holeResult } from './rules';
-import { formatDelta } from './tiers';
+import { allPicked, entryKey, freePassUsed, holeComplete, holeResult, ownsPlayer, teamOf, type HoleResult } from './rules';
+import { formatDelta, halves } from './tiers';
 import type { Game, Player, Tier } from './types';
 
 /** Holes where every player has a result. Only these count towards totals. */
@@ -67,8 +67,55 @@ export function playerTotals(game: Game, playerId: string, holes: readonly numbe
   return t;
 }
 
+/**
+ * What the leaderboard ranks: a player, or in a team game a team. A team stands in as a
+ * Player named "Sam & Alex" (with `members`), so screens can show it like anyone else.
+ */
+export type Unit = Player & { members?: [Player, Player] };
+
+export function units(game: Game): Unit[] {
+  if (!game.teams) return game.players;
+  return game.teams.flatMap((t) => {
+    const a = game.players.find((p) => p.id === t.players[0]);
+    const b = game.players.find((p) => p.id === t.players[1]);
+    return a && b ? [{ id: t.id, name: `${a.name} & ${b.name}`, color: a.color, deviceId: null, members: [a, b] as [Player, Player] }] : [];
+  });
+}
+
+/**
+ * A standings row's result on one hole: the player's own, or for a team both partners' golf
+ * averaged with the shared card counted once (so it can land on a half). Null until both are in.
+ */
+export function unitHoleResult(game: Game, unitId: string, hole: number): HoleResult | null {
+  const team = game.teams?.find((t) => t.id === unitId);
+  if (!team) return holeResult(game, unitId, hole);
+  const a = holeResult(game, team.players[0], hole);
+  const b = holeResult(game, team.players[1], hole);
+  if (!a || !b) return null;
+  return {
+    ...a,
+    strokes: (a.strokes + b.strokes) / 2,
+    gameScore: (a.gameScore + b.gameScore) / 2,
+    toPar: (a.toPar + b.toPar) / 2,
+    mulligan: a.mulligan || b.mulligan,
+    ownOutcome: a.outcome,
+  };
+}
+
+/** The unit a player is ranked in (their team, or themselves). */
+export function unitOf(game: Game, playerId: string): Unit | undefined {
+  return units(game).find((u) => u.id === playerId || u.members?.some((m) => m.id === playerId));
+}
+
+/** A team's totals: strokes added up, scores averaged over both partners, the card counted once. */
+function teamTotals(game: Game, members: [Player, Player], holes: readonly number[]): PlayerTotals {
+  const a = playerTotals(game, members[0].id, holes);
+  const b = playerTotals(game, members[1].id, holes);
+  return { ...a, real: a.real + b.real, par: (a.par + b.par) / 2, toPar: (a.toPar + b.toPar) / 2, game: (a.game + b.game) / 2 };
+}
+
 export interface StandingRow {
-  player: Player;
+  player: Unit;
   /** 1-based. Tied players share a rank (1, 1, 3). */
   rank: number;
   tied: boolean;
@@ -83,7 +130,11 @@ export function standings(game: Game, by: 'game' | 'real' = 'game', holes: reado
   const useTiebreak = by === 'game' && game.settings.tiebreakOnStrokes;
   const key = (t: PlayerTotals): [number, number] => (by === 'game' ? [t.toPar, useTiebreak ? t.real : 0] : [t.real, 0]);
 
-  const rows = game.players.map((player, order) => ({ player, order, totals: playerTotals(game, player.id, holes) }));
+  const rows = units(game).map((player, order) => ({
+    player,
+    order,
+    totals: player.members ? teamTotals(game, player.members, holes) : playerTotals(game, player.id, holes),
+  }));
   rows.sort((a, b) => {
     const [a1, a2] = key(a.totals);
     const [b1, b2] = key(b.totals);
@@ -134,14 +185,14 @@ export function rankMoves(game: Game, holes: readonly number[] = completedHoles(
  * Who passed whom on the last finished hole: `by` was behind `passed` before it and is
  * ahead now. Ties don't count as a pass. Biggest climbs first.
  */
-export function overtakes(game: Game, hole?: number): { by: Player; passed: Player }[] {
+export function overtakes(game: Game, hole?: number): { by: Unit; passed: Unit }[] {
   const holes = completedHoles(game).filter((h) => hole == null || h <= hole);
   if (holes.length < 2) return [];
   const before = new Map(standings(game, 'game', holes.slice(0, -1)).map((r) => [r.player.id, r.rank]));
   const now = new Map(standings(game, 'game', holes).map((r) => [r.player.id, r.rank]));
-  const out: { by: Player; passed: Player; climb: number }[] = [];
-  for (const a of game.players)
-    for (const b of game.players)
+  const out: { by: Unit; passed: Unit; climb: number }[] = [];
+  for (const a of units(game))
+    for (const b of units(game))
       if (a.id !== b.id && before.get(a.id)! > before.get(b.id)! && now.get(a.id)! < now.get(b.id)!)
         out.push({ by: a, passed: b, climb: before.get(a.id)! - now.get(a.id)! });
   return out.sort((x, y) => y.climb - x.climb).map(({ by, passed }) => ({ by, passed }));
@@ -175,7 +226,7 @@ export function skins(game: Game): Record<number, Skin> {
 }
 
 /** The new outright leader if this hole changed who leads, else null. */
-export function newLeader(game: Game, hole: number): Player | null {
+export function newLeader(game: Game, hole: number): Unit | null {
   const holes = completedHoles(game).filter((h) => h <= hole);
   if (holes.length < 2 || holes[holes.length - 1] !== hole) return null;
   const sole = (rows: StandingRow[]) => (rows.filter((r) => r.rank === 1).length === 1 ? rows[0].player : null);
@@ -186,15 +237,15 @@ export function newLeader(game: Game, hole: number): Player | null {
 
 /** How this player stands against the leader (or the chaser, if they lead). */
 export function gapText(game: Game, playerId: string): string | null {
-  if (game.players.length < 2) return null;
+  if (units(game).length < 2) return null;
   const holes = completedHoles(game).filter((h) => h < game.current);
   if (holes.length === 0) return null;
   const rows = standings(game, 'game', holes);
-  const me = rows.find((r) => r.player.id === playerId);
+  const me = rows.find((r) => r.player.id === playerId || r.player.members?.some((m) => m.id === playerId));
   if (!me) return null;
   const leaders = rows.filter((r) => r.rank === 1);
-  // No unit: the gap is game score (strokes plus cards), so "strokes" would be wrong.
-  const n = (v: number) => String(v);
+  // No unit: the gap is game score (strokes plus cards), so "strokes" would be wrong. Halves for team averages.
+  const n = (v: number) => halves(v);
   if (me.rank === 1) {
     if (leaders.length > 1) {
       const others = leaders.filter((r) => r !== me).map((r) => r.player.name);
@@ -394,6 +445,11 @@ export const MASKED_PLAYER = '~player';
 export function redactForDevice(game: Game, deviceId: string): Game {
   const view = structuredClone(game);
   delete view.decks;
+  // A teammate sees the team's shared card straight away; only other teams' picks stay hidden.
+  const sameSide = (playerId: string) => {
+    const t = teamOf(game, playerId);
+    return ownsPlayer(game, deviceId, playerId) || Boolean(t?.players.some((id) => ownsPlayer(game, deviceId, id)));
+  };
   const mask = (id: string) => (id === deviceId ? id : id === game.hostDeviceId ? MASKED_HOST : MASKED_PLAYER);
   view.hostDeviceId = mask(view.hostDeviceId);
   for (const p of view.players) if (p.deviceId) p.deviceId = mask(p.deviceId);
@@ -402,7 +458,7 @@ export function redactForDevice(game: Game, deviceId: string): Game {
     for (const p of view.players) {
       const key = entryKey(p.id, view.current);
       const e = game.entries[key];
-      if (e?.tier && e.pickedBy !== deviceId) view.entries[key] = { hidden: true };
+      if (e?.tier && e.pickedBy !== deviceId && !sameSide(p.id)) view.entries[key] = { hidden: true };
     }
   }
   return view;

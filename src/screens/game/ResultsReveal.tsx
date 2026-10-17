@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { completedHoles, formatToPar, getCard, holeResult, ownsPlayer, rankMoves, standings, type Game } from '../../game';
+import { completedHoles, formatToPar, getCard, ownsPlayer, rankMoves, standings, unitHoleResult, units, type Game } from '../../game';
 import { leaveResults, markResultsRevealed, navigate, resultsRevealSeen, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Move, RankedAvatar, rankLabel } from '../../ui/BoardRow';
@@ -32,14 +32,15 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
   const before = useMemo(() => standings(game, 'game', holes.slice(0, -1)), [game, holes]);
   const after = useMemo(() => standings(game, 'game', holes), [game, holes]);
   const moves = rankMoves(game, holes);
-  const results = new Map(game.players.map((p) => [p.id, holeResult(game, p.id, hole)]));
+  // One row per standings unit: a player, or a team in 2v2.
+  const results = new Map(units(game).map((u) => [u.id, unitHoleResult(game, u.id, hole)]));
   // Flip order: worst first, so the hole's best score lands last.
   const flipOrder = useMemo(
     () =>
-      game.players
-        .filter((p) => holeResult(game, p.id, hole))
-        .sort((a, b) => holeResult(game, b.id, hole)!.toPar - holeResult(game, a.id, hole)!.toPar)
-        .map((p) => p.id),
+      units(game)
+        .filter((u) => unitHoleResult(game, u.id, hole))
+        .sort((a, b) => unitHoleResult(game, b.id, hole)!.toPar - unitHoleResult(game, a.id, hole)!.toPar)
+        .map((u) => u.id),
     [game, hole],
   );
 
@@ -65,9 +66,10 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
     const t = setTimeout(
       () => {
         const id = orderRef.current[flipped];
-        const r = holeResult(game, id, hole);
+        const r = unitHoleResult(game, id, hole);
+        const unit = units(game).find((u) => u.id === id);
         // A buzz for your own row only, so the phone doesn't rattle through everyone's.
-        if (r && ownsPlayer(game, deviceId, id)) haptic(r.outcome === 'made' ? (r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
+        if (r && (unit?.members ?? [{ id }]).some((m) => ownsPlayer(game, deviceId, m.id))) haptic(r.outcome === 'made' ? (r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
         setFlipped((x) => x + 1);
       },
       flipped === 0 ? 300 : flipped === n - 1 ? HOLD_MS : GAP_MS,
@@ -79,7 +81,7 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
     if (!settled || instant) return;
     markResultsRevealed(hole);
     const top = flipOrder[flipOrder.length - 1];
-    const r = top ? holeResult(game, top, hole) : null;
+    const r = top ? unitHoleResult(game, top, hole) : null;
     if (r) confetti(r.outcome === 'made' ? CONFETTI[r.tier] : CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.3 }, 60);
     haptic('success');
   }, [settled]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -116,7 +118,7 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
             const was = before.find((x) => x.player.id === p.id);
             const total = settled ? now : (was ?? now);
             const from = (oldIndex.get(p.id) ?? i) - i;
-            const isMine = mine.some((m) => m.id === p.id);
+            const isMine = mine.some((m) => m.id === p.id || p.members?.some((x) => x.id === m.id));
             return (
               <div
                 key={p.id}

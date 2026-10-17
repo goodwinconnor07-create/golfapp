@@ -25,7 +25,7 @@ A golf party game: before each hole every player picks Safe, Bold or Insane, dra
 
 ## Rules that matter
 
-- Don't change the stroke modifiers in `tiers.ts` (Safe −1/+1, Bold −2/+2, Insane −9/+3) without the product owner asking, and never without passing `npm run balance`. They were tuned with the deck; see `docs/GAME_BALANCE.md`. The last 3 holes of a 6+ hole round count double, applied in `stakeFor()` in `rules.ts`, never by editing the tier values.
+- Don't change the stroke modifiers in `tiers.ts` (Safe −1/+1, Bold −2/+2, Insane −9/+3; 2v2 team mode uses `TEAM_TIERS`: −3/+2, −4/+3, −12/+4) without the product owner asking, and never without passing `npm run balance`. They were tuned with the deck; see `docs/GAME_BALANCE.md`. The last 3 holes of a 6+ hole round count double, applied in `stakeFor()` in `rules.ts`, never by editing the tier values.
 - Same rules for everyone: no rule may depend on the standings (no catch-up help for whoever's behind), and cards are dealt at random, never matched to a player. The free shot is switched off (`FREE_SHOT_ON` in `selectors.ts`).
 - Never overwrite real strokes with game score. Game score is always derived from strokes + card result.
 - Keep pass-condition text exactly as approved. Card ids are permanent: retire a card with `enabled: false`, never delete, renumber or move it to another level (saved games check the level). To move one, retire it and add a copy under a new id. A new card also needs a scene in `src/ui/shotArt.ts` and a check in `scripts/balance/checks.ts`.

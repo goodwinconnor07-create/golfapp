@@ -6,6 +6,7 @@ import { colourWipe } from '../../ui/effects';
 import { CopyIcon, QrIcon, ShareIcon } from '../../ui/Icons';
 import { joinLink, joinLinkLabel, SHORT_HOST } from '../../state/platform';
 import { CodeTiles, copy, shareInvite } from '../sheets/InviteSheet';
+import { TeamPicker } from './TeamPicker';
 
 export function Lobby({ game }: { game: Game }) {
   const deviceId = useApp((s) => s.deviceId);
@@ -15,6 +16,11 @@ export function Lobby({ game }: { game: Game }) {
   const busy = useApp((s) => s.busy);
   const server = useApp((s) => s.server);
   const alone = game.players.length === 1;
+  const canTeam = game.players.length === 4;
+  const setTeams = (on: boolean) => {
+    const [a, b, c, d] = game.players;
+    dispatch({ type: 'setTeams', teams: on ? [[a.id, b.id], [c.id, d.id]] : null });
+  };
 
   const start = () => dispatch({ type: 'start' });
   const startClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -104,8 +110,9 @@ export function Lobby({ game }: { game: Game }) {
           )}
         </div>
         {/* Each player's picture pops in when they join, then floats gently. Tap yours (or anyone's, as host) to change it. */}
-        <div className="roster">
-          {game.players.map((p, i) => {
+        {game.teams && <TeamPicker game={game} editable={host} />}
+        <div className="roster" hidden={!!game.teams}>
+          {!game.teams && game.players.map((p, i) => {
             const you = p.deviceId === deviceId;
             const isHostPlayer = p.deviceId === game.hostDeviceId;
             const inner = (
@@ -137,6 +144,16 @@ export function Lobby({ game }: { game: Game }) {
             );
           })}
         </div>
+        {host && canTeam && (
+          <button
+            type="button"
+            className={`btn ${game.teams ? 'btn-blue' : 'btn-ghost'}`}
+            aria-pressed={!!game.teams}
+            onClick={() => setTeams(!game.teams)}
+          >
+            {game.teams ? '2v2 teams on' : 'Play as 2v2 teams'}
+          </button>
+        )}
         {host && alone && (
           <div className="waiting-line slim">
             <span className="dots" aria-hidden>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cardStakes, completedHoles, formatDelta, freePassAvailable, gapText, isDoubleHole, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
+import { cardStakes, completedHoles, formatDelta, freePassAvailable, gapText, isDoubleHole, mateOf, TIER_ORDER, TIERS, type Game, type Tier } from '../../game';
 import { pickTier } from '../../state/store';
 import { haptic } from '../../ui/effects';
 import { Avatar, TierFx, TierIcon } from '../../ui/components';
@@ -14,7 +14,8 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
   const doubled = isDoubleHole(game, h);
   const gap = gapText(game, playerId);
   const canFree = freePassAvailable(game, playerId);
-  // One line for where you stand ("You're 2 behind Sam"); before any hole is in, the one rule that matters.
+  const mate = game.players.find((p) => p.id === mateOf(game, playerId));
+  // One line for where you stand ("You're 2 behind Sam", your team's place in 2v2); before any hole is in, the one rule that matters.
   const firstHole = completedHoles(game).filter((x) => x < h).length === 0;
 
   return (
@@ -29,6 +30,15 @@ export function PickTier({ game, playerId }: { game: Game; playerId: string }) {
             </p>
           </div>
         </div>
+
+        {mate && (
+          <div className="tile-flat team-note" role="status">
+            <Avatar player={mate} size={32} />
+            <span>
+              Your team's card, shared with <b>{mate.name}</b>. Either of you completing it counts.
+            </span>
+          </div>
+        )}
 
         {doubled && (
           <div className="double-banner" role="status">

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getCard, getEntry, holeResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
+import { getCard, getEntry, holeResult, unitHoleResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { HoleMeta, Working } from '../../ui/components';
@@ -35,7 +35,7 @@ export function HoleResults({ game }: { game: Game }) {
         </div>
         <div className="board">
           {rows.map((row, i) => {
-            const r = holeResult(game, row.player.id, h);
+            const r = unitHoleResult(game, row.player.id, h);
             return (
               <BoardRow
                 key={row.player.id}

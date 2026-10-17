@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cardStakes, getCard, getEntry, holeResult, mulliganAllowance, mulligansLeft, ownsPlayer, type Game } from '../../game';
+import { cardStakes, getCard, getEntry, mulliganAllowance, mulligansLeft, ownsPlayer, playerScored, type Game } from '../../game';
 import { dispatch, startScoring, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { ChallengeCard } from '../../ui/ChallengeCard';
@@ -97,7 +97,7 @@ function SharedPhoneHole({ game }: { game: Game }) {
                   <span className="h3">{p.name}</span>
                   {!shown && <small className="play-card-title">{getCard(e?.cardId)?.title}</small>}
                 </span>
-                {holeResult(game, p.id, h) && <span className="tag tag-done">Scored</span>}
+                {playerScored(game, p.id, h) && <span className="tag tag-done">Scored</span>}
                 {!shown && e?.tier && <TierChip tier={e.tier} />}
                 {e?.tier && <BackIcon width={20} height={20} className={`play-chevron${shown ? ' open' : ''}`} aria-hidden />}
               </button>

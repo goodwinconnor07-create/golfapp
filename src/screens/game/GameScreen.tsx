@@ -201,7 +201,7 @@ function RankPill({ game, online }: { game: Game; online: boolean }) {
   const deviceId = useApp((s) => s.deviceId);
   const holes = shownHoles(game);
   const mine = online ? myPlayers(game, deviceId, true) : game.players.length === 1 ? game.players : [];
-  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id) : undefined;
+  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id || r.player.members?.some((m) => m.id === mine[0].id)) : undefined;
   const place = row ? `${row.tied ? '=' : ''}${ordinal(row.rank)}` : null;
   return (
     <button

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatDelta, getCard, recap, type Game, type Recap, type StandingRow, formatToPar, toParWords } from '../../game';
+import { formatDelta, getCard, recap, units, type Game, type Recap, type StandingRow, formatToPar, toParWords } from '../../game';
 import { nativeShare } from '../../state/native';
 import { APP_STORE_URL, canHost, isNative, publicOrigin } from '../../state/platform';
 import { navigate, startNewGame, toast } from '../../state/store';
@@ -12,13 +12,14 @@ import { resultsImage } from '../../ui/resultsImage';
 import { EditList } from './EditList';
 
 function names(game: Game, ids: string[]): string {
-  return joinNames(ids.map((id) => game.players.find((p) => p.id === id)?.name ?? '?'));
+  // Awards can name a team in 2v2 (the strokes award ranks teams).
+  return joinNames(ids.map((id) => (game.players.find((p) => p.id === id) ?? units(game).find((u) => u.id === id))?.name ?? '?'));
 }
 
 function shareText(game: Game, rc: Recap): string {
   const lines = [`⛳ CardShot${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
   if (rc.winners.length) {
-    const who = joinNames(rc.winners.map((w) => w.player.name));
+    const who = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
     lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} at ${toParWords(rc.winners[0].totals.toPar)}`);
   }
   lines.push('', 'Against par (lowest wins):');
@@ -124,7 +125,7 @@ export function Final({ game }: { game: Game }) {
     confetti(CONFETTI.party, { x: innerWidth / 2, y: innerHeight * 0.22 }, 150);
   }, [played, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const winnerNames = joinNames(rc.winners.map((w) => w.player.name));
+  const winnerNames = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
   const headline = rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`;
   // The podium already shows each score, so the line under the headline gives the margin instead.
   const runnerUp = rc.byGame.find((r) => r.rank > 1);

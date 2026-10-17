@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { getEntry, REACTIONS, type Game } from '../game';
 import { reactTo, useApp } from '../state/store';
-import { reactorFor } from '../state/view';
+import { reactionTarget, reactorFor } from '../state/view';
 
 /**
- * One-tap reactions and heckles on someone's hole result. Everyone sees the tallies ("🔥 2"); online,
- * friends on other phones get one small "React" button that opens the five choices (tap yours again
- * to take it back). Closed by default so a row isn't a strip of emoji. Closes when the group moves on.
+ * Reactions on someone's hole result (or the other team's, in 2v2). Everyone sees the tallies;
+ * online, other players get one React button that opens the five emojis. Your own pick shows
+ * once, as the outlined tally; tap it to take it back. Closes when the group moves on.
  */
 export function Reactions({ game, playerId, hole }: { game: Game; playerId: string; hole: number }) {
   const deviceId = useApp((s) => s.deviceId);
   const [open, setOpen] = useState(false);
-  const reactions = getEntry(game, playerId, hole)?.reactions ?? {};
+  const reactions = getEntry(game, reactionTarget(game, playerId), hole)?.reactions ?? {};
   const me = hole === game.current && game.status === 'playing' ? reactorFor(game, deviceId, playerId) : null;
   const mine = me ? reactions[me] : undefined;
   const tally = REACTIONS.map((e) => [e, Object.values(reactions).filter((x) => x === e).length] as const).filter(([, n]) => n > 0);
@@ -21,42 +21,34 @@ export function Reactions({ game, playerId, hole }: { game: Game; playerId: stri
     setOpen(false);
   };
   return (
-    <span className="react-line">
-      {!open &&
-        tally.map(([e, n]) => (
-          <span key={`${e}${n}`} className={`react-tally${mine === e ? ' mine' : ''}`} aria-label={`${n} ${e}`}>
-            {e} {n}
+    <span className="react-line" onClick={(ev) => ev.stopPropagation()}>
+      {tally.map(([e, n]) =>
+        me && mine === e ? (
+          <button key={`${e}${n}`} type="button" className="react-tally mine press" aria-label={`${n} ${e}, yours. Take it back`} onClick={() => pick(e)}>
+            {e}
+            {n > 1 && n}
+          </button>
+        ) : (
+          <span key={`${e}${n}`} className="react-tally" aria-label={`${n} ${e}`}>
+            {e}
+            {n > 1 && n}
           </span>
-        ))}
+        ),
+      )}
       {me && !open && (
-        <button
-          type="button"
-          className="react-open press"
-          onClick={(ev) => {
-            ev.stopPropagation();
-            setOpen(true);
-          }}
-        >
-          {mine ? 'Change' : 'React'}
+        <button type="button" className="react-open press" aria-expanded={false} onClick={() => setOpen(true)}>
+          React
         </button>
       )}
-      {me &&
-        open &&
-        REACTIONS.map((e) => (
-          <button
-            key={e}
-            type="button"
-            className={`react-btn press ${mine === e ? 'on' : ''}`}
-            aria-label={`React ${e}`}
-            aria-pressed={mine === e}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              pick(e);
-            }}
-          >
-            {e}
-          </button>
-        ))}
+      {me && open && (
+        <span className="react-picker" role="group" aria-label="Pick a reaction">
+          {REACTIONS.map((e) => (
+            <button key={e} type="button" className={`react-btn press ${mine === e ? 'on' : ''}`} aria-label={`React ${e}`} aria-pressed={mine === e} onClick={() => pick(e)}>
+              {e}
+            </button>
+          ))}
+        </span>
+      )}
     </span>
   );
 }

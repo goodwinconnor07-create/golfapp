@@ -10,6 +10,7 @@ import { Scorecard } from './screens/Scorecard';
 import { History } from './screens/History';
 import { SheetHost } from './screens/sheets/SheetHost';
 import { ScoreFlash } from './screens/game/ScoreFlash';
+import { Flood } from './ui/Flood';
 
 export function App() {
   const route = useApp((s) => s.stack[s.stack.length - 1]);
@@ -17,6 +18,7 @@ export function App() {
   const sheet = useApp((s) => s.sheet);
   const sheetKey = useApp((s) => s.sheetKey);
   const flash = useApp((s) => s.flash);
+  const flood = useApp((s) => s.flood);
 
   let screen;
   switch (route.name) {
@@ -54,6 +56,7 @@ export function App() {
       <div key={`${depth}-${route.name}`}>{screen}</div>
       {sheet && <SheetHost key={sheetKey} sheet={sheet} />}
       {flash && <ScoreFlash key={flash.key} flash={flash} />}
+      {flood && <Flood key={flood.key} emoji={flood.emoji} name={flood.name} />}
       <Toasts />
     </>
   );

@@ -282,6 +282,26 @@ Replaces the Clubhouse navy (and a short-lived party pink). Asked for by the pro
 - **Pick your risk:** Safe's whole-card shimmer is gone; light now glances off the shields one by one, like the flashes behind Insane.
 - **Score screen:** "Completed · your strokes prove it" is a slim banner above the stroke counter, only on cards the strokes settle. Footer buttons are normal height. "Not done yet" (or Cancel, when the host scores for someone else) is a back arrow in the header next to Par; the standings trophy steps aside while scoring.
 
+## 2v2 teams (Oct 2026)
+
+Asked for by the product owner, built to match the last simulation. Optional, 4 players only.
+
+- **Setup:** the host switches on "Play as 2v2 teams" in the lobby when exactly 4 players are in. Teams start as players 1+2 and 3+4. The host drags a profile pic onto someone on the other team to swap them (tapping two pics works too). Guests see the teams but can't change them. Teams lock when the round starts; adding or removing a player turns teams off.
+- **One shared card:** either partner can pick the level; whoever taps first picks for the team. The same card is on both phones. One redraw per team per round.
+- **Scoring:** each player still enters their own real strokes. The team's hole score is the **average of both partners' golf scores** plus the card result **once**. **Either partner completing the card completes it for the team**; it only fails when both have scored and neither completed it. Scores can land on half points (−2½).
+- **Team values:** Safe −3/+2, Bold −4/+3, Insane −12/+4 (in `TEAM_TIERS`, `tiers.ts`). The solo values are unchanged. The 2× finish on the last 3 holes applies as usual.
+- **Standings:** teams are ranked against each other (lowest average wins). Skins on the scorecard stay per player.
+- **Reactions:** you react to the other team's row, never your own (stored on the team's first partner). Both partners' phones get the flood.
+- Team values and the either-completes rule came from the simulation only. `npm run balance` doesn't check team games yet.
+
+## Reactions: React button and emoji flood (Oct 2026)
+
+Asked for by the product owner.
+
+- **One React button** under each result instead of five emoji buttons. Tapping it opens the five emojis; picking one closes it.
+- **Your pick shows once**, as an outlined tally (tap it to take it back), instead of both a pressed button and a tally.
+- **Emoji flood:** when someone reacts to your hole, your phone fills with that emoji rising up the screen for about 2 seconds, with "Gus 🤡" in the middle. It never blocks taps. If it arrives while your results are still flipping over, it waits until they've settled. Reduce Motion shows just the name tag.
+
 ## UX audit (Oct 2026)
 
 A five-pass audit of every screen (code read, screenshots at 390px and 360px, a wording sweep, a scripted tap count, and simulated first-time players: a non-golfer, a casual teen and a club golfer). The product owner asked for every finding to be fixed and made two calls; the rest are mine (easy to change). Scoring and rules are unchanged.
@@ -298,7 +318,7 @@ My calls:
 - **Lower is better, said once:** the first pick of a round says "Pick your risk. Lowest score wins."; How to play says "−2 is 2 under, E is even". The stroke counter adds plain words ("Bogey · 1 over"). The podium says "Even" instead of a bare "E".
 - **Score screen:** strokes first (label "Strokes taken · par 4"), then the card without its stakes, then Completed and Failed with what each is worth underneath. They always stay two buttons: when the strokes settle the card, the other one greys out and one slim line says why. "Not done yet" (or Cancel for the host) is a text link under them, not a back arrow in the header, so the header never changes.
 - **Fix a score:** Completed / Failed is a segmented choice (it doesn't save on its own), Save score is stuck to the bottom of the sheet, and the title says what it is ("Fix Sam's hole 1").
-- **Results:** the heading is "Results" on one phone too (the top bar already says the hole), with "This hole" and "Total" over the columns. Each row names the card. The rank badge sits on the avatar's bottom edge so it doesn't cover the letter. No "Best hole" pill, no blue ring for your row (a "You" tag instead), votes in words ("Voted down 👍 1 · 👎 2"). Reactions sit behind one small "React" button; tallies read "🔥 2".
+- **Results:** the heading is "Results" on one phone too (the top bar already says the hole), with "This hole" and "Total" over the columns. Each row names the card. The rank badge sits on the avatar's bottom edge so it doesn't cover the letter. No "Best hole" pill, no blue ring for your row (a "You" tag instead), votes in words ("Voted down 👍 1 · 👎 2"). Reactions work as in "Reactions: React button and emoji flood" above. In 2v2 a team row shows the shared card once, with the partners' averaged golf score.
 - **A new leader is announced once:** the "👑 Sam takes the lead" line under the heading, which now brings the confetti. The full-screen moment is only for a tie for the lead, halfway in 18, and the 2× holes coming up.
 - **Header:** "8 left" or "Last hole" instead of "1/9", which read as a bug next to "Hole 10" on the back nine. The trophy says "Scores" until there's a place to show. The gear is a real cog (the old one read as brightness). End round now has a stop icon; the flag means "Hole done".
 - **Pick screen:** one line for where you stand instead of a rank badge, a sentence and a score box.
