@@ -295,6 +295,6 @@ Asked for by the product owner, built to match the last simulation. Optional, 4 
 
 Asked for by the product owner.
 
-- **One React button** under each result instead of five emoji buttons. Tapping it opens the five emojis; picking one closes it. The button then reads "Change".
+- **One React button** under each result instead of five emoji buttons. Tapping it opens the five emojis; picking one closes it.
 - **Your pick shows once**, as an outlined tally (tap it to take it back), instead of both a pressed button and a tally.
-- **Emoji flood:** when someone reacts to your hole, your phone fills with that emoji rising up the screen for about 2 seconds, with "Gus 🤡" in the middle. It never blocks taps. Reduce Motion shows just the name tag.
+- **Emoji flood:** when someone reacts to your hole, your phone fills with that emoji rising up the screen for about 2 seconds, with "Gus 🤡" in the middle. It never blocks taps. If it arrives while your results are still flipping over, it waits until they've settled. Reduce Motion shows just the name tag.

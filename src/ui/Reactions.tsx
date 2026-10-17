@@ -37,7 +37,7 @@ export function Reactions({ game, playerId, hole }: { game: Game; playerId: stri
       )}
       {me && !open && (
         <button type="button" className="react-open press" aria-expanded={false} onClick={() => setOpen(true)}>
-          {mine ? 'Change' : 'React'}
+          React
         </button>
       )}
       {me && open && (

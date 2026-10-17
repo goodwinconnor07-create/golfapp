@@ -673,6 +673,13 @@ export function reactTo(rowId: string, emoji: string): void {
   if (dispatch({ type: 'react', playerId: target, hole: g.current, fromId: from, emoji: mine === emoji ? null : emoji })) haptic('light');
 }
 
+let heldFlood: { key: number; emoji: string; name: string } | null = null;
+
+function showFlood(flood: { key: number; emoji: string; name: string }): void {
+  set({ flood });
+  haptic('medium');
+}
+
 /** Someone reacted to this phone's player (or their team): flood the screen with that emoji. */
 function announceReactions(before: Game | null, after: Game): void {
   if (!before || before.id !== after.id || after.status !== 'playing') return;
@@ -684,8 +691,10 @@ function announceReactions(before: Game | null, after: Game): void {
     for (const [fromId, emoji] of Object.entries(now)) {
       if (was[fromId] === emoji || ownsPlayer(after, state.deviceId, fromId)) continue;
       const name = after.players.find((x) => x.id === fromId)?.name ?? 'Someone';
-      set({ flood: { key: Date.now(), emoji, name } });
-      haptic('medium');
+      const flood = { key: Date.now(), emoji, name };
+      // Mid-reveal, hold it until the results have settled so it doesn't cover them.
+      if (!resultsRevealSeen(after.id, h)) heldFlood = flood;
+      else showFlood(flood);
       return;
     }
   }
@@ -811,6 +820,10 @@ export function markResultsRevealed(hole: number): void {
   if (state.results.shown === shown) return;
   writeMark(RESULTS_KEY, shown);
   set({ results: { ...state.results, shown } });
+  if (heldFlood) {
+    showFlood({ ...heldFlood, key: Date.now() });
+    heldFlood = null;
+  }
 }
 
 /**
