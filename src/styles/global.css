@@ -106,7 +106,7 @@
   --bronze-ink: #fff7ed;
 
   /* Tiers: teal / orange / violet, chosen to stay apart for colour-blind players
-     (icons and 1-2-3 pips back the colour up). */
+     (each level's icon backs the colour up). */
   --safe: #0f766e;
   --safe-lo: #115e59;
   --safe-bg: #e3f8f5;
@@ -501,6 +501,11 @@ input {
   font-size: var(--fs-lead);
 }
 
+/* Destructive text buttons (Clear past games) are red, not the brand purple. */
+.btn-link.danger {
+  color: var(--red-ink);
+}
+
 .btn-ghost .ripple,
 .btn-outline .ripple,
 .btn-link .ripple,
@@ -690,23 +695,6 @@ input {
   background: linear-gradient(120deg, var(--insane), var(--insane-lo));
 }
 
-.pips {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.pips i {
-  width: 6px;
-  height: 14px;
-  border-radius: var(--r-xs);
-  background: currentColor;
-  opacity: 0.35;
-}
-
-.pips i.on {
-  opacity: 1;
-}
-
 .delta {
   font-variant-numeric: tabular-nums;
   font-weight: 900;
@@ -782,14 +770,18 @@ input {
   border-bottom: 0;
 }
 
+/* Off has a grey edge so the switch still shows on a glass sheet; on fills green. */
 .toggle {
   flex: none;
   width: 64px;
   height: 38px;
   border-radius: var(--r-pill);
   background: var(--bg-3);
+  box-shadow: inset 0 0 0 2px var(--ink-4);
   position: relative;
-  transition: background 0.18s ease;
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .toggle::after {
@@ -807,6 +799,7 @@ input {
 
 .toggle.on {
   background: var(--green);
+  box-shadow: none;
 }
 
 .toggle.on::after {
@@ -908,6 +901,12 @@ input {
   gap: 8px;
   pointer-events: none;
   padding: 0 16px;
+}
+
+/* With a sheet open, the footer is covered and the sheet's own buttons sit there: show messages at the top instead. */
+body:has(.sheet-backdrop) .toasts {
+  top: calc(var(--safe-top) + 16px);
+  bottom: auto;
 }
 
 .toast {
@@ -1110,82 +1109,82 @@ input {
   }
 }
 
-/* A hole's working as pills: [Bogey +1] + [✓ Card −4] = −3. Pills never break inside. */
-.breakdown {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 4px;
-  font-size: var(--fs-caption);
+/* A sum written out like a receipt: labels on the left, numbers lined up on the right, the total under a rule. */
+.sum-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-body);
   font-weight: 800;
-  line-height: 1;
+  text-align: left;
 }
 
-.pill {
-  padding: 4px 8px;
-  border-radius: var(--r-pill);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+.sum-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
 }
 
-.pill-golf {
-  background: var(--bg-3);
+.sum-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
   color: var(--ink-2);
 }
 
-.pill-made {
-  background: var(--green-bg);
-  color: var(--green-ink);
+.sum-label svg {
+  flex: none;
 }
 
-.pill-missed {
-  background: var(--red-bg);
-  color: var(--red-ink);
-}
-
-.pill-na {
-  background: var(--bg-3);
-  color: var(--ink-3);
-}
-
-.pill-group {
-  display: inline-flex;
-  align-items: center;
-  gap: inherit;
-  white-space: nowrap;
-}
-
-.pill-op {
-  color: var(--ink-3);
-}
-
-.pill-total {
+.sum-row b {
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
-.breakdown.big {
-  justify-content: center;
-  gap: 8px 8px;
-  font-size: var(--fs-body);
+.sum-row.made .sum-label,
+.sum-row.made b {
+  color: var(--green-ink);
 }
 
-.breakdown.big .pill {
-  padding: 8px 12px;
+.sum-row.missed .sum-label,
+.sum-row.missed b {
+  color: var(--red-ink);
 }
 
-.breakdown.big .pill-total {
-  font-size: var(--fs-h1);
+.sum-row.na .sum-label,
+.sum-row.na b {
+  color: var(--ink-3);
 }
 
-/* On the coloured result splash: white pills, dark text. */
-.flash .pill {
-  background: var(--surface);
+.sum-total {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 2px solid var(--line);
 }
 
-.flash .pill-op,
-.flash .pill-total {
-  color: var(--on-color);
+.sum-total .sum-label {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.sum-total b {
+  font-size: var(--fs-h2);
+  line-height: 1;
+}
+
+/* The over/under words under a score name: "1 over". */
+.score-over {
+  font-size: var(--fs-small);
+  font-weight: 800;
+  opacity: 0.8;
 }
 
 /* Avatar picture picker. */
@@ -1299,12 +1298,6 @@ input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 20px;
-}
-
-.look-name {
-  display: grid;
   gap: 8px;
   margin: 0 0 20px;
 }

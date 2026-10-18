@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { TIERS, type Par } from '../../game';
 import { clearFlash, type Flash } from '../../state/store';
-import { Breakdown, TierIcon } from '../../ui/components';
+import { Receipt, TierIcon } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { CheckIcon, CrossIcon, MinusIcon } from '../../ui/Icons';
 
@@ -31,6 +31,7 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
   return (
     <div className="flash" onClick={clearFlash} role="alert">
       <div className={`flash-card ${flash.outcome} ${missed ? 'shake' : 'pop'}`}>
+        <p className="flash-name">{flash.name}</p>
         {stamped ? (
           <div className={`ccard stamp-card ccard-${flash.tier}`}>
             <div className="ccard-band">
@@ -46,20 +47,16 @@ export function ScoreFlash({ flash }: { flash: Flash }) {
             <p className="flash-title">{made ? 'Completed!' : missed ? 'Failed' : 'No change'}</p>
           </>
         )}
-        <p className="flash-calc">
-          <Breakdown
-            strokes={flash.strokes}
-            par={flash.par as Par}
-            adjustment={flash.delta}
-            outcome={flash.outcome}
-            doubled={flash.doubled}
-            freePass={flash.freePass}
-            total
-            big
-          />
-        </p>
-        <p className="flash-name">{flash.name}</p>
-        <p className="flash-sub">{flash.strokes} strokes taken</p>
+        <Receipt
+          className="flash-calc"
+          strokes={flash.strokes}
+          par={flash.par as Par}
+          adjustment={flash.delta}
+          outcome={flash.outcome}
+          doubled={flash.doubled}
+          freePass={flash.freePass}
+        />
+        <p className="flash-skip">Tap to skip</p>
       </div>
     </div>
   );

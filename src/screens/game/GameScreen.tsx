@@ -3,7 +3,7 @@ import type { ConnStatus } from '../../state/connection';
 import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
-import { BackIcon, BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
+import { BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
@@ -46,7 +46,7 @@ export function GameScreen() {
   // The hole on screen: a phone still showing the last hole's results stays on that hole.
   const holeIdx = view.kind === 'resultsReveal' ? view.hole : game.current;
   const key = `${view.kind}-${'playerId' in view ? view.playerId : ''}-${holeIdx}`;
-  // Scoring: a back button by the par. The host scoring for someone on another phone cancels;
+  // Scoring: a link under the score buttons. The host scoring for someone on another phone cancels;
   // anyone else goes back to playing ("Not done yet") until a score is saved.
   let back: { label: string; run: () => void } | undefined;
   if (view.kind === 'score') {
@@ -56,14 +56,24 @@ export function GameScreen() {
 
   return (
     <div className="screen">
-      <GameTopBar game={game} online={online} conn={conn} holeIdx={holeIdx} final={view.kind === 'final'} back={back} />
+      <GameTopBar game={game} online={online} conn={conn} holeIdx={holeIdx} final={view.kind === 'final'} />
       {view.kind !== 'groupReveal' && view.kind !== 'reveal' && <VotePrompt game={game} />}
-      <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} />
+      <Phase key={key} game={game} view={view} pickers={[...mine, ...helpers]} back={back} />
     </div>
   );
 }
 
-function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: Game['players'] }) {
+function Phase({
+  game,
+  view,
+  pickers,
+  back,
+}: {
+  game: Game;
+  view: GameView;
+  pickers: Game['players'];
+  back?: { label: string; run: () => void };
+}) {
   switch (view.kind) {
     case 'lobby':
       return <Lobby game={game} />;
@@ -86,7 +96,7 @@ function Phase({ game, view, pickers }: { game: Game; view: GameView; pickers: G
     case 'play':
       return <PlayHole game={game} />;
     case 'score':
-      return <ScoreEntry game={game} playerId={view.playerId} />;
+      return <ScoreEntry game={game} playerId={view.playerId} back={back} />;
     case 'results':
       return <HoleResults game={game} />;
   }
@@ -98,14 +108,12 @@ function GameTopBar({
   conn,
   holeIdx,
   final,
-  back,
 }: {
   game: Game;
   online: boolean;
   conn: ConnStatus | 'none';
   holeIdx: number;
   final: boolean;
-  back?: { label: string; run: () => void };
 }) {
   // Changes made with no signal, saved on this phone until they reach the server.
   const waiting = useApp((s) => (s.session?.mode === 'online' ? s.session.pending.length : 0));
@@ -126,37 +134,30 @@ function GameTopBar({
           </div>
         )}
       </div>
-      {back && (
-        <button type="button" className="icon-btn press" aria-label={back.label} onClick={back.run}>
-          <BackIcon />
-        </button>
-      )}
       {game.status !== 'lobby' && !final && hole.par && (
         <div className="par-tile" role="img" aria-label={`Par ${hole.par}`}>
           <small>PAR</small>
           <b>{hole.par}</b>
         </div>
       )}
-      {/* While scoring, the back button takes the trophy's place so the hole number keeps its room. */}
-      {game.status === 'playing' && !back && <RankPill game={game} online={online} />}
+      {game.status === 'playing' && <RankPill game={game} online={online} />}
       {game.status === 'lobby' && host && (
         <button type="button" className="icon-btn press" aria-label="Game options" onClick={() => openSheet({ name: 'options' })}>
           <GearIcon />
         </button>
       )}
-      {online && game.status !== 'lobby' && (
+      {/* Only when a score change is waiting on you; otherwise Notifications lives in the menu. */}
+      {online && game.status !== 'lobby' && asks > 0 && (
         <button
           type="button"
           className="icon-btn press bell-btn"
-          aria-label={asks ? `Notifications, ${asks} new` : 'Notifications'}
+          aria-label={`Notifications, ${asks} new`}
           onClick={() => openSheet({ name: 'notifications' })}
         >
           <BellIcon />
-          {asks > 0 && (
-            <span key={asks} className="badge pop" aria-hidden>
-              {asks > 9 ? '9+' : asks}
-            </span>
-          )}
+          <span key={asks} className="badge pop" aria-hidden>
+            {asks > 9 ? '9+' : asks}
+          </span>
         </button>
       )}
       <button type="button" className="icon-btn press" aria-label="Menu" onClick={() => openSheet({ name: 'menu' })}>
@@ -175,9 +176,8 @@ function GameTopBar({
           <span className="hole-progress-track">
             <i style={{ width: `${((game.current + 1) / game.holes.length) * 100}%` }} />
           </span>
-          <span className="hole-progress-count num">
-            {game.current + 1}/{game.holes.length}
-          </span>
+          {/* "8 left" rather than "1/9", which read as a bug next to "Hole 10" on the back nine. */}
+          <span className="hole-progress-count num">{holesLeftLabel(game.holes.length - game.current - 1)}</span>
         </div>
       )}
       {online && conn !== 'open' && (
@@ -195,13 +195,13 @@ function GameTopBar({
 /**
  * Your place, always on screen: "2nd" under a trophy (gold when you lead). Opens the standings.
  * It only moves once this phone has seen the hole's results. With everyone on one phone there's
- * no "you", so it's just the trophy.
+ * no "you", so it says "Scores".
  */
 function RankPill({ game, online }: { game: Game; online: boolean }) {
   const deviceId = useApp((s) => s.deviceId);
   const holes = shownHoles(game);
   const mine = online ? myPlayers(game, deviceId, true) : game.players.length === 1 ? game.players : [];
-  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id) : undefined;
+  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id || r.player.members?.some((m) => m.id === mine[0].id)) : undefined;
   const place = row ? `${row.tied ? '=' : ''}${ordinal(row.rank)}` : null;
   return (
     <button
@@ -210,12 +210,20 @@ function RankPill({ game, online }: { game: Game; online: boolean }) {
       aria-label={place ? `Standings, you're ${place}` : 'Standings'}
       onClick={() => openSheet({ name: 'standings' })}
     >
-      <TrophyIcon width={place ? 20 : 26} height={place ? 20 : 26} />
-      {place && (
+      <TrophyIcon width={20} height={20} />
+      {/* Your place once there is one; until then (and with everyone on one phone) a plain label. */}
+      {place ? (
         <b key={place} className="pop">
           {place}
         </b>
+      ) : (
+        <small className="rank-pill-label">Scores</small>
       )}
     </button>
   );
+}
+
+/** What's left after this hole: "8 left", or "Last hole". */
+export function holesLeftLabel(left: number): string {
+  return left <= 0 ? 'Last hole' : `${left} left`;
 }

@@ -4,7 +4,7 @@ import { markHowToSeen } from '../state/persist';
 import { publicOrigin } from '../state/platform';
 import { back } from '../state/store';
 import { ChallengeCard } from '../ui/ChallengeCard';
-import { Breakdown, BackBar, Pips, TierIcon, TIER_LOOK } from '../ui/components';
+import { BackBar, Receipt, TierIcon, Working } from '../ui/components';
 import { PlayerRow } from '../ui/BoardRow';
 import { reducedMotion } from '../ui/effects';
 import { CheckIcon } from '../ui/Icons';
@@ -18,36 +18,36 @@ import { ShotScene } from '../ui/ShotScene';
 const SLIDES: { title: string; text: string; demo: () => ReactNode }[] = [
   {
     title: 'Pick your risk',
-    text: 'Before each hole, everyone picks Safe, Bold or Insane. Bigger risk, bigger swing.',
+    text: 'Before each hole, everyone picks Safe, Bold or Insane. The harder the level, the more its card is worth.',
     demo: () => <PickDemo />,
   },
   {
     title: 'Get a card',
-    text: 'You draw a random challenge from that level. Everyone gets their own.',
-    demo: () => <ChallengeCard tier="bold" cardId="B12" flip compact />,
+    text: 'You get a random card from that level. Everyone gets their own.',
+    demo: () => <ChallengeCard tier="bold" cardId="B17" flip compact />,
   },
   {
     title: 'Play the hole',
-    text: 'Play normal golf and keep up with the group. Then come back to score it.',
+    text: 'Play normal golf. Your phone can stay in your pocket until the hole is done.',
     demo: () => (
       <div className="howto-scene">
-        <ShotScene art={SHOT_ART.B02} par={4} delay={0.2} />
+        <ShotScene art={SHOT_ART.B19} par={4} delay={0.2} />
       </div>
     ),
   },
   {
     title: 'Score it',
-    text: 'Enter your strokes. Complete the card and strokes come off. Fail it and they go on.',
+    text: 'Enter your strokes. Complete the card and strokes come off your score. Fail it and they go on. Your real strokes are kept too.',
     demo: () => <ScoreDemo />,
   },
   {
     title: 'Lowest score wins',
-    text: 'Everything counts over or under par, like golf. One good card can flip the lead.',
+    text: 'Scores count against par, like golf: −2 is 2 under, E is even. One good card can flip the lead.',
     demo: () => <LeadDemo />,
   },
   {
-    title: 'Twists',
-    text: 'A few extras keep it close right to the end.',
+    title: 'Extras',
+    text: 'Small things that change a round.',
     demo: () => <TwistsDemo />,
   },
 ];
@@ -152,11 +152,8 @@ function PickDemo() {
           <span className="tier-btn-icon">
             <TierIcon tier={t} size={30} />
           </span>
-          <span>
-            <span className="tier-btn-label">
-              {TIERS[t].label}
-              <Pips n={TIER_LOOK[t].pips} />
-            </span>
+          <span className="tier-btn-text">
+            <span className="tier-btn-label">{TIERS[t].label}</span>
             <span className="tier-btn-stakes">
               Complete {formatDelta(TIERS[t].made)} · Fail {formatDelta(TIERS[t].missed)}
             </span>
@@ -176,16 +173,7 @@ function PickDemo() {
 function ScoreDemo() {
   return (
     <div className="howto-score">
-      <div className="howto-strokes">
-        <small>Strokes · par 4</small>
-        <b>5</b>
-      </div>
-      <div className="howto-sum">
-        <Breakdown strokes={5} par={4} adjustment={TIERS.bold.made} outcome="made" total big />
-      </div>
-      <p className="muted small" style={{ margin: 0 }}>
-        Your strokes are kept as they are. The card only changes your game score.
-      </p>
+      <Receipt strokes={5} par={4} adjustment={TIERS.bold.made} outcome="made" />
     </div>
   );
 }
@@ -204,7 +192,7 @@ function LeadDemo() {
         className="board-row first reorder climbed"
         style={{ '--from': 1 } as React.CSSProperties}
         score="−4"
-        detail="Insane card ✓ −9"
+        detail={<Working strokes={5} par={4} adjustment={TIERS.insane.made} outcome="made" tier="insane" cardTitle="One-Putt Green" />}
       />
       <PlayerRow
         player={ALEX}
@@ -212,7 +200,7 @@ function LeadDemo() {
         className="board-row reorder dropped"
         style={{ '--from': -1 } as React.CSSProperties}
         score="−1"
-        detail="Safe card ✗ +1"
+        detail={<Working strokes={4} par={4} adjustment={TIERS.safe.missed} outcome="missed" tier="safe" cardTitle="Two-Putt Limit" />}
       />
     </div>
   );
@@ -222,8 +210,9 @@ function TwistsDemo() {
   const items = [
     { icon: '2×', text: 'In longer rounds, the last 3 holes count double.' },
     { icon: '⇄', text: "Don't like your card? Redraw once a round." },
-    { icon: '👍', text: 'Cards judged by eye? The group votes on them.' },
-    { icon: '🔁', text: 'Mulligans: a couple of re-hits a round that don’t count.' },
+    { icon: '🔁', text: 'Mulligans: re-hit a bad shot and leave it off your strokes. Two a round.' },
+    { icon: '👍', text: 'Cards judged by eye go to a group vote.' },
+    { icon: '🏅', text: 'Skins: the best score on a hole wins it. Ties carry over to the next hole.' },
   ];
   return (
     <div className="stack" style={{ gap: 8 }}>
@@ -233,9 +222,6 @@ function TwistsDemo() {
           <span>{it.text}</span>
         </div>
       ))}
-      <p className="muted small" style={{ margin: '4px 0 0' }}>
-        It's a party score, not an official golf score or handicap.
-      </p>
       <p className="howto-links">
         <a href={`${publicOrigin()}/privacy`} target="_blank" rel="noreferrer">
           Privacy

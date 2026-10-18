@@ -58,6 +58,13 @@ jobs:
             exit 1
           fi
           { echo '-----BEGIN PRIVATE KEY-----'; printf '%s' "$BODY" | fold -w 64; echo; echo '-----END PRIVATE KEY-----'; } > "$RUNNER_TEMP/keys/AuthKey.p8"
+      # Each run makes a new development certificate and Apple caps how many an account holds,
+      # so clear out the ones earlier runs made. Never blocks the build.
+      - name: Revoke old CI development certificates
+        continue-on-error: true
+        env:
+          KEY_PATH: ${{ runner.temp }}/keys/AuthKey.p8
+        run: node scripts/ios/revoke-ci-certs.mjs
       - name: Archive
         run: |
           xcodebuild archive \

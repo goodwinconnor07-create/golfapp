@@ -2,7 +2,7 @@
 // Nothing here is stored: the screen always follows the data, so every phone in an
 // online game lands in the right place after a reconnect.
 
-import { allPicked, completedHoles, getEntry, hasPicked, holeComplete, holeResult, type Game, type Player } from '../game';
+import { allPicked, completedHoles, getEntry, hasPicked, holeComplete, playerScored, type Game, type Player } from '../game';
 
 export interface HoleUi {
   gameId: string;
@@ -61,9 +61,20 @@ export function myPlayers(game: Game, deviceId: string, online: boolean): Player
  * players on another phone: heckling someone sharing your phone happens out loud, not in the app.
  */
 export function reactorFor(game: Game, deviceId: string, targetId: string): string | null {
+  if (!game.code) return null;
+  const me = game.players.find((p) => p.deviceId === deviceId);
+  if (!me) return null;
+  // 2v2: you react to the other team's row, never your own.
+  const team = game.teams?.find((t) => t.id === targetId);
+  if (team) return team.players.includes(me.id) ? null : me.id;
   const target = game.players.find((p) => p.id === targetId);
-  if (!game.code || !target?.deviceId || target.deviceId === deviceId) return null;
-  return game.players.find((p) => p.deviceId === deviceId)?.id ?? null;
+  if (!target?.deviceId || target.deviceId === deviceId) return null;
+  return me.id;
+}
+
+/** Where a row's reactions are stored: the player, or for a 2v2 team its first partner's entry. */
+export function reactionTarget(game: Game, rowId: string): string {
+  return game.teams?.find((t) => t.id === rowId)?.players[0] ?? rowId;
 }
 
 export function gameView(
@@ -99,18 +110,19 @@ export function gameView(
   if (holeComplete(game, hole)) {
     return room ? { kind: 'resultsReveal', hole } : { kind: 'results' };
   }
-  // Everyone's in: flip all the tiers over at once, before anyone tees off.
+  // Everyone's in: flip all the tiers over at once, before anyone tees off. Online with friends on
+  // other phones only; on one phone everyone just watched the picks being made.
   const scoringStarted = game.players.some((p) => getEntry(game, p.id, hole)?.strokes != null);
-  if (game.players.length >= 2 && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
+  if (room && !ui.groupShown && !scoringStarted && !groupSeen(game.id, hole)) return { kind: 'groupReveal' };
   if (room) {
     const mineDone = mine.length > 0 && mine.every((p) => getEntry(game, p.id, hole)?.done);
     if (!ui.scoring && !mineDone) return { kind: 'play' };
-    if (ui.scoreFor && !holeResult(game, ui.scoreFor, hole)) return { kind: 'score', playerId: ui.scoreFor };
+    if (ui.scoreFor && !playerScored(game, ui.scoreFor, hole)) return { kind: 'score', playerId: ui.scoreFor };
     return { kind: 'scoreRoom' };
   }
   if (!ui.scoring) return { kind: 'play' };
 
   // Everyone is on this phone here, so once all are scored the hole is complete (handled above).
-  const toScore = mine.find((p) => !holeResult(game, p.id, hole));
+  const toScore = mine.find((p) => !playerScored(game, p.id, hole));
   return toScore ? { kind: 'score', playerId: toScore.id } : { kind: 'results' };
 }

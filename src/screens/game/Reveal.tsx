@@ -39,7 +39,6 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
           stakes={cardStakes(game, game.current, tier, entry?.freePass)}
           par={game.holes[game.current]?.par ?? undefined}
         />
-        {card && entry?.redrawn && <p className="note">Redrawn. This one's yours.</p>}
         {card?.needsBunker && (
           <button type="button" className="btn btn-ghost" onClick={() => swapCard(playerId)}>
             <SwapIcon width={24} height={24} /> No bunker in play? Swap card

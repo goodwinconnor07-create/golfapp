@@ -1,4 +1,4 @@
-import { formatToPar, getEntry, holeResult, holeStatus, ownsPlayer, type Game, type Player } from '../../game';
+import { formatToPar, getCard, getEntry, holeResult, holeStatus, ownsPlayer, type Game, type Player } from '../../game';
 import { confirm, enterScoreFor, notDoneYet, openSheet, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Avatar, Working } from '../../ui/components';
@@ -27,7 +27,7 @@ export function ScoreRoom({ game }: { game: Game }) {
     if (holeStatus(game, p.id, h) === 'done') return enterScoreFor(p.id);
     confirm({
       title: `Enter ${p.name}'s score?`,
-      body: `Only if ${p.name}'s phone can't. They'll see that you did.`,
+      body: `${p.name} is still playing. Only do this if their phone has died.`,
       confirm: 'Enter score',
       onConfirm: () => enterScoreFor(p.id),
     });
@@ -59,15 +59,26 @@ export function ScoreRoom({ game }: { game: Game }) {
                     <Avatar player={p} size={24} /> {p.name}
                   </span>
                 ) : (
-                  'Your hole'
+                  'Your score'
                 )}
                 <button type="button" className="btn-link-small" onClick={() => openSheet({ name: 'edit', playerId: p.id, hole: h })}>
-                  Change
+                  Fix
                 </button>
               </span>
               <span className="my-result-row stamp-in">
-                <Working strokes={r.strokes} par={r.par} adjustment={r.adjustment} outcome={r.outcome} tier={r.tier} doubled={r.doubled} />
-                <b className="num">{formatToPar(r.toPar)}</b>
+                <Working
+                  strokes={r.strokes}
+                  par={r.par}
+                  adjustment={r.adjustment}
+                  outcome={r.outcome}
+                  tier={r.tier}
+                  cardTitle={getCard(r.cardId)?.title}
+                  doubled={r.doubled}
+                />
+                <span className="my-result-total">
+                  <b className="num">{formatToPar(r.toPar)}</b>
+                  <small>This hole</small>
+                </span>
               </span>
             </div>
           );

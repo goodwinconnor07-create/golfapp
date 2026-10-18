@@ -49,7 +49,7 @@ export function notesFor(before: Game, after: Game, action: Action, actor: strin
         notes.push({
           devices: voters,
           title,
-          body: `${player.name} says they made ${card ? `"${card.title}"` : 'their card'}. Do you agree? Vote now.`,
+          body: `${player.name} says they completed ${card ? `"${card.title}"` : 'their card'}. Fair? Vote now.`,
         });
       }
     }

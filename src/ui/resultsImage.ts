@@ -5,7 +5,7 @@ import { formatToPar, toParWords, type Game, type Recap } from '../game';
 import { publicOrigin } from '../state/platform';
 import { playerColor } from './components';
 import { avatarInk } from './theme';
-import { joinNames, plural } from './format';
+import { joinNames, plural, roundLine } from './format';
 
 const W = 1080;
 const H = 1350;
@@ -83,9 +83,13 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     const who = joinNames(rc.winners.map((w) => w.player.name));
     ctx.fillStyle = INK;
     fitText(ctx, `🏆 ${who} ${rc.winners.length > 1 ? 'tie!' : 'wins!'}`, 80, y + 50, W - 160, 84);
+    // The margin when there's a runner-up ("Won by 3"), else their score in words.
+    const second = rc.byGame.find((r) => r.rank > 1);
+    const margin = rc.winners.length === 1 && second ? second.totals.toPar - rc.winners[0].totals.toPar : 0;
+    const words = toParWords(rc.winners[0].totals.toPar);
     ctx.fillStyle = MUTED;
     ctx.font = font(40, 800);
-    ctx.fillText(toParWords(rc.winners[0].totals.toPar), 80, y + 112);
+    ctx.fillText(margin ? `Won by ${margin}` : words.charAt(0).toUpperCase() + words.slice(1), 80, y + 112);
     y += 170;
   }
 
@@ -117,7 +121,7 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     fitText(ctx, r.player.name, 262, top + 52, 470, 42);
     ctx.fillStyle = MUTED;
     ctx.font = font(26, 800);
-    ctx.fillText(`${r.totals.made} of ${r.totals.holes} cards made · ${r.totals.real} strokes`, 262, top + 86);
+    ctx.fillText(roundLine(r.totals), 262, top + 86);
 
     ctx.textAlign = 'right';
     ctx.fillStyle = INK;
@@ -133,14 +137,18 @@ export function drawResults(game: Game, rc: Recap): HTMLCanvasElement {
     y += 50;
   }
 
-  // A couple of awards, if there's room.
+  // Awards with what earned them, as many as fit (up to 4).
   const awards = rc.awards.filter((a) => a.id !== 'real');
-  const room = Math.max(0, Math.floor((H - 130 - (y + 30)) / 58));
-  for (const a of awards.slice(0, Math.min(3, room))) {
-    y += 58;
+  const awardH = 96;
+  const room = Math.max(0, Math.floor((H - 120 - (y + 24)) / awardH));
+  y += 24;
+  for (const a of awards.slice(0, Math.min(4, room))) {
     const who = joinNames(a.playerIds.map((id) => game.players.find((p) => p.id === id)?.name ?? '?'));
     ctx.fillStyle = INK;
-    fitText(ctx, `${a.emoji} ${a.title}: ${who}`, 80, y, W - 160, 34, 800);
+    fitText(ctx, `${a.emoji} ${a.title}: ${who}`, 80, y + 40, W - 160, 36, 900);
+    ctx.fillStyle = MUTED;
+    fitText(ctx, a.detail, 132, y + 78, W - 212, 28, 800);
+    y += awardH;
   }
 
   // Footer.

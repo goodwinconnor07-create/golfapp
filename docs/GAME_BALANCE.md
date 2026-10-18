@@ -126,6 +126,10 @@ Also look at (not pass/fail): the dads and teens rows of the strategy test, come
 | Winning margin (strokes)          | 19.8              | 12.7    |
 | Insane completions a round        | 1.6               | 5.9     |
 
+### Team mode (2v2)
+
+Teams use their own values because the card counts once for two players and either partner can complete it: Safe −3/+2, Bold −4/+3, Insane −12/+4. A team's hole score is the average of both golf scores plus the card result once. These were tuned in simulation (not in `npm run balance`, which only checks solo rounds). Don't change them, or the either-completes rule, without re-running a team simulation first.
+
 ## 6. How to decide on a proposed change
 
 1. **Check it against the goals and hard rules (sections 1–2).** If it breaks a hard rule, the answer is no unless the product owner changes the rule itself; then update this file first.

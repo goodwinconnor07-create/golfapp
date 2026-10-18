@@ -102,3 +102,7 @@ instead of the live server.
 - Airplane mode mid-hole: the round keeps going and catches up after.
 - Notifications: allow them when asked, lock the phone, and have a friend finish the hole, claim
   a distance card, or ask to fix your score. Each should buzz your phone.
+
+## "Maximum number of certificates"
+
+Each TestFlight run is on a fresh GitHub Mac, so Xcode asks Apple for a new development certificate every time, and Apple caps how many an account can hold. The workflow's "Revoke old CI development certificates" step (`scripts/ios/revoke-ci-certs.mjs`) revokes the ones earlier runs made (named "Created via API") before each build. Development certificates only sign debug builds, so this never affects TestFlight or App Store builds. Certificates made in Xcode on your own Mac are left alone.

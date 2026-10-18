@@ -3,7 +3,7 @@ import { castVote, useApp } from '../../state/store';
 import { Avatar } from '../../ui/components';
 
 /**
- * Cards judged by eye go to the group: when someone says they made one,
+ * Cards judged by eye go to the group: when someone says they completed one,
  * everyone else gets a thumbs up or down on their own phone. More downs than ups = failed.
  */
 export function VotePrompt({ game }: { game: Game }) {
@@ -28,7 +28,7 @@ export function VotePrompt({ game }: { game: Game }) {
             <div className="row" style={{ gap: 10 }}>
               <Avatar player={p} size={36} />
               <b className="vote-title">
-                {p.name} says they made <span className="vote-card-name">{card.title}</span>
+                {p.name} says they completed <span className="vote-card-name">{card.title}</span>
               </b>
             </div>
             <p className="vote-pass">{card.pass}</p>

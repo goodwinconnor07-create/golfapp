@@ -1,10 +1,11 @@
 import type { Game, Par } from '../../game';
 import { dispatch } from '../../state/store';
 
+// Colour for fun, not meaning (product owner): blue, green and purple.
 const PARS: { par: Par; className: string }[] = [
   { par: 3, className: 'btn-blue' },
   { par: 4, className: 'btn-green' },
-  { par: 5, className: 'btn-dark' },
+  { par: 5, className: 'btn-insane' },
 ];
 
 export function ParPick({ game }: { game: Game }) {
@@ -27,9 +28,6 @@ export function ParPick({ game }: { game: Game }) {
           </button>
         ))}
       </div>
-      <p className="muted" style={{ marginTop: 18 }}>
-        It's on the sign at the tee.
-      </p>
     </div>
   );
 }

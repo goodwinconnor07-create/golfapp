@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEntry, isDoubleHole, type Game } from '../../game';
+import { getEntry, isDoubleHole, units, type Game } from '../../game';
 import { doneGroupReveal } from '../../state/store';
 import { Avatar, TierChip } from '../../ui/components';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
@@ -51,9 +51,11 @@ export function GroupReveal({ game }: { game: Game }) {
       <div className="screen-body" onClick={done ? undefined : skip}>
         <div>
           <h1 className="h1">Everyone's in!</h1>
-          <p className="muted" style={{ margin: '6px 0 0' }}>
-            {isDoubleHole(game, h) ? 'Double stakes on this hole. ' : ''}Here's who's playing what.
-          </p>
+          {isDoubleHole(game, h) && (
+            <p className="muted" style={{ margin: '6px 0 0' }}>
+              Double stakes on this hole.
+            </p>
+          )}
         </div>
         {count > 0 ? (
           <div className="reveal-count" key={count} aria-live="polite">
@@ -61,12 +63,22 @@ export function GroupReveal({ game }: { game: Game }) {
           </div>
         ) : (
           <div className="stack">
-            {game.players.map((p, i) => {
-              const e = getEntry(game, p.id, h);
-              const open = i < shown;
+            {/* In 2v2 a team shares one card, so each team is one row with both pictures. */}
+            {units(game).map((p) => {
+              const members = p.members ?? [p];
+              const e = getEntry(game, members[0].id, h);
+              const open = Math.min(...members.map((m) => game.players.indexOf(m))) < shown;
               return (
-                <div key={p.id} className={`reveal-row ${open ? 'open' : ''} ${open && e?.tier ? `reveal-${e.tier}` : ''}`}>
-                  <Avatar player={p} size={44} />
+                <div key={p.id} className={`reveal-row${p.members ? " reveal-team" : ""} ${open ? 'open' : ''} ${open && e?.tier ? `reveal-${e.tier}` : ''}`}>
+                  {p.members ? (
+                    <span className="reveal-pair">
+                      {p.members.map((m) => (
+                        <Avatar key={m.id} player={m} size={44} />
+                      ))}
+                    </span>
+                  ) : (
+                    <Avatar player={p} size={44} />
+                  )}
                   <span className="reveal-name">
                     {p.name}
                     {open && e?.freePass && <small className="reveal-free">🛟 Free shot</small>}
@@ -85,7 +97,8 @@ export function GroupReveal({ game }: { game: Game }) {
         )}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-green" disabled={!done} onClick={doneGroupReveal}>
+        {/* Never greyed out: during the countdown the first tap skips to the end. */}
+        <button type="button" className="btn btn-xl btn-green" onClick={done ? doneGroupReveal : skip}>
           Go play!
         </button>
       </div>

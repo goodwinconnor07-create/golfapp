@@ -7,7 +7,6 @@ import { CopyIcon, ShareIcon } from '../../ui/Icons';
 import { QRCode } from '../../ui/QRCode';
 import { TILE_COLORS } from '../../ui/theme';
 
-
 export async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text);

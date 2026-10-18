@@ -55,9 +55,7 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   // Guest follows the link and adds themselves.
   await guest.goto(`/j/${code}`);
   await expect(guest.getByText('Who are you?')).toBeVisible();
-  await guest.getByRole('button', { name: /your name and picture/ }).click();
   await guest.getByRole('textbox', { name: 'Your name' }).fill('Gus');
-  await guest.getByRole('button', { name: 'Done' }).click();
   await shot(guest, '22-join-who');
   await guest.getByRole('button', { name: 'Join as Gus' }).click();
   await expect(guest.getByText("You're in!")).toBeVisible();
@@ -114,13 +112,19 @@ test('two phones: invite by code, hidden picks, live scores, reconnect', async (
   await expect(guest.locator('.board-row')).toHaveCount(2);
   await expect(guest.locator('.prow-rank').first()).toContainText('1st');
 
-  // One-tap heckle: Gus reacts to Hana's hole, and Hana's phone shows it.
+  // Heckle: Gus taps React, picks 🤡, and Hana's phone fills with it.
   const hanaRow = guest.locator('.result-row', { hasText: 'Hana' });
+  await hanaRow.getByRole('button', { name: 'React', exact: true }).click();
   await hanaRow.getByRole('button', { name: 'React 🤡' }).click();
-  await expect(hanaRow.getByRole('button', { name: 'React 🤡' })).toHaveAttribute('aria-pressed', 'true');
+  // The picker closes and Gus's pick shows once, as his outlined tally.
+  await expect(hanaRow.locator('.react-picker')).toHaveCount(0);
+  await expect(hanaRow.locator('.react-tally.mine')).toHaveText('🤡');
+  await expect(host.locator('.flood')).toBeVisible();
+  await expect(host.locator('.flood-tag')).toContainText('Gus 🤡');
+  await shot(host, '26d-reaction-flood');
   await expect(host.locator('.result-row', { hasText: 'Hana' }).locator('.react-tally')).toHaveText('🤡');
   // You can't heckle yourself.
-  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: /^React/ })).toHaveCount(0);
+  await expect(guest.locator('.result-row', { hasText: 'Gus' }).getByRole('button', { name: 'React', exact: true })).toHaveCount(0);
   await shot(host, '26c-reactions');
 
   // Either phone moves the group on, but the other phone keeps its results until its player moves on.
@@ -163,7 +167,7 @@ test('no signal mid-round: deal, score and catch up later', async ({ browser }) 
 
   // The server kept the same result: reloading (which loads from the server) still shows it.
   await host.reload();
-  await expect(host.getByText(/Hole 1 done|done!/)).toBeVisible();
+  await expect(host.getByRole('heading', { name: 'Results' })).toBeVisible();
 });
 
 test('a silently dead link still gets a card after a few seconds', async ({ browser }) => {
@@ -255,8 +259,8 @@ test('the group votes down an honour-system claim', async ({ browser }) => {
   // Voted down: Hana's card counts as failed (+2), and both phones say so.
   for (const page of [host, guest]) {
     const hana = page.locator('.result-row', { hasText: 'Hana' });
-    await expect(hana.locator('.working-card.missed')).toContainText('+2');
-    await expect(hana.getByText(/overturned/)).toBeVisible();
+    await expect(hana.locator('.working-delta.missed')).toContainText('+2');
+    await expect(hana.getByText(/Voted down/)).toBeVisible();
     await expect(hana).toContainText('+2');
   }
   await shot(host, '33-vote-result');
@@ -269,9 +273,7 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await newGame(host, ['Hana']);
   const code = await gameCode(host, '.invite-panel');
   await guest.goto(`/j/${code}`);
-  await guest.getByRole('button', { name: /your name and picture/ }).click();
   await guest.getByRole('textbox', { name: 'Your name' }).fill('Gus');
-  await guest.getByRole('button', { name: 'Done' }).click();
   await guest.getByRole('button', { name: 'Join as Gus' }).click();
   await expect(host.locator('.roster-item', { hasText: 'Gus' })).toBeVisible();
   await host.getByRole('button', { name: "Let's go!" }).click();
@@ -281,8 +283,8 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   await passGroupReveal(guest);
   await passGroupReveal(host);
   // Gus takes a mulligan (his phone only has the button for Gus); the host's phone hears about it.
-  await expect(guest.getByRole('button', { name: /Take a mulligan/ })).toHaveCount(1);
-  await guest.getByRole('button', { name: /Take a mulligan/ }).click();
+  await expect(guest.getByRole('button', { name: /Mulligan: re-hit a shot/ })).toHaveCount(1);
+  await guest.getByRole('button', { name: /Mulligan: re-hit a shot/ }).click();
   await expect(host.getByText('Gus took a mulligan 🔁')).toBeVisible();
   await expect(host.locator('.group-row', { hasText: 'Gus' })).toContainText('🔁 Mulligan');
   await holeDoneAndScore(guest, 6, false);
@@ -293,6 +295,9 @@ test('a locked-in score: the guest asks, the host approves, and everyone sees th
   // Gus's phone keeps the results until he moves on.
   await guest.getByRole('button', { name: /Next hole/ }).click();
   await expect(guest.locator('.hole-tag b')).toHaveText('Hole 2');
+  // Nothing waiting, so no bell in the top bar; Notifications is in the menu.
+  await expect(guest.getByRole('button', { name: /^Notifications/ })).toHaveCount(0);
+  await guest.getByRole('button', { name: 'Menu' }).click();
   await guest.getByRole('button', { name: 'Notifications' }).click();
   await expect(guest.getByText('No new notifications')).toBeVisible();
   await guest.getByRole('button', { name: 'Close' }).click();
