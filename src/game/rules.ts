@@ -77,12 +77,18 @@ export function eligibleCards(tier: Tier, par: Par, settings: Settings): CardDef
   return CARDS.filter((c) => c.tier === tier && isEligible(c, par, settings));
 }
 
-/** The player's score against par on the hole before this one, or null if there isn't one yet. */
-export function lastHoleToPar(game: Game, playerId: string, hole: number): number | null {
+/** The player's strokes and the par on the hole before this one, or null if there isn't one yet. */
+export function lastHole(game: Game, playerId: string, hole: number): { strokes: number; par: number } | null {
   if (hole <= 0) return null;
   const prev = getEntry(game, playerId, hole - 1);
   const par = game.holes[hole - 1]?.par;
-  return prev?.strokes != null && par != null ? prev.strokes - par : null;
+  return prev?.strokes != null && par != null ? { strokes: prev.strokes, par } : null;
+}
+
+/** The player's score against par on the hole before this one, or null if there isn't one yet. */
+export function lastHoleToPar(game: Game, playerId: string, hole: number): number | null {
+  const last = lastHole(game, playerId, hole);
+  return last ? last.strokes - last.par : null;
 }
 
 /**

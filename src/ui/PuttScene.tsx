@@ -12,10 +12,11 @@ import { SceneTag } from './ShotScene';
  * Motion it shows that still straight away.
  *
  * two: a lag putt that stops short, then a tap-in (for "two putts or fewer").
- * feet: shows the distance on the aim line.
+ * feet: the putt's length; it's drawn that far from the hole and the distance shows on the aim line.
+ * ring: a dashed ring this many feet around the hole, lit up when the first putt stops inside it.
  * tag: the card's extra condition ("for par", "2 putts max"), shown by the flag.
  */
-export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: number; two?: boolean; tag?: string; delay?: number }) {
+export function PuttScene({ feet, two = false, ring, tag, delay = 0.35 }: { feet?: number; two?: boolean; ring?: number; tag?: string; delay?: number }) {
   const uid = useId().replace(/:/g, '');
   const [run, setRun] = useState(0);
   const still = reducedMotion();
@@ -23,9 +24,18 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
   // The putter takes it back first; the ball leaves when the blade gets to it.
   const start = delay + STROKE_HIT;
 
-  // The line from the ball to the cup, breaking left to right as it slows.
-  const line = 'M54 116 C 118 124, 204 104, 262 66';
-  const roll = two ? 2.1 : 1.7;
+  // The line from the ball to the cup, breaking left to right as it slows. Lag putts use the whole
+  // strip; shorter putts start part of the way along, so a 3-footer looks short next to a 10-footer.
+  const k = reach(two ? undefined : feet);
+  const ball = { x: CUP.x + (FAR.x - CUP.x) * k, y: CUP.y + (FAR.y - CUP.y) * k };
+  const c1 = { x: ball.x + 64 * k, y: ball.y + 8 * k };
+  const c2 = { x: CUP.x - 58 * k, y: CUP.y + 38 * k };
+  const line = `M${ball.x.toFixed(1)} ${ball.y.toFixed(1)} C ${c1.x.toFixed(1)} ${c1.y.toFixed(1)}, ${c2.x.toFixed(1)} ${c2.y.toFixed(1)}, ${CUP.x} ${CUP.y}`;
+  // The distance label sits past halfway along the line, clear of the putter at the start: above it
+  // on a long putt, below it on a short one (where above would crowd the hole).
+  const bez = (a: number, b: number, c: number, d: number, t = 0.62) => (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t * t * c + t ** 3 * d;
+  const mid = { x: bez(ball.x, c1.x, c2.x, CUP.x), y: bez(ball.y, c1.y, c2.y, CUP.y) + (k < 0.7 ? 20 : -18) };
+  const roll = two ? 1.6 : 0.7 + 0.45 * k;
   const begin = (s: number) => `${(start + s).toFixed(2)}s`;
   const sunk = begin(roll);
   // Two putts: the first stops ~85% of the way, a beat, then the tap-in.
@@ -112,11 +122,29 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('stripes')})`} />
         <ellipse cx="176" cy="92" rx="214" ry="86" fill={`url(#${id('grain')})`} />
 
+        {/* The ring the first putt has to finish inside, lit up as the lag putt stops in it. */}
+        {ring != null && (
+          <g>
+            <ellipse cx={CUP.x} cy={CUP.y} rx={reach(ring) * (CUP.x - FAR.x)} ry={reach(ring) * (CUP.x - FAR.x) * 0.42} fill="#ffffff" fillOpacity="0.08" stroke="#ffffff" strokeOpacity="0.85" strokeWidth="1.6" strokeDasharray="3 4" />
+            <g opacity={still ? 0.6 : 0}>
+              {!still && <animate attributeName="opacity" values="0;1;0.6" keyTimes="0;0.3;1" begin={begin(roll * 0.62)} dur="0.9s" fill="freeze" />}
+              <ellipse cx={CUP.x} cy={CUP.y} rx={reach(ring) * (CUP.x - FAR.x)} ry={reach(ring) * (CUP.x - FAR.x) * 0.42} fill="#ffffff" fillOpacity="0.2" stroke="#ffffff" strokeWidth="1.6" />
+            </g>
+            {/* On the far side of the hole from the ball's line. */}
+            <g transform={`translate(${CUP.x + reach(ring) * (CUP.x - FAR.x) * 0.55} ${CUP.y + reach(ring) * (CUP.x - FAR.x) * 0.26})`}>
+              <rect x="-22" y="-12" width="44" height="24" rx="12" fill="#0b0b12" fillOpacity="0.72" />
+              <text x="0" y="4.5" textAnchor="middle" fontSize="13" fontWeight="800" fill="#ffffff" fontFamily="-apple-system, system-ui, sans-serif">
+                {ring} ft
+              </text>
+            </g>
+          </g>
+        )}
+
         {/* Aim line and distance: they dim while the ball rolls and come back once it drops. */}
         <g>
           <path d={line} fill="none" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="2" strokeDasharray="1 7" strokeLinecap="round" />
           {feet != null && (
-            <g transform="translate(150 98)">
+            <g transform={`translate(${mid.x.toFixed(1)} ${mid.y.toFixed(1)})`}>
               <rect x="-24" y="-13" width="48" height="24" rx="12" fill="#0b0b12" fillOpacity="0.72" />
               <text
                 x="0"
@@ -201,7 +229,9 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
         </path>
         <path d="M263.4 8 C 276 10, 286 7, 298 13" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1" />
 
-        <Putter still={still} begin={`${delay.toFixed(2)}s`} />
+        <g transform={`translate(${(ball.x - FAR.x).toFixed(1)} ${(ball.y - FAR.y).toFixed(1)})`}>
+          <Putter still={still} begin={`${delay.toFixed(2)}s`} />
+        </g>
 
         {/* Ball and its shadow, rolling on the line. */}
         <g>
@@ -216,7 +246,7 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
                   <animateTransform
                     attributeName="transform"
                     type="scale"
-                    values="1.12;1.12;0.86"
+                    values={`${(0.86 + 0.26 * k).toFixed(2)};${(0.86 + 0.26 * k).toFixed(2)};0.86`}
                     keyTimes={`0;${t(0)};1`}
                     begin="0s"
                     dur={`${total}s`}
@@ -229,26 +259,26 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
           )}
         </g>
 
-        {/* The drop: once it's over the hole the ball falls straight down and is gone. The clip
-            is the cup opening plus everything above it, so the front lip swallows the ball as it
-            falls. The still shows it halfway in. */}
+        {/* The drop: once it's over the hole the ball drops and settles halfway in, the same as the
+            still, so the last frame shows it holed. The clip is the cup opening plus everything
+            above it, so the front lip swallows the ball as it falls. */}
         <clipPath id={id('in-cup')}>
           <path d="M249.5 0 H 274.5 V 66 A 12.5 5.6 0 0 1 249.5 66 Z" />
         </clipPath>
         <g opacity={still ? 1 : 0}>
-          {!still && <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.95;1" begin={sunk} dur="0.3s" fill="freeze" />}
+          {!still && <set attributeName="opacity" to="1" begin={sunk} />}
           <g clipPath={`url(#${id('in-cup')})`}>
             <g transform={still ? 'translate(0 5)' : undefined}>
               {!still && (
                 <animateTransform
                   attributeName="transform"
                   type="translate"
-                  values="0 0;0.6 4;0 15"
-                  keyTimes="0;0.35;1"
+                  values="0 0;0.6 4;0 5"
+                  keyTimes="0;0.5;1"
                   calcMode="spline"
-                  keySplines="0.5 0 1 1;0.6 0 1 1"
+                  keySplines="0.5 0 1 1;0.2 0 0.4 1"
                   begin={sunk}
-                  dur="0.3s"
+                  dur="0.25s"
                   fill="freeze"
                 />
               )}
@@ -271,7 +301,7 @@ export function PuttScene({ feet, two = false, tag, delay = 0.35 }: { feet?: num
 
       </svg>
       {/* The card's extra condition, once the ball is in. */}
-      {tag && <SceneTag key={`tag-${run}`} text={tag} at={still ? 0 : total + 0.35} />}
+      {tag && <SceneTag key={`tag-${run}`} text={tag} at={still ? 0 : total + 0.1} />}
     </button>
   );
 }
@@ -282,6 +312,7 @@ function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; t
     <>
       <ellipse cx="2.4" cy="5.2" rx="7.6" ry="2.6" fill={`url(#${id('shade')})`} fillOpacity="0.64" />
       <circle r="7.5" fill={`url(#${id('ball')})`} />
+      <circle r="7.5" fill="none" stroke="#1b2a12" strokeOpacity="0.4" strokeWidth="1" />
       <g>
         {spin && (
           <animateTransform
@@ -310,7 +341,19 @@ function Ball({ id, spin }: { id: (n: string) => string; spin?: { dur: number; t
 }
 
 /** Seconds from the start of the stroke until the blade meets the ball. */
-const STROKE_HIT = 0.7;
+const STROKE_HIT = 0.45;
+/** The putter's whole stroke, back and through, in seconds. */
+const STROKE = 0.7;
+
+const CUP = { x: 262, y: 66 };
+/** Where the longest putt starts: the bottom left of the strip. */
+const FAR = { x: 54, y: 116 };
+
+/**
+ * How far along the longest putt a putt of this many feet starts (1 = all the way). Scaled down so a
+ * 10-footer still fits: 3 ft is about 0.4, 10 ft and more the whole strip. No distance: the whole strip.
+ */
+const reach = (feet?: number) => (feet == null ? 1 : Math.min(1, 0.14 + feet * 0.086));
 
 /**
  * The putter, at the scale of this close-up: the golfer's hands are well above the picture, so
@@ -326,11 +369,11 @@ function Putter({ still, begin }: { still: boolean; begin: string }) {
           attributeName="transform"
           type="rotate"
           values={`0 ${pivot};0 ${pivot};7 ${pivot};0 ${pivot};-5 ${pivot}`}
-          keyTimes={`0;0.12;0.5;${STROKE_HIT};1`}
+          keyTimes={`0;0.06;0.4;${(STROKE_HIT / STROKE).toFixed(3)};1`}
           calcMode="spline"
           keySplines="0 0 1 1;0.42 0 0.58 1;0.5 0 1 1;0 0 0.4 1"
           begin={begin}
-          dur="1s"
+          dur={`${STROKE}s`}
           fill="freeze"
         />
       )}
