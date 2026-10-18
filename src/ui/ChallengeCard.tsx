@@ -82,10 +82,15 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
               </>
             )}
           </div>
-          {card && !compact && shown && SHOT_ART[card.id] && (
-            // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
-            <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 120) / 1000 : 0.3} />
-          )}
+          {card && !compact && SHOT_ART[card.id] &&
+            (shown ? (
+              // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
+              <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 120) / 1000 : 0.3} />
+            ) : (
+              // Holds the scene's room before the flip, so the back is already the card's full height
+              // and the card doesn't grow as it turns over.
+              <span className="putt-scene putt-scene-slot" />
+            ))}
           {card && (
             <div className="ccard-body">
               <h3 className="ccard-title">{card.title}</h3>
