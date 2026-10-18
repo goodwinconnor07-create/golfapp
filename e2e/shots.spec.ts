@@ -6,9 +6,12 @@ const LABELS: Record<string, RegExp> = {
   S04: /lag putt and a tap-in, 2 putts max/,
   S16: /150 metre drive/,
   I19: /within 30 feet/,
-  I18: /scorecard marked birdie, beat your last hole/,
+  I18: /scorecard: first hole, so this hole needs bogey or better/,
   B17: /lag putt and a tap-in, 1st putt within 3 feet/,
+  I21: /scorecard: bogey on the last hole, so this hole needs birdie or better/,
 };
+// Cards drawn on the second hole, after these strokes on the first (a par 4).
+const LAST: Record<string, number> = { I21: 5 };
 
 for (const card of Object.keys(LABELS)) {
   test(`card ${card} shows its shot animation`, async ({ page }) => {
@@ -24,9 +27,9 @@ for (const card of Object.keys(LABELS)) {
       course: '',
       status: 'playing',
       holes: [1, 2, 3].map((number) => ({ number, par: 4 })),
-      current: 0,
+      current: LAST[card] ? 1 : 0,
       players: [{ id: 'sam0000001', name: 'Sam', color: 0, deviceId: dev }],
-      entries: {},
+      entries: LAST[card] ? { 'sam0000001:0': { tier: 'safe', cardId: 'S01', strokes: LAST[card], done: true } } : {},
       settings: { distanceCards: true, situationCards: true, tiebreakOnStrokes: false },
       decks: { bold: [card, card], safe: [card, card], insane: [card, card] },
       seq: 1,

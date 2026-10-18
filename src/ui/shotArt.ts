@@ -10,8 +10,14 @@ export interface ShotArt {
   feet?: number;
   /** putt: a lag putt then a tap-in. */
   two?: boolean;
+  /** putt: a dashed ring this many feet around the hole, for where the first putt has to finish. */
+  ring?: number;
   /** drive: the distance shown where the ball lands. */
   metres?: number;
+  /** drive: played from the fairway (a second shot), not off a tee. */
+  fairway?: boolean;
+  /** drive: the first cut of rough counts too, so it's lit up with the fairway and the ball finishes in it. */
+  rough?: boolean;
   /** trouble: what's beside the fairway. */
   hazard?: 'stakes' | 'water' | 'both';
   /** bunker: carry over the sand instead of playing out of it. chip: drop in. */
@@ -19,22 +25,27 @@ export interface ShotArt {
   holeOut?: boolean;
   /** score: strokes against par to write on the card (−1 birdie, 0 par, +2 double bogey…). */
   toPar?: number;
+  /**
+   * score: judged against the player's last hole (the card's vsLastHole), so the card shows their real
+   * last hole next to what this one needs. The tag is a fallback for when there's no game to read.
+   */
+  vsLast?: boolean;
 }
 
 export const SHOT_ART: Record<string, ShotArt> = {
   // Deck v2 (Oct 2026)
   S16: { kind: 'drive', metres: 150 },
-  B16: { kind: 'score', toPar: 0, tag: 'match or beat your last hole' },
-  B17: { kind: 'putt', two: true, tag: '1st putt within 3 feet' },
+  B16: { kind: 'score', vsLast: true, tag: 'match or beat your last hole' },
+  B17: { kind: 'putt', two: true, ring: 3, tag: '1st putt within 3 feet' },
   B18: { kind: 'putt', two: true, tag: 'no penalties · 2 putts max' },
   B19: { kind: 'drive', tag: 'tee shot · fairway' },
-  B20: { kind: 'drive', tag: '2nd shot · fairway' },
+  B20: { kind: 'drive', fairway: true, tag: '2nd shot · fairway' },
   I16: { kind: 'putt', feet: 4 },
   I17: { kind: 'putt', feet: 3 },
-  I18: { kind: 'score', toPar: -1, tag: 'beat your last hole' },
+  I18: { kind: 'score', vsLast: true, tag: 'beat your last hole' },
   I19: { kind: 'approach', feet: 30 },
   I20: { kind: 'putt', feet: 10, tag: 'one putt · chip-in counts' },
-  I21: { kind: 'score', toPar: -2, tag: 'beat your last hole by 2' },
+  I21: { kind: 'score', vsLast: true, tag: 'beat your last hole by 2' },
   I22: { kind: 'putt', feet: 10, tag: 'one putt' },
 
   // Putting
@@ -46,10 +57,10 @@ export const SHOT_ART: Record<string, ShotArt> = {
 
   // Off the tee
   S03: { kind: 'drive', tag: 'tee shot · fairway' },
-  S11: { kind: 'drive', tag: 'fairway or rough' },
+  S11: { kind: 'drive', rough: true, tag: 'fairway or rough' },
   B03: { kind: 'drive', metres: 170 },
   I08: { kind: 'drive', metres: 200, tag: 'and in the fairway' },
-  S15: { kind: 'drive', tag: '2nd shot · fairway' },
+  S15: { kind: 'drive', fairway: true, tag: '2nd shot · fairway' },
 
   // Staying out of trouble
   S02: { kind: 'trouble', hazard: 'both', tag: 'no penalties' },

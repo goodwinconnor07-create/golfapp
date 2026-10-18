@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { cardStakes, getCard, getEntry, hasPicked, redrawUsed, type Game, type Player } from '../../game';
+import { cardStakes, getCard, getEntry, hasPicked, lastHole, redrawUsed, type Game, type Player } from '../../game';
 import { doneReveal, redrawCard, swapCard } from '../../state/store';
 import { ChallengeCard, flipDelay, FLIP_MS } from '../../ui/ChallengeCard';
 import { Avatar } from '../../ui/components';
@@ -38,6 +38,7 @@ export function Reveal({ game, playerId, pickers }: { game: Game; playerId: stri
           flip
           stakes={cardStakes(game, game.current, tier, entry?.freePass)}
           par={game.holes[game.current]?.par ?? undefined}
+          last={lastHole(game, playerId, game.current)}
         />
         {card?.needsBunker && (
           <button type="button" className="btn btn-ghost" onClick={() => swapCard(playerId)}>

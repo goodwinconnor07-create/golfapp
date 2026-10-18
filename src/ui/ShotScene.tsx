@@ -15,17 +15,28 @@ const HAND = "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive";
  * The short scene at the top of a card. Plays once after the card flips (tap to replay), then
  * settles on a still that explains the card, with its tag. Reduce Motion shows the still.
  */
-export function ShotScene({ art, par = 4, delay = 0.35 }: { art: ShotArt; par?: number; delay?: number }) {
-  if (art.kind === 'putt') return <PuttScene feet={art.feet} two={art.two} tag={art.tag} delay={delay} />;
-  return <Scene art={art} par={par} delay={delay} />;
+export function ShotScene({ art, par = 4, delay = 0.35, vs }: { art: ShotArt; par?: number; delay?: number; vs?: VsLast }) {
+  if (art.kind === 'putt') return <PuttScene feet={art.feet} two={art.two} ring={art.ring} tag={art.tag} delay={delay} />;
+  return <Scene art={art} par={par} delay={delay} vs={vs} />;
 }
 
-function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }) {
+/**
+ * For cards judged against the player's last hole: the card's rule and that hole (null on the first
+ * hole, or when they have no score for it), so the scorecard can show what this hole needs.
+ */
+export interface VsLast {
+  by: number;
+  first: number;
+  last: { strokes: number; par: number } | null;
+}
+
+function Scene({ art, par, delay, vs }: { art: ShotArt; par: number; delay: number; vs?: VsLast }) {
   const uid = useId().replace(/:/g, '');
   const [run, setRun] = useState(0);
   const still = reducedMotion();
   const id = (n: string) => `${n}-${uid}`;
-  const plan = PLANS[art.kind as Exclude<ShotArt['kind'], 'putt'>](art, par);
+  const plan = PLANS[art.kind as Exclude<ShotArt['kind'], 'putt'>](art, par, vs);
+  const tag = plan.tag ?? art.tag;
   // With a golfer in the scene, the ball waits for his swing: everything else runs from impact.
   const start = delay + (plan.lead ?? 0);
   const done = start + plan.duration;
@@ -42,7 +53,7 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
     <button
       type="button"
       className="putt-scene"
-      aria-label={`Animation: ${plan.label}${art.tag ? `, ${art.tag}` : ''}`}
+      aria-label={`Animation: ${plan.label}${tag ? `, ${tag}` : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         setRun((n) => n + 1);
@@ -52,7 +63,8 @@ function Scene({ art, par, delay }: { art: ShotArt; par: number; delay: number }
         <Defs id={id} />
         {plan.draw(ctx)}
       </svg>
-      {art.tag && <SceneTag key={`tag-${run}`} text={art.tag} at={still ? 0 : start + plan.duration + 0.2} />}
+      {/* The tag arrives with the ball, so the card is explained the moment it lands. */}
+      {tag && <SceneTag key={`tag-${run}`} text={tag} at={still ? 0 : start + plan.landAt} />}
     </button>
   );
 }
@@ -83,6 +95,8 @@ interface Ctx {
 
 interface Plan {
   label: string;
+  /** Overrides the card's tag (the last-hole cards work theirs out from the game). */
+  tag?: string;
   /** Seconds the golfer swings before the club meets the ball (scene times count from impact). */
   lead?: number;
   /** Seconds of motion after the delay. */
@@ -189,6 +203,10 @@ function Defs({ id }: { id: (n: string) => string }) {
         <stop offset="0.5" stopColor="#f5b800" />
         <stop offset="1" stopColor="#c98f00" />
       </linearGradient>
+      <linearGradient id={id('cut')} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#4f9a45" />
+        <stop offset="1" stopColor="#5aa84b" />
+      </linearGradient>
       <radialGradient id={id('shade')}>
         <stop offset="0" stopColor="#0d3a15" />
         <stop offset="0.55" stopColor="#0d3a15" stopOpacity="0.7" />
@@ -215,6 +233,8 @@ function Ball({ c, r = 6.5, spin }: { c: Ctx; r?: number; spin?: { begin: string
   return (
     <g transform={`scale(${k})`}>
       <circle r="7" fill={`url(#${c.id('ball')})`} />
+      {/* A thin dark edge, so it still shows against pale grass and sky in sunlight. */}
+      <circle r="7" fill="none" stroke="#1b2a12" strokeOpacity="0.4" strokeWidth="1" />
       <g>
         {spin && <animateTransform attributeName="transform" type="rotate" values={spin.values} begin={spin.begin} dur={spin.dur} fill="freeze" />}
         <circle cx="-1.6" cy="1.4" r="0.8" fill="#9aa3ad" opacity="0.5" />
@@ -233,7 +253,7 @@ function BallShadow({ c, r = 6.5 }: { c: Ctx; r?: number }) {
   return <ellipse cx="1.5" cy="2" rx={r * 1.35} ry={r * 0.5} fill={`url(#${c.id('shade')})`} fillOpacity="0.55" />;
 }
 
-function Flag({ c, x, y, h = 46 }: { c: Ctx; x: number; y: number; h?: number }) {
+function Flag({ c, x, y, h = 38 }: { c: Ctx; x: number; y: number; h?: number }) {
   const top = y - h;
   const f = (dx: number, dy: number) => `${x + 1.2 + dx} ${top + 2 + dy}`;
   const a = `M${f(0, 0)} C ${f(11, 2)}, ${f(20, -1)}, ${f(30, 5)} C ${f(21, 10)}, ${f(11, 10)}, ${f(0, 16)} Z`;
@@ -331,6 +351,20 @@ function Flight({ c, from, legs, start = 0, r = 6.5, sink }: { c: Ctx; from: Spo
   return (
     <g>
       {gone}
+      {/* Two faint copies a moment behind, so the eye can follow a small ball across the sky.
+          They fade once it has stopped. */}
+      {[0.05, 0.1].map((lag, i) => (
+        <g key={lag} opacity={i ? 0.22 : 0.4}>
+          <animate attributeName="opacity" to="0" begin={at(c, start + duration)} dur="0.2s" fill="freeze" />
+          <g transform={`translate(${first.bx} ${first.by})`}>
+            <animateTransform attributeName="transform" type="translate" values={t.ball} {...run} begin={at(c, start + lag)} />
+            <g transform={`scale(${first.s})`}>
+              <animateTransform attributeName="transform" type="scale" values={t.scale} {...run} begin={at(c, start + lag)} />
+              <circle r={r * 0.8} fill="#ffffff" />
+            </g>
+          </g>
+        </g>
+      ))}
       <g transform={`translate(${first.gx} ${first.gy})`}>
         <animateTransform attributeName="transform" type="translate" values={t.ground} {...run} />
         <g transform={`scale(${first.s})`} opacity="1">
@@ -404,16 +438,16 @@ function Player({ c, ball, view, swing, peg = 0, driver }: { c: Ctx; ball: Spot;
 }
 
 /**
- * The ball dropping into the hole once it's over it: it falls straight down and is gone. The clip
- * is the cup opening plus everything above it, so the front lip swallows the ball as it falls (the
- * rolling ball crosses over the lip on its way in). The still shows it halfway in.
+ * The ball dropping into the hole once it's over it: it drops and settles halfway in, the same as the
+ * still, so the last frame shows it holed. The clip is the cup opening plus everything above it, so
+ * the front lip swallows the ball as it falls (the rolling ball crosses over the lip on its way in).
  */
 function CupDrop({ c, x, y, s, r = 5 }: { c: Ctx; x: number; y: number; s: number; r?: number }) {
   const rx = 9;
   const ry = 4;
   return (
     <g opacity={c.still ? 1 : 0}>
-      {!c.still && <animate attributeName="opacity" values="1;1;0" keyTimes="0;0.95;1" begin={at(c, s)} dur="0.3s" fill="freeze" />}
+      {!c.still && <set attributeName="opacity" to="1" begin={at(c, s)} />}
       <clipPath id={c.id('in-cup')}>
         <path d={`M${x - rx} 0 H ${x + rx} V ${y} A ${rx} ${ry} 0 0 1 ${x - rx} ${y} Z`} />
       </clipPath>
@@ -423,12 +457,12 @@ function CupDrop({ c, x, y, s, r = 5 }: { c: Ctx; x: number; y: number; s: numbe
             <animateTransform
               attributeName="transform"
               type="translate"
-              values={`0 0;0.5 ${r * 0.6};0 ${r * 2.6}`}
-              keyTimes="0;0.35;1"
+              values={`0 0;0.5 ${r * 0.6};0 ${r * 0.8}`}
+              keyTimes="0;0.5;1"
               calcMode="spline"
-              keySplines="0.5 0 1 1;0.6 0 1 1"
+              keySplines="0.5 0 1 1;0.2 0 0.4 1"
               begin={at(c, s)}
-              dur="0.3s"
+              dur="0.25s"
               fill="freeze"
             />
           )}
@@ -441,6 +475,22 @@ function CupDrop({ c, x, y, s, r = 5 }: { c: Ctx; x: number; y: number; s: numbe
     </g>
   );
 }
+
+/**
+ * Lights up where the ball has to finish as it gets there (at s), then settles to a soft glow that
+ * the still keeps, so the final picture shows the target.
+ */
+function Glow({ c, s, children }: { c: Ctx; s: number; children: ReactNode }) {
+  return (
+    <g opacity={c.still ? 0.6 : 0}>
+      {!c.still && <animate attributeName="opacity" values="0;1;0.6" keyTimes="0;0.3;1" begin={at(c, s)} dur="0.9s" fill="freeze" />}
+      {children}
+    </g>
+  );
+}
+
+/** A target area for Glow: a light wash with a bright edge. */
+const lit = { fill: '#ffffff', fillOpacity: 0.2, stroke: '#ffffff', strokeOpacity: 0.9, strokeWidth: 1.6 } as const;
 
 function Ripple({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
   if (c.still) return null;
@@ -460,6 +510,8 @@ function Ripple({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
 // back and big ones framing the near corners.
 const HORIZON = 34;
 const FAIRWAY = `M96 150 C 150 110, 192 64, 206 ${HORIZON} L 230 ${HORIZON} C 236 64, 246 110, 276 150 Z`;
+/** The first cut of rough either side of the fairway, for cards where it counts too. */
+const FIRST_CUT = `M70 150 C 132 110, 182 64, 200 ${HORIZON} L 236 ${HORIZON} C 246 64, 262 110, 302 150 Z`;
 
 /** A point on the left edge of the fairway, t = 0 at the tee and 1 at the horizon. */
 function leftEdge(t: number): [number, number] {
@@ -469,7 +521,11 @@ function leftEdge(t: number): [number, number] {
   return [x, y];
 }
 
-function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
+/**
+ * tee: the tee box and its markers (off for a second shot, played from the fairway).
+ * rough: draws the first cut beside the fairway.
+ */
+function TeeView({ c, hazard, tee = true, rough = false }: { c: Ctx; hazard?: ShotArt['hazard']; tee?: boolean; rough?: boolean }) {
   const stakes = hazard === 'stakes' || hazard === 'both';
   const water = hazard === 'water' || hazard === 'both';
   // Mowing stripes: bands that get thinner toward the horizon.
@@ -502,6 +558,7 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
       {/* Ground: hazy at the horizon, rich up close. */}
       <rect y={HORIZON} width="340" height={144 - HORIZON} fill={`url(#${c.id('ground')})`} />
       <rect y={HORIZON} width="340" height={144 - HORIZON} fill={`url(#${c.id('grain')})`} />
+      {rough && <path d={FIRST_CUT} fill={`url(#${c.id('cut')})`} />}
       {/* Fairway with stripes. */}
       <path d={FAIRWAY} fill={`url(#${c.id('fairway')})`} />
       <clipPath id={c.id('fw')}>
@@ -539,14 +596,14 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
       {water && (
         <g>
           <path
-            d="M262 74 C 280 64, 334 64, 346 76 L 346 98 C 320 104, 280 100, 262 88 C 254 84, 254 78, 262 74 Z"
+            d="M248 74 C 266 64, 320 64, 332 76 L 332 96 C 306 102, 266 100, 248 88 C 240 84, 240 78, 248 74 Z"
             fill={`url(#${c.id('water')})`}
           />
-          <path d="M262 74 C 280 64, 334 64, 346 76" fill="none" stroke="#c9eeff" strokeOpacity="0.6" strokeWidth="1.2" />
+          <path d="M248 74 C 266 64, 320 64, 332 76" fill="none" stroke="#c9eeff" strokeOpacity="0.6" strokeWidth="1.2" />
           {[0, 1, 2].map((i) => (
             <path
               key={i}
-              d={`M${278 + i * 18} ${80 + i * 5} q 7 -2 14 0`}
+              d={`M${264 + i * 18} ${80 + i * 4} q 7 -2 14 0`}
               fill="none"
               stroke="#ffffff"
               strokeOpacity="0.5"
@@ -566,8 +623,8 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
         </g>
       )}
       {stakes &&
-        [0.04, 0.2, 0.36, 0.52, 0.68, 0.84].map((t, i) => {
-          // White stakes down the left, shrinking with distance.
+        [0.04, 0.2, 0.68, 0.84].map((t, i) => {
+          // White stakes down the left, shrinking with distance (none where the golfer stands).
           const [ex, ey] = leftEdge(t);
           const x = ex - 12 * (1 - t) - 2;
           const h = 20 * (1 - t) ** 1.3 + 3;
@@ -579,10 +636,18 @@ function TeeView({ c, hazard }: { c: Ctx; hazard?: ShotArt['hazard'] }) {
             </g>
           );
         })}
-      {/* Tee box and markers. */}
-      <path d="M144 110 L 230 110 L 240 140 L 134 140 Z" fill="#8ad472" opacity="0.65" />
-      <circle cx="150" cy="114" r="3" fill="#e11d48" />
-      <circle cx="226" cy="114" r="3" fill="#e11d48" />
+      {/* Tee box and its markers (yellow: the everyday tees). */}
+      {tee && (
+        <g>
+          <path d="M120 110 L 236 110 L 248 150 L 108 150 Z" fill="#8ad472" opacity="0.65" />
+          {[124, 230].map((x) => (
+            <g key={x}>
+              <ellipse cx={x + 1.5} cy="117.5" rx="4.6" ry="1.6" fill="#0d2a10" opacity="0.3" />
+              <circle cx={x} cy="114" r="3.8" fill="#f5c518" stroke="#8a6d00" strokeOpacity="0.5" strokeWidth="0.8" />
+            </g>
+          ))}
+        </g>
+      )}
     </g>
   );
 }
@@ -634,11 +699,14 @@ function GreenView({ c, bunker = true }: { c: Ctx; bunker?: boolean }) {
 }
 
 /** A ring around the flag showing how close the ball has to finish. */
-function Ring({ c, feet }: { c: Ctx; feet: number }) {
+function Ring({ c, feet, s }: { c: Ctx; feet: number; s: number }) {
   const rx = 10 + feet * 1.25;
   const ry = rx * 0.42;
   return (
     <g>
+      <Glow c={c} s={s}>
+        <ellipse cx={CUP.x} cy={CUP.y} rx={rx} ry={ry} {...lit} />
+      </Glow>
       <ellipse
         cx={CUP.x}
         cy={CUP.y}
@@ -651,7 +719,7 @@ function Ring({ c, feet }: { c: Ctx; feet: number }) {
         strokeWidth="1.6"
         strokeDasharray="3 4"
       />
-      <Pill ctx={c} x={CUP.x - rx - 4} y={CUP.y + ry + 2} text={`${feet} ft`} at={0} anchor="middle" />
+      <Pill ctx={c} x={CUP.x} y={CUP.y + ry + 4} text={`${feet} ft`} at={0} anchor="middle" />
     </g>
   );
 }
@@ -660,33 +728,55 @@ function Ring({ c, feet }: { c: Ctx; feet: number }) {
 
 // Each shot: where the ball starts, then its legs (flight with a height, bounces, rolls). Times in
 // seconds; the scene's landAt and duration line up with the leg times.
-const TEE: Spot = { x: 192, y: 116, s: 1.05 };
+const TEE: Spot = { x: 176, y: 122, s: 1.6 };
 /** The tee peg under the ball on the tee. */
 const PEG = 3;
 const off = (x: number, y: number, s: number): Spot => ({ x, y, s });
+/** A second shot: the ball sits on the fairway, a little right of where the tee would be. */
+const FAIRWAY_LIE = off(184, 122, 1.6);
 /** Where approaches are played from: on the fairway, near enough to see the golfer. */
-const FAIRWAY_BALL = off(58, 122, 1.15);
+const FAIRWAY_BALL = off(58, 120, 1.3);
+// Flight heights keep the top of each arc inside the strip, even on a small phone.
 
-const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number) => Plan> = {
+const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number, vs?: VsLast) => Plan> = {
   drive: (art) => {
-    const legs: Leg[] = [
-      { to: off(215, 66, 0.44), t: 1.3, h: 105 },
-      { to: off(217, 61, 0.42), t: 0.3, h: 10 },
-      { to: off(218, 57, 0.4), t: 0.45 },
-    ];
+    // A second shot is played off the fairway with an iron; the first cut counts for some cards.
+    const from = art.fairway ? FAIRWAY_LIE : TEE;
+    const rest = art.rough ? off(181, 64, 0.44) : off(215, 57, 0.4);
+    const legs: Leg[] = art.rough
+      ? [
+          { to: off(180, 70, 0.46), t: 0.95, h: 78 },
+          { to: off(180.5, 66.5, 0.45), t: 0.2, h: 7 },
+          { to: rest, t: 0.32 },
+        ]
+      : [
+          { to: off(214, 66, 0.44), t: 0.95, h: art.fairway ? 76 : 78 },
+          { to: off(214.5, 61, 0.42), t: 0.22, h: 8 },
+          { to: rest, t: 0.35 },
+        ];
     return {
-      label: art.metres ? `a ${art.metres} metre drive down the fairway` : 'a drive landing in the fairway',
+      label: art.metres
+        ? `a ${art.metres} metre drive down the fairway`
+        : art.fairway
+          ? 'a second shot from the fairway, finishing in the fairway'
+          : art.rough
+            ? 'a drive finishing in the first cut of rough'
+            : 'a drive landing in the fairway',
       lead: impactAt('full'),
-      duration: 2.1,
-      landAt: 1.3,
+      duration: 1.52,
+      landAt: 0.95,
       draw: (c) => (
         <>
-          <TeeView c={c} />
-          {art.metres && <Pill ctx={c} x={262} y={48} text={`${art.metres} m`} at={1.4} anchor="middle" />}
-          <Player c={c} ball={TEE} view="side" swing="full" peg={PEG} driver />
-          <Flight c={c} from={TEE} legs={legs} />
-          <RestingBall c={c} x={218} y={57} s={0.4} />
-          {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
+          <TeeView c={c} tee={!art.fairway} rough={art.rough} />
+          <Glow c={c} s={0.95}>
+            {art.rough && <path d={FIRST_CUT} {...lit} fillOpacity={0.12} />}
+            <path d={FAIRWAY} {...lit} />
+          </Glow>
+          {art.metres && <Pill ctx={c} x={266} y={46} text={`${art.metres} m`} at={1.05} anchor="middle" />}
+          <Player c={c} ball={from} view="side" swing="full" peg={art.fairway ? 0 : PEG} driver={!art.fairway} />
+          <Flight c={c} from={from} legs={legs} />
+          <RestingBall c={c} x={rest.x} y={rest.y} s={rest.s} />
+          {c.still && <Trail from={from} legs={legs.slice(0, 1)} />}
         </>
       ),
     };
@@ -694,9 +784,9 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
 
   trouble: (art) => {
     const legs: Leg[] = [
-      { to: off(218, 68, 0.45), t: 1.3, h: 103 },
-      { to: off(218.5, 63, 0.43), t: 0.3, h: 9 },
-      { to: off(219, 59, 0.42), t: 0.45 },
+      { to: off(216, 68, 0.45), t: 0.95, h: 78 },
+      { to: off(216.5, 63, 0.43), t: 0.22, h: 7 },
+      { to: off(217, 59, 0.42), t: 0.35 },
     ];
     return {
       label:
@@ -706,14 +796,17 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
             ? 'a drive staying inside the white stakes'
             : 'a drive staying clear of trouble',
       lead: impactAt('full'),
-      duration: 2.1,
-      landAt: 1.3,
+      duration: 1.52,
+      landAt: 0.95,
       draw: (c) => (
         <>
           <TeeView c={c} hazard={art.hazard} />
+          <Glow c={c} s={0.95}>
+            <path d={FAIRWAY} {...lit} />
+          </Glow>
           <Player c={c} ball={TEE} view="side" swing="full" peg={PEG} driver />
           <Flight c={c} from={TEE} legs={legs} />
-          <RestingBall c={c} x={219} y={59} s={0.42} />
+          <RestingBall c={c} x={217} y={59} s={0.42} />
           {c.still && <Trail from={TEE} legs={legs.slice(0, 1)} />}
         </>
       ),
@@ -725,19 +818,25 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     const stop = art.feet ? { x: CUP.x - 4 - art.feet * 0.35, y: CUP.y + 3 } : { x: 226, y: 70 };
     // Backspin: it pitches just past the target, skips on, then checks back to stop.
     const legs: Leg[] = [
-      { to: off(stop.x + 6, stop.y - 2, 0.76), t: 1.25, h: 85 },
-      { to: off(stop.x + 13, stop.y - 4, 0.75), t: 0.25, h: 6 },
-      { to: off(stop.x, stop.y, 0.75), t: 0.6 },
+      { to: off(stop.x + 6, stop.y - 2, 0.76), t: 0.95, h: art.feet ? 58 : 62 },
+      { to: off(stop.x + 13, stop.y - 4, 0.75), t: 0.2, h: 5 },
+      { to: off(stop.x, stop.y, 0.75), t: 0.45 },
     ];
     return {
       label: art.feet ? `an approach finishing within ${art.feet} feet of the hole` : 'an approach landing on the green',
       lead: impactAt('full'),
-      duration: 2.2,
-      landAt: 1.25,
+      duration: 1.6,
+      landAt: 0.95,
       draw: (c) => (
         <>
           <GreenView c={c} />
-          {art.feet && <Ring c={c} feet={art.feet} />}
+          {art.feet ? (
+            <Ring c={c} feet={art.feet} s={0.95} />
+          ) : (
+            <Glow c={c} s={0.95}>
+              <ellipse {...GREEN} {...lit} />
+            </Glow>
+          )}
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Player c={c} ball={FAIRWAY_BALL} view="face" swing="full" />
           <Flight c={c} from={FAIRWAY_BALL} legs={legs} />
@@ -749,19 +848,24 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
 
   bunker: (art) => {
     if (art.miss) {
+      // The bunker sits on the line in, marked as the thing to avoid; the ball carries it.
       const legs: Leg[] = [
-        { to: off(218, 70, 0.76), t: 1.25, h: 92 },
-        { to: off(225, 68, 0.75), t: 0.25, h: 6 },
-        { to: off(230, 66, 0.75), t: 0.45 },
+        { to: off(218, 70, 0.76), t: 0.95, h: 64 },
+        { to: off(225, 68, 0.75), t: 0.2, h: 5 },
+        { to: off(230, 66, 0.75), t: 0.4 },
       ];
       return {
         label: 'an approach carrying the bunker onto the green',
         lead: impactAt('full'),
-        duration: 2,
-        landAt: 1.25,
+        duration: 1.55,
+        landAt: 0.95,
         draw: (c) => (
           <>
             <GreenView c={c} />
+            <path d={BUNKER} fill="none" stroke="#e11d48" strokeOpacity="0.9" strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />
+            <Glow c={c} s={0.95}>
+              <ellipse {...GREEN} {...lit} />
+            </Glow>
             <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
             <Player c={c} ball={FAIRWAY_BALL} view="face" swing="full" />
             <Flight c={c} from={FAIRWAY_BALL} legs={legs} />
@@ -772,18 +876,21 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     }
     // Popped up soft out of the sand, lands on the green and runs out.
     const legs: Leg[] = [
-      { to: off(228, 66, 0.77), t: 1.0, h: 66 },
-      { to: off(234, 64, 0.76), t: 0.22, h: 5 },
-      { to: off(240, 62, 0.75), t: 0.5 },
+      { to: off(228, 66, 0.77), t: 0.8, h: 56 },
+      { to: off(234, 64, 0.76), t: 0.2, h: 5 },
+      { to: off(240, 62, 0.75), t: 0.4 },
     ];
     return {
       label: 'a splash out of the bunker onto the green',
       lead: impactAt('splash'),
-      duration: 2,
-      landAt: 1.05,
+      duration: 1.5,
+      landAt: 0.85,
       draw: (c) => (
         <>
           <GreenView c={c} />
+          <Glow c={c} s={0.85}>
+            <ellipse {...GREEN} {...lit} />
+          </Glow>
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Player c={c} ball={off(154, 96, 1)} view="face" swing="splash" />
           <Spray c={c} x={154} y={96} s={0} />
@@ -797,21 +904,26 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
   chip: (art) => {
     // A low pitch that lands on the fringe edge, then rolls out (into the cup for a hole-out).
     const end = art.holeOut ? off(CUP.x, CUP.y, 0.8) : off(230, 66, 0.8);
-    const roll = art.holeOut ? 1.1 : 0.8;
+    const roll = art.holeOut ? 0.85 : 0.6;
     const legs: Leg[] = [
-      { to: off(192, 81, 0.86), t: 0.6, h: 34 },
-      { to: off(199, 77, 0.85), t: 0.2, h: 4 },
+      { to: off(192, 81, 0.86), t: 0.5, h: 34 },
+      { to: off(199, 77, 0.85), t: 0.16, h: 4 },
       { to: end, t: roll },
     ];
-    const sinkAt = 0.8 + roll;
+    const sinkAt = 0.66 + roll;
     return {
       label: art.holeOut ? 'a chip from off the green rolling into the hole' : 'a chip from off the green onto it',
       lead: impactAt('chip'),
-      duration: art.holeOut ? 2.1 : 1.7,
-      landAt: art.holeOut ? sinkAt : 0.6,
+      duration: sinkAt + 0.3,
+      landAt: art.holeOut ? sinkAt : 0.5,
       draw: (c) => (
         <>
           <GreenView c={c} bunker={false} />
+          {!art.holeOut && (
+            <Glow c={c} s={0.5}>
+              <ellipse {...GREEN} {...lit} />
+            </Glow>
+          )}
           <Flag c={c} x={CUP.x} y={CUP.y - 2.5} />
           <Player c={c} ball={off(150, 108, 1)} view="face" swing="chip" />
           <Flight c={c} from={off(150, 108, 1)} legs={legs} r={6.5} sink={art.holeOut} />
@@ -827,12 +939,32 @@ const PLANS: Record<Exclude<ShotArt['kind'], 'putt'>, (art: ShotArt, par: number
     };
   },
 
-  score: (art, par) => ({
-    label: `a scorecard marked ${scoreName(art.toPar ?? 0)}`,
-    duration: 1.9,
-    landAt: 1.5,
-    draw: (c) => <Scorecard c={c} par={par} toPar={art.toPar ?? 0} />,
-  }),
+  score: (art, par, vs) => {
+    if (art.vsLast) {
+      // This hole needs the last hole's score against par, less the card's margin; with no last
+      // hole, the card's first-hole target.
+      const lastToPar = vs?.last ? vs.last.strokes - vs.last.par : null;
+      const need = lastToPar == null ? (vs?.first ?? 0) : lastToPar - (vs?.by ?? 0);
+      const strokes = Math.max(1, par + need);
+      const name = scoreName(strokes - par);
+      return {
+        label: vs?.last
+          ? `a scorecard: ${scoreName(lastToPar!)} on the last hole, so this hole needs ${name} or better`
+          : `a scorecard: first hole, so this hole needs ${name} or better`,
+        tag: `need ${name} or better`,
+        duration: vsThisAt(lastToPar) + 0.45 + marksTime(strokes - par),
+        landAt: vsThisAt(lastToPar) + 0.45 + marksTime(strokes - par),
+        draw: (c) => <VsCard c={c} last={vs?.last ?? null} par={par} strokes={strokes} />,
+      };
+    }
+    const toPar = art.toPar ?? 0;
+    return {
+      label: `a scorecard marked ${scoreName(toPar)}`,
+      duration: 0.5 + marksTime(toPar),
+      landAt: 0.5 + marksTime(toPar),
+      draw: (c) => <Scorecard c={c} par={par} toPar={toPar} />,
+    };
+  },
 };
 
 /** Sand thrown up as the ball splashes out. */
@@ -865,27 +997,72 @@ function Spray({ c, x, y, s }: { c: Ctx; x: number; y: number; s: number }) {
 }
 
 function scoreName(toPar: number): string {
-  return { [-2]: 'eagle', [-1]: 'birdie', 0: 'par', 1: 'bogey', 2: 'double bogey', 3: 'triple bogey' }[toPar] ?? `${toPar} over`;
+  return (
+    { [-3]: 'albatross', [-2]: 'eagle', [-1]: 'birdie', 0: 'par', 1: 'bogey', 2: 'double bogey', 3: 'triple bogey' }[toPar] ??
+    (toPar < 0 ? `${-toPar} under` : `${toPar} over`)
+  );
 }
 
-/** A pencilled scorecard: the target score is written in, then marked the way golfers do. */
-function Scorecard({ c, par, toPar }: { c: Ctx; par: number; toPar: number }) {
-  const score = par + toPar;
-  // Birdie: circled. Par: no mark. Bogey and worse: one square per stroke over (up to three).
-  const box = (x: number, y: number, w: number, h: number, i: number) => {
-    const p = `M${x - 29} ${y + 16} h ${w} v ${h} h ${-w} Z`;
-    return <Stroke key={i} c={c} d={p} s={0.9 + i * 0.25} dur={0.35} />;
-  };
+/** Seconds to draw the marks for a score: one circle a birdie, two for an eagle or better, a box per stroke over (up to three). */
+const marksTime = (toPar: number) => (toPar === 0 ? 0 : 0.1 + 0.2 * Math.min(toPar < 0 ? 2 : 3, Math.abs(toPar)) + 0.1);
+
+/**
+ * The way golfers mark a scorecard, around a number centred on (x, y), drawn from s seconds:
+ * birdie circled, eagle or better circled twice, bogey and worse one box per stroke over (up to three).
+ */
+function Marks({ c, x, y, toPar, s }: { c: Ctx; x: number; y: number; toPar: number; s: number }) {
+  if (toPar < 0) {
+    const ring = (k: number) =>
+      `M${x} ${y - 24 * k} C ${x + 22 * k} ${y - 24 * k}, ${x + 24 * k} ${y + 22 * k}, ${x} ${y + 24 * k} C ${x - 22 * k} ${y + 24 * k}, ${x - 24 * k} ${y - 22 * k}, ${x + 2} ${y - 22 * k}`;
+    return (
+      <>
+        {[1, 1.2].slice(0, toPar <= -2 ? 2 : 1).map((k, i) => (
+          <Stroke key={k} c={c} d={ring(k)} s={s + i * 0.2} dur={0.3} />
+        ))}
+      </>
+    );
+  }
+  return (
+    <>
+      {[0, 1, 2].slice(0, Math.min(3, toPar)).map((i) => {
+        const w = 40 + i * 8;
+        const h = 44 + i * 8;
+        return <Stroke key={i} c={c} d={`M${x - w / 2} ${y - h / 2} h ${w} v ${h} h ${-w} Z`} s={s + i * 0.2} dur={0.25} />;
+      })}
+    </>
+  );
+}
+
+/** A number written in pencil from left to right, centred on x, from s seconds. */
+function Written({ c, x, y, text, s, dur = 0.4 }: { c: Ctx; x: number; y: number; text: string; s: number; dur?: number }) {
+  const clip = c.id(`write-${x}`);
+  return (
+    <>
+      <clipPath id={clip}>
+        <rect x={x - 30} y={y - 52} width={c.still ? 60 : 0} height="70">
+          {!c.still && <animate attributeName="width" to="60" begin={at(c, s)} dur={`${dur}s`} fill="freeze" />}
+        </rect>
+      </clipPath>
+      <text x={x} y={y} textAnchor="middle" fontSize="44" fill="#2b2f3a" fontFamily={HAND} clipPath={`url(#${clip})`}>
+        {text}
+      </text>
+    </>
+  );
+}
+
+/** The scorecard's paper, header and middle line, with a column label over each half. */
+function Card({ c, heads, children }: { c: Ctx; heads: [string, string]; children: ReactNode }) {
   return (
     <g>
       <rect width="340" height="144" fill={`url(#${c.id('rough')})`} />
+      <rect width="340" height="144" fill={`url(#${c.id('stripes')})`} />
       <rect width="340" height="144" fill={`url(#${c.id('grain')})`} />
-      <g transform="translate(22 6) scale(0.88) rotate(-3 170 84)" filter={`url(#${c.id('shadow')})`}>
+      {/* Kept clear of the tag in the top-left corner and inside the strip on a small phone. */}
+      <g transform="translate(44 12) scale(0.82) rotate(-3 170 84)" filter={`url(#${c.id('shadow')})`}>
         <rect x="76" y="36" width="188" height="102" rx="8" fill={`url(#${c.id('paper')})`} />
-        {/* Header row and grid. */}
         <rect x="76" y="36" width="188" height="24" rx="8" fill="#1f6b3a" />
         <rect x="76" y="52" width="188" height="8" fill="#1f6b3a" />
-        {['PAR', 'SCORE'].map((t, i) => (
+        {heads.map((t, i) => (
           <text
             key={t}
             x={123 + i * 94}
@@ -901,26 +1078,60 @@ function Scorecard({ c, par, toPar }: { c: Ctx; par: number; toPar: number }) {
           </text>
         ))}
         <path d="M170 60 V 138" stroke="#d9cfb4" strokeWidth="1.2" />
-        <text x="123" y="114" textAnchor="middle" fontSize="36" fontWeight="800" fill="#2c3a2f" fontFamily={FONT}>
-          {par}
-        </text>
-        {/* The score, written in pencil from left to right. */}
-        <clipPath id={c.id('write')}>
-          <rect x="187" y="66" width={c.still ? 60 : 0} height="70">
-            {!c.still && <animate attributeName="width" to="60" begin={at(c, 0.2)} dur="0.55s" fill="freeze" />}
-          </rect>
-        </clipPath>
-        <text x="217" y="118" textAnchor="middle" fontSize="44" fill="#2b2f3a" fontFamily={HAND} clipPath={`url(#${c.id('write')})`}>
-          {score}
-        </text>
-        {toPar < 0 && <Stroke c={c} d="M217 74 C 239 74, 241 120, 217 122 C 195 122, 193 76, 219 76" s={0.9} dur={0.55} />}
-        {toPar > 0 && [0, 1, 2].slice(0, Math.min(3, toPar)).map((i) => box(226 - i * 4, 62 - i * 4, 40 + i * 8, 44 + i * 8, i))}
+        {children}
       </g>
     </g>
   );
 }
 
-/** A pencil line that draws itself. */
+/** A pencilled scorecard: the target score is written in, then marked the way golfers do. */
+function Scorecard({ c, par, toPar }: { c: Ctx; par: number; toPar: number }) {
+  return (
+    <Card c={c} heads={['PAR', 'SCORE']}>
+      <text x="123" y="114" textAnchor="middle" fontSize="36" fontWeight="800" fill="#2c3a2f" fontFamily={FONT}>
+        {par}
+      </text>
+      <Written c={c} x={217} y={118} text={String(par + toPar)} s={0.05} />
+      <Marks c={c} x={217} y={100} toPar={toPar} s={0.5} />
+    </Card>
+  );
+}
+
+/** When the last-hole card starts writing this hole's target: once the last hole is written and marked. */
+const vsThisAt = (lastToPar: number | null) => (lastToPar == null ? 0.2 : 0.3 + marksTime(lastToPar));
+
+/**
+ * For cards judged against the last hole: the player's real last hole on the left (or "first hole"),
+ * and the score this hole needs on the right, each marked, with its par printed underneath.
+ */
+function VsCard({ c, last, par, strokes }: { c: Ctx; last: { strokes: number; par: number } | null; par: number; strokes: number }) {
+  const s = vsThisAt(last ? last.strokes - last.par : null);
+  const small = { textAnchor: 'middle', fontSize: 11, fontWeight: 700, fill: '#8a8170', fontFamily: FONT } as const;
+  return (
+    <Card c={c} heads={['LAST HOLE', 'THIS HOLE']}>
+      {last ? (
+        <>
+          <Written c={c} x={123} y={112} text={String(last.strokes)} s={0.05} dur={0.3} />
+          <Marks c={c} x={123} y={94} toPar={last.strokes - last.par} s={0.3} />
+          <text x="123" y="132" {...small}>
+            par {last.par}
+          </text>
+        </>
+      ) : (
+        <text x="123" y="104" {...small} fontSize={14}>
+          first hole
+        </text>
+      )}
+      <Written c={c} x={217} y={112} text={String(strokes)} s={s} />
+      <Marks c={c} x={217} y={94} toPar={strokes - par} s={s + 0.45} />
+      <text x="217" y="132" {...small}>
+        par {par} · or better
+      </text>
+    </Card>
+  );
+}
+
+/** A pencil line that draws itself. It's hidden until it starts, so the pen's round tip doesn't leave a dot. */
 function Stroke({ c, d, s, dur }: { c: Ctx; d: string; s: number; dur: number }) {
   return (
     <path
@@ -933,8 +1144,9 @@ function Stroke({ c, d, s, dur }: { c: Ctx; d: string; s: number; dur: number })
       pathLength="1"
       strokeDasharray="1 1"
       strokeDashoffset={c.still ? 0 : 1}
-      opacity="0.85"
+      opacity={c.still ? 0.85 : 0}
     >
+      {!c.still && <set attributeName="opacity" to="0.85" begin={at(c, s)} />}
       {!c.still && <animate attributeName="stroke-dashoffset" to="0" begin={at(c, s)} dur={`${dur}s`} fill="freeze" />}
     </path>
   );
