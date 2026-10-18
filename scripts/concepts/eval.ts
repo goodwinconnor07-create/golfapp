@@ -41,6 +41,8 @@ export interface Metrics {
   eyeClaims: number;
   eyeStrokes: number;
   drawLuckSD: number;
+  repeatRate: number; // share of cards shown that the player had already been shown this round
+  distinct: number; // different cards a player sees in a round
   picks: Record<string, number>;
   made: Record<string, number>;
 }
@@ -88,6 +90,9 @@ export function evaluate(c: Concept, opts: { games?: number; probGames?: number;
     golfW = 0;
   const pick: Record<string, number> = {},
     madeN: Record<string, number> = {};
+  let reps = 0,
+    offs = 0,
+    dist = 0;
   let eyeC = 0,
     eyeS = 0,
     luck2 = 0,
@@ -128,6 +133,9 @@ export function evaluate(c: Concept, opts: { games?: number; probGames?: number;
         pick[tr] = (pick[tr] ?? 0) + 1;
         if (t.made[i]) madeN[tr] = (madeN[tr] ?? 0) + 1;
       });
+    reps += r.g.repeats;
+    offs += r.g.offers;
+    dist += r.g.seen.reduce((a, x) => a + x.size, 0) / r.g.seen.length;
     eyeC += r.g.eyeClaims;
     eyeS += r.g.eyeStrokes;
     r.g.drawLuck.forEach((x) => {
@@ -208,6 +216,8 @@ export function evaluate(c: Concept, opts: { games?: number; probGames?: number;
     eyeClaims: eyeC / G,
     eyeStrokes: eyeS / G,
     drawLuckSD: Math.sqrt(luck2 / Math.max(1, luckN)),
+    repeatRate: reps / Math.max(1, offs),
+    distinct: dist / G,
     picks: Object.fromEntries(Object.entries(pick).map(([t, x]) => [t, x / total])),
     made: Object.fromEntries(Object.entries(pick).map(([t, x]) => [t, (madeN[t] ?? 0) / x])),
   };
@@ -227,7 +237,7 @@ export function print(m: Metrics) {
     `  skill: best ${f(m.bestMixed)} worst ${f(m.worstMixed)} 10v20 ${p(m.oneVone)} golfWinner ${p(m.golfWinner)} cardVar ${p(m.cardVarShare)}`,
   );
   console.log(
-    `  luck: eyeClaims ${m.eyeClaims.toFixed(1)} eyeStrokes ${m.eyeStrokes.toFixed(1)} drawSD ${f(m.drawLuckSD)} | picks ${Object.entries(m.picks)
+    `  luck: eyeClaims ${m.eyeClaims.toFixed(1)} eyeStrokes ${m.eyeStrokes.toFixed(1)} drawSD ${f(m.drawLuckSD)} repeats ${p(m.repeatRate)} distinct ${m.distinct.toFixed(1)} | picks ${Object.entries(m.picks)
       .map(([t, x]) => `${t[0]}${p(x)}`)
       .join(' ')} made ${Object.entries(m.made)
       .map(([t, x]) => `${t[0]}${p(x)}`)
