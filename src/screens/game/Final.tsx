@@ -6,7 +6,7 @@ import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { Avatar } from '../../ui/components';
 import { colourWipe, confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
-import { joinNames, plural } from '../../ui/format';
+import { duration, joinNames, plural } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
 import { resultsImage } from '../../ui/resultsImage';
 import { EditList } from './EditList';
@@ -16,8 +16,17 @@ function names(game: Game, ids: string[]): string {
   return joinNames(ids.map((id) => (game.players.find((p) => p.id === id) ?? units(game).find((u) => u.id === id))?.name ?? '?'));
 }
 
+/** Tee-off on the first hole to the end of the round. null for games from before the clock. */
+function roundTime(game: Game): number | null {
+  const start = game.holeStarts?.[0];
+  return start != null && game.finishedAt != null ? game.finishedAt - start : null;
+}
+
 function shareText(game: Game, rc: Recap): string {
-  const lines = [`⛳ CardShot${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}`];
+  const time = roundTime(game);
+  const lines = [
+    `⛳ CardShot${game.course ? ` · ${game.course}` : ''} · ${plural(rc.holesPlayed, 'hole')}${time != null ? ` · ${duration(time)}` : ''}`,
+  ];
   if (rc.winners.length) {
     const who = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
     lines.push(`🏆 ${who} ${rc.winners.length > 1 ? 'tie' : 'wins'} at ${toParWords(rc.winners[0].totals.toPar)}`);
@@ -84,6 +93,7 @@ async function share(game: Game, rc: Recap, image: File | null) {
 export function Final({ game }: { game: Game }) {
   const rc = useMemo(() => recap(game), [game]);
   const played = rc.holesPlayed > 0;
+  const time = roundTime(game);
   // Draw the picture now, so tapping Share opens the share sheet straight away
   // (iPhones refuse to share if there's a wait after the tap).
   const image = useRef<File | null>(null);
@@ -176,6 +186,12 @@ export function Final({ game }: { game: Game }) {
               ))}
             </div>
           </>
+        )}
+
+        {step >= 3 && time != null && (
+          <p className="round-time rise">
+            Round time <b className="num">{duration(time)}</b>
+          </p>
         )}
 
         {step >= 3 && rc.awards.length > 0 && (

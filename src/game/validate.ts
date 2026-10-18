@@ -257,6 +257,11 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
     decks: {},
     seq: 0,
   };
+  // Hole clock: one start time per hole reached so far, in order.
+  const starts = input.holeStarts;
+  if (Array.isArray(starts) && starts.length <= current + 1 && starts.every((t, i) => isInt(t, 0, now) && (i === 0 || t >= starts[i - 1])))
+    game.holeStarts = starts as number[];
+  if (status === 'finished' && isInt(input.finishedAt, game.holeStarts?.[0] ?? 0, now)) game.finishedAt = input.finishedAt;
   // Teams only survive if they're still two pairs of exactly four known players.
   if (Array.isArray(input.teams) && input.teams.length === 2 && players.length === 4) {
     const pairs: string[][] = [];

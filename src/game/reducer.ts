@@ -52,7 +52,8 @@ const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '😎',
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
 
-export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
+export const isAvatarEmoji = (v: unknown): v is string =>
+  typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
 function freeColor(players: Player[], want?: number, exceptId?: string): number {
@@ -312,7 +313,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         break;
       }
       const ids = action.teams.flat();
-      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2)) return fail('Teams need exactly four players, two on each side.');
+      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2))
+        return fail('Teams need exactly four players, two on each side.');
       if (new Set(ids).size !== 4 || ids.some((id) => !findPlayer(id))) return fail('Each player goes on one team.');
       g.teams = action.teams.map(([a, b], i) => ({ id: `team${i + 1}`, players: [a, b] as [string, string] }));
       break;
@@ -324,6 +326,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.players.length === 0) return fail('Add at least one player.');
       g.status = 'playing';
       g.current = 0;
+      g.holeStarts = [ctx.now];
       break;
     }
 
@@ -385,7 +388,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (!entry || !entry.tier || !card) return unchanged;
       if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
-      if (redrawUsed(g, action.playerId)) return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
+      if (redrawUsed(g, action.playerId))
+        return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
       const oldId = card.id;
       const opts = { exclude: [oldId] };
       entry.redrawn = true;
@@ -521,8 +525,14 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
     case 'nextHole': {
       if (g.status !== 'playing' || action.from !== g.current) return unchanged;
       if (!holeComplete(g, g.current)) return fail('Waiting for everyone to finish the hole.');
-      if (g.current >= g.holes.length - 1) g.status = 'finished';
-      else g.current += 1;
+      if (g.current >= g.holes.length - 1) {
+        g.status = 'finished';
+        g.finishedAt = ctx.now;
+      } else {
+        g.current += 1;
+        // Games started before the clock existed have no start times, so they stay without one.
+        if (g.holeStarts) g.holeStarts = [...g.holeStarts.slice(0, g.current), ctx.now];
+      }
       break;
     }
 
@@ -530,6 +540,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.status === 'finished') return unchanged;
       if (!isHost) return fail('Only the host can end the round.');
       g.status = 'finished';
+      g.finishedAt = ctx.now;
       break;
     }
 

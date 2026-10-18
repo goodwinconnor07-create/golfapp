@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { getEntry, ordinal, ownsPlayer, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
+import { clock } from '../../ui/format';
 import { BackIcon, BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
@@ -172,6 +174,7 @@ function GameTopBar({
           aria-valuemax={game.holes.length}
           aria-valuenow={game.current + 1}
         >
+          <HoleClock key={game.current} start={game.holeStarts?.[game.current]} />
           <span className="hole-progress-track">
             <i style={{ width: `${((game.current + 1) / game.holes.length) * 100}%` }} />
           </span>
@@ -192,6 +195,23 @@ function GameTopBar({
   );
 }
 
+/** How long the current hole has been going. Counts up, no limit. Hidden for games from before the clock. */
+function HoleClock({ start }: { start?: number }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (start == null) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [start]);
+  if (start == null) return null;
+  const text = clock(now - start);
+  return (
+    <span className="hole-clock num" role="timer" aria-label={`Time on this hole ${text}`}>
+      {text}
+    </span>
+  );
+}
+
 /**
  * Your place, always on screen: "2nd" under a trophy (gold when you lead). Opens the standings.
  * It only moves once this phone has seen the hole's results. With everyone on one phone there's
@@ -201,7 +221,10 @@ function RankPill({ game, online }: { game: Game; online: boolean }) {
   const deviceId = useApp((s) => s.deviceId);
   const holes = shownHoles(game);
   const mine = online ? myPlayers(game, deviceId, true) : game.players.length === 1 ? game.players : [];
-  const row = mine.length === 1 && holes.length > 0 ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id || r.player.members?.some((m) => m.id === mine[0].id)) : undefined;
+  const row =
+    mine.length === 1 && holes.length > 0
+      ? standings(game, 'game', holes).find((r) => r.player.id === mine[0].id || r.player.members?.some((m) => m.id === mine[0].id))
+      : undefined;
   const place = row ? `${row.tied ? '=' : ''}${ordinal(row.rank)}` : null;
   return (
     <button

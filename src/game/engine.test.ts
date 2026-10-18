@@ -408,6 +408,30 @@ describe('round flow', () => {
     expect(g.status).toBe('finished');
   });
 
+  it('times each hole and the whole round', () => {
+    const at = (now: number): ActionContext => ({ ...ctx(), now });
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' }, at(1_000));
+    expect(g.holeStarts).toEqual([1_000]);
+    g = playHole(g, 0, [4, 5]);
+    g = run(g, { type: 'nextHole', from: 0 }, at(600_000));
+    expect(g.holeStarts).toEqual([1_000, 600_000]);
+    expect(g.finishedAt).toBeUndefined();
+    g = playHole(g, 1, [4, 4]);
+    g = run(g, { type: 'nextHole', from: 1 }, at(1_200_000));
+    expect(g.finishedAt).toBe(1_200_000);
+    // The times survive an upload; bad ones are dropped.
+    expect(sanitizeUpload(g, HOST, 2_000_000, seeded())).toMatchObject({ holeStarts: [1_000, 600_000], finishedAt: 1_200_000 });
+    expect(sanitizeUpload({ ...g, holeStarts: [600_000, 1_000] }, HOST, 2_000_000, seeded())?.holeStarts).toBeUndefined();
+  });
+
+  it('leaves games from before the clock without one', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' });
+    delete g.holeStarts;
+    g = playHole(g, 0, [4, 5]);
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(g.holeStarts).toBeUndefined();
+  });
+
   it('shares ranks on ties unless the strokes tiebreak is on', () => {
     let g = run(newGame(['Sam', 'Alex'], [4]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'S02');
@@ -960,7 +984,19 @@ describe('2v2 teams', () => {
     const g = newGame(NAMES);
     expect(applyAction(g, { type: 'setTeams', teams: TEAMS }, ctx(OTHER)).ok).toBe(false);
     expect(applyAction(newGame(['Sam', 'Alex', 'Kim']), { type: 'setTeams', teams: TEAMS }, ctx()).ok).toBe(false);
-    expect(applyAction(g, { type: 'setTeams', teams: [['player00', 'player01'], ['player01', 'player02']] }, ctx()).ok).toBe(false);
+    expect(
+      applyAction(
+        g,
+        {
+          type: 'setTeams',
+          teams: [
+            ['player00', 'player01'],
+            ['player01', 'player02'],
+          ],
+        },
+        ctx(),
+      ).ok,
+    ).toBe(false);
     const t = run(g, { type: 'setTeams', teams: TEAMS });
     expect(t.teams).toHaveLength(2);
     expect(mateOf(t, 'player00')).toBe('player01');
@@ -974,7 +1010,8 @@ describe('2v2 teams', () => {
   it('gives both partners the same card as soon as one picks, first tap wins', () => {
     let g = teamGame();
     g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold' });
-    const a = g.entries[entryKey('player00', 0)], b = g.entries[entryKey('player01', 0)];
+    const a = g.entries[entryKey('player00', 0)],
+      b = g.entries[entryKey('player01', 0)];
     expect(a.tier).toBe('bold');
     expect(a.cardId).toBeDefined();
     expect(a.cardId).toBe(b.cardId);
@@ -1021,7 +1058,12 @@ describe('2v2 teams', () => {
 
   it('ranks teams by the average of both partners, in halves', () => {
     let g = teamGame();
-    for (const [id, strokes, outcome] of [['player00', 4, 'made'], ['player01', 5, 'made'], ['player02', 5, 'missed'], ['player03', 4, 'missed']] as const) {
+    for (const [id, strokes, outcome] of [
+      ['player00', 4, 'made'],
+      ['player01', 5, 'made'],
+      ['player02', 5, 'missed'],
+      ['player03', 4, 'missed'],
+    ] as const) {
       g = giveCard(g, id, 0, 'S02');
       g = score(g, id, 0, strokes, outcome);
     }
