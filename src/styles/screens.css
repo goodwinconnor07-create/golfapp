@@ -3904,7 +3904,6 @@
   box-shadow: 0 0 0 2px var(--gold-line);
 }
 
-
 .standings-line {
   width: 100%;
   min-height: 56px;
@@ -4535,4 +4534,237 @@ button.roster-item:active {
   .flood-tag {
     animation: none;
   }
+}
+
+/* ── Ruleset 2: the hand, Name It, friends, the Crown and win chances ─────── */
+
+/* Your hand: three cards, the picked one opens up with its scene. */
+.hand-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hand-card {
+  border-radius: var(--r-lg);
+  outline: 3px solid transparent;
+  outline-offset: 2px;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    outline-color 0.2s;
+}
+
+.hand-card.on {
+  outline-color: var(--ink);
+}
+
+.hand-card.dim {
+  opacity: 0.6;
+}
+
+.hand-card:focus-visible {
+  outline-color: var(--focus);
+}
+
+/* A Name It card: one card, a target for each level. */
+.hand-nameit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  border: 2px solid var(--line);
+}
+
+.hand-nameit-head .ccard-title {
+  margin: 4px 0;
+  font-size: var(--fs-h2);
+}
+
+.hand-nameit-head .ccard-pass {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+}
+
+.hand-nameit-kicker {
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-ink);
+}
+
+.hand-nameit-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nameit-opt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.nameit-opt.on {
+  border-color: var(--ink);
+}
+
+.nameit-opt-safe.on {
+  background: var(--safe-bg);
+}
+
+.nameit-opt-bold.on {
+  background: var(--bold-bg);
+}
+
+.nameit-opt-insane.on {
+  background: var(--insane-bg);
+}
+
+.nameit-opt-tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.nameit-opt-label {
+  font-weight: 800;
+  font-size: var(--fs-small);
+}
+
+.nameit-opt-stakes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+/* Shadow and Bodyguard: who the card is about. */
+.friend-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.friend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 16px 4px 4px;
+  border-radius: var(--r-pill);
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+}
+
+.friend-chip.on {
+  border-color: var(--ink);
+  background: var(--bg-2);
+}
+
+/* The Crown: who wears it, and what beating them is worth. */
+.crown-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--gold-bg);
+  color: var(--gold-ink-2);
+  font-size: var(--fs-small);
+}
+
+.crown-line > span:first-child {
+  font-size: var(--fs-h3);
+}
+
+.crown-mark {
+  margin-left: 4px;
+  font-size: var(--fs-small);
+}
+
+/* Live win chances, under each total. */
+.win-chance {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.prow-score small.win-chance {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.win-line {
+  margin: 4px 0 0;
+  font-size: var(--fs-small);
+  font-weight: 800;
+  color: var(--ink-3);
+}
+
+.standings-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* A streak card that hasn't finished, and the payouts and Crown under a hole's working. */
+.working-delta.running {
+  color: var(--ink-3);
+  font-weight: 800;
+}
+
+.hole-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: var(--fs-caption);
+}
+
+.hole-extra {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.hole-extra.made b {
+  color: var(--green-ink);
+}
+
+.hole-extra.missed b {
+  color: var(--red-ink);
 }

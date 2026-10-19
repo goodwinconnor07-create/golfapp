@@ -1,8 +1,21 @@
 import { useEffect } from 'react';
-import { getCard, getEntry, holeResult, unitHoleResult, isVoteable, rankMoves, standings, voteTally, type Game } from '../../game';
+import {
+  crownHolder,
+  getCard,
+  getEntry,
+  holeResult,
+  unitHoleResult,
+  isVoteable,
+  rankMoves,
+  standings,
+  voteTally,
+  winChancesFor,
+  type Game,
+} from '../../game';
+import { winText } from '../../ui/format';
 import { navigate, nextHole } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
-import { HoleMeta, Working } from '../../ui/components';
+import { HoleMeta, HoleExtras, Working } from '../../ui/components';
 import { confetti, CONFETTI } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
 import { Moment } from './Moment';
@@ -14,6 +27,8 @@ export function HoleResults({ game }: { game: Game }) {
   const rows = standings(game);
   const moves = rankMoves(game);
   const last = h === game.holes.length - 1;
+  const chances = last ? null : winChancesFor(game);
+  const nextCrown = last ? null : crownHolder(game, h + 1);
   const insaneMade = game.players.some((p) => {
     const r = holeResult(game, p.id, h);
     return r?.tier === 'insane' && r.outcome === 'made';
@@ -42,7 +57,8 @@ export function HoleResults({ game }: { game: Game }) {
                 row={row}
                 delay={i * 70}
                 move={moves[row.player.id]}
-                scoreLabel={null}
+                scoreLabel={chances ? winText(chances[row.player.id] ?? 0) : null}
+                crown={nextCrown === row.player.id}
                 sub={
                   r && (
                     <>
@@ -54,7 +70,9 @@ export function HoleResults({ game }: { game: Game }) {
                         tier={r.tier}
                         cardTitle={getCard(r.cardId)?.title}
                         doubled={r.doubled}
+                        running={r.streak && r.outcome === 'na'}
                       />
+                      <HoleExtras game={game} extras={r.extras} />
                       <HoleMeta mulligan={r.mulligan} freePass={r.freePass}>
                         <VoteTag game={game} playerId={row.player.id} hole={h} />
                       </HoleMeta>

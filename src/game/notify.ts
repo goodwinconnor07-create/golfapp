@@ -31,7 +31,7 @@ export function notesFor(before: Game, after: Game, action: Action, actor: strin
   // The host tapped Let's go.
   if (before.status === 'lobby' && after.status === 'playing') {
     const host = after.players.find((p) => p.deviceId === after.hostDeviceId)?.name ?? 'The host';
-    notes.push({ devices: others, title, body: `${host} started the round. Pick your risk for hole ${holeNo(after.current)}.` });
+    notes.push({ devices: others, title, body: `${host} started the round. Pick your card for hole ${holeNo(after.current)}.` });
   }
 
   if (action.type === 'score') {

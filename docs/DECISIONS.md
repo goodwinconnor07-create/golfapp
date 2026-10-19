@@ -102,7 +102,6 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 
 Superseded by the receipt and two-line rows in "UX audit" below; kept for the history.
 
-
 - The product owner found "5 − 4 = 1" next to "−3 to par" confusing, so every hole now shows its working against par as two pills that add up to the big number: **[Bogey +1] + [✓ Card −4]** → **−3**. The golf pill uses the usual names (Birdie −1, Par, Bogey +1…; plain "Par", never "Par 0"). The card pill is green when made and red when missed, with ✓/✗ as well, and notes "(2×)" on double-stakes holes and "free shot" when a free shot makes a fail cost 0.
 - The splash and the fix-a-score sheet show the pills large with the total: [Bogey +1] + [✓ Card −4] = −3. The splash no longer repeats "3 under on this hole".
 - Display only: scoring is unchanged, and real strokes still show on the stroke picker, the splash, the leaderboard and the scorecard.
@@ -236,6 +235,7 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 - **How to play on first host.** The first time a phone taps New game, How to play shows first, with a Skip button on every slide but the last. Finishing or skipping lands on the name screen. It's marked seen as soon as How to play opens (from anywhere), so it's never forced twice, and a phone that already has past games never sees it. Guests joining by code don't get it, so the join link stays quick. Stored under `sendit.howto`.
 - **Crash screen.** If a screen crashes while drawing, an error boundary (`src/ui/ErrorBoundary.tsx`) shows "Something went wrong" with Reload and Go to Home, instead of a blank page. The game is saved on the phone, so Reload picks the round back up. It doesn't catch errors in button handlers or network calls.
 - **Tests start as if How to play was seen.** `playwright.config.ts` seeds `sendit.howto`; the first-time tests in `e2e/home.spec.ts` clear it.
+
 ## Lobby layout and short join link (Oct 2026)
 
 - The host's lobby is one screen with no scrolling: join code tiles, the link `cardshot.link/CODE` (tap to copy), Share and QR buttons, then the list of who's in, then Let's go!
@@ -343,3 +343,24 @@ An audit of every card's scene (frame-by-frame captures at 390px and 360px, Redu
 - **Easier to see:** the golfer on the tee is about 1.5× bigger, the ball has a thin dark edge and two faint copies trailing it in flight, and every arc stays inside the strip on a 360px phone. The ring's "30 ft" label sits under the ring, off the bunker. The flag is shorter so its top isn't cut off, the scorecard is smaller so it fits on short phones, and the pencil no longer leaves a dot before it starts. Penalty-Free has no stakes where the golfer stands, so none overlap him.
 - **About half as long:** the scene starts as the flip lands, the swing is brisker (backswing to downswing still about 3:1), flights and rolls are shorter, and the tag fades in as the ball lands instead of after. The finished picture now shows about 2 seconds after the flip, down from about 4. Tap to replay is unchanged.
 - **Not changed:** One and Done ("a chip-in counts") still shows a putt, since the card is about putting.
+
+## The Showdown update: ruleset 2 (Oct 2026)
+
+The product owner asked for the cards audit's plan to be built: see your hand, deck v4, the Crown, the exploit fixes, card packs, no-repeat dealing, Name It cards and live win chances. Wild holes and gold cards were on the list too, with the instruction to drop anything that hurt the simulation scores. Everything was simulated first (`scripts/concepts`), then built. Older saved games (no `rules` field) keep the blind draw, deck v2 and the old values, so nothing already played changes.
+
+- **A hand of three.** Before each hole a player sees one card from each level and picks one. There's no level-first pick, no redraw and no swap. The hand comes from the game's `seed`, the player and the hole (`handFor()` in `hand.ts`), so every phone and the server work out the same hand without dealing, offline included. The reducer only accepts a card that's in the player's hand. In 2v2 a team shares one hand.
+- **No repeats.** A player isn't dealt the same card twice in a round until their packs run out. A streak card isn't dealt within 2 holes of another one.
+- **Values (ruleset 2 only):** Safe −1/+1, Bold −2/+2, Insane −9/+4 (`TIERS_V2`). Insane's fail cost went from +3 to +4 because seeing your hand made Insane the pick far too often at +3. The 2× finish is unchanged. Team values are unchanged (−3/+2, −4/+3, −12/+4), but they haven't been re-simulated with hands. Re-check before leaning on 2v2.
+- **The Crown (on by default, a switch in Options).** Whoever leads alone at the start of a hole wears it. Anyone who beats the leader's score on that hole takes −1 off (−2 on a 2× hole). It's the same rule for everyone: the leader can't earn it because they're the one being chased, and whoever leads next wears it next. In 2v2 it's per team. A "Crown thief" award goes to whoever took it most (2+ times).
+- **Card packs (a switch each in Options, locked once the round starts).** Core is always in. On by default: Name It, Beat Yourself, Streaks, Par 3 & 5, Friends and Flag Length. Off by default: Hard Mode (club limits), because it gives the best golfer too much of an edge (2.73× fair share, over the 2.6 target).
+- **Name It cards (N01–N03).** The card shows a target per level and the target sets the level. The app sets the targets so nobody can call an easy number on a big level: Name Your Number is your own average so far (it starts at bogey) +1 for Safe, level for Bold and −1 for Insane. Name Your Green is par, par −1 or par −2 shots to the green. Name Your Putts is 2 putts (Safe) or 1 (Insane). Number and Green are checked from strokes; for Putts the player taps how many they took. This closes the hole the product owner spotted in free calls (call a double bogey on Insane and bank it).
+- **Cards about you (Beat Yourself pack).** Steady Eddie, Better Half, Personal Best, plus Personal Par and Beat Your Average in core. They're judged against the player's own earlier holes, so they're as fair for a 30 as a 10.
+- **Streak cards (I25 Three-Hole Streak, I26 Hot Hand).** They run over 3 holes and pay on the hole that settles them. Hot Hand only counts Bold and Insane follow-ups: with Safe ones it landed 83%.
+- **Friend cards.** Shadow (match a friend's strokes), Underdog (beat a player ahead of you) and Bodyguard (your friend completes their card). The player picks the friend when they pick the card.
+- **Live win chances.** "41% to win" shows on the pick screen, the results and the standings from the second hole on. It's a quick simulation on the phone (`winChance.ts`, 2000 rounds, odds from `winTable.ts`), seeded from the game and the holes played, so every phone shows the same numbers. It was checked against full simulations and is within about 3 points. It's a display only and changes nothing in scoring.
+- **Retired for ruleset 2 (still in older games):** S10 No Bunker Visit, B18 Tidy Hole (S17 replaces it as a Safe card), I16 Short Knee-Knocker and I17 Sink a Tiddler (players lagged short on purpose to set up the short putt), I21 Big Improvement and I22 One-Putt Green.
+- **Dropped after simulation:**
+  - Gold cards (a rare card worth double) and wild holes (one random hole with a twist): both made the leader with 3 to go win more often and the last hole matter less.
+  - Cards that could be gamed: No Repeat, Same Again, Slow Burn, exact score calls, Over/Under, Jinx, Copycat and Called Shot. Each one let a player pick a target they'd hit anyway, or play badly on purpose to set up a later card.
+  - Putts Report, Clean Run and No Three-Putts: they need data the app doesn't record.
+- **Not built yet:** Raise (the product owner said not now).

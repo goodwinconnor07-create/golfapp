@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cardStakes, getCard, getEntry, mulliganAllowance, mulligansLeft, ownsPlayer, playerScored, type Game } from '../../game';
+import { cardNote, cardStakes, getCard, getEntry, mulliganAllowance, mulligansLeft, ownsPlayer, playerScored, type Game } from '../../game';
 import { dispatch, startScoring, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { ChallengeCard } from '../../ui/ChallengeCard';
@@ -40,7 +40,13 @@ function LiveHole({ game, mine }: { game: Game; mine: Game['players'] }) {
                   <span className="h3">{p.name}</span>
                 </span>
               )}
-              <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />
+              <ChallengeCard
+                compact
+                tier={e.tier}
+                cardId={e.cardId}
+                stakes={cardStakes(game, h, e.tier, e.freePass)}
+                note={cardNote(game, p.id, h)}
+              />
               {mulliganAllowance(game) > 0 && (
                 <MulliganBar game={game} playerId={p.id} canTake={ownsPlayer(game, deviceId, p.id) || deviceId === game.hostDeviceId} />
               )}
@@ -102,7 +108,13 @@ function SharedPhoneHole({ game }: { game: Game }) {
                 {e?.tier && <BackIcon width={20} height={20} className={`play-chevron${shown ? ' open' : ''}`} aria-hidden />}
               </button>
               {shown && e?.tier && (
-                <ChallengeCard compact tier={e.tier} cardId={e.cardId} stakes={cardStakes(game, h, e.tier, e.freePass)} />
+                <ChallengeCard
+                  compact
+                  tier={e.tier}
+                  cardId={e.cardId}
+                  stakes={cardStakes(game, h, e.tier, e.freePass)}
+                  note={cardNote(game, p.id, h)}
+                />
               )}
               {shown && e?.tier && mulliganAllowance(game) > 0 && (
                 <MulliganBar

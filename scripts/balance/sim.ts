@@ -23,10 +23,11 @@ export interface Config {
   doubleMult: number;
 }
 
-/** The game as it is in the code right now (distance cards on, situation cards off). */
+/** Older games (no ruleset 2) as they are in the code right now (distance cards on, situation cards off). */
 export function currentConfig(): Config {
   const deck: Record<string, Tier> = {};
-  for (const c of CARDS) if (c.enabled && !c.situational) deck[c.id] = c.tier;
+  // Older games (before ruleset 2) deal deck v2: no ruleset 2 cards.
+  for (const c of CARDS) if (c.enabled && !c.situational && !c.v2) deck[c.id] = c.tier;
   const missing = Object.keys(deck).filter((id) => !CHECKS[id]);
   if (missing.length) throw new Error(`No balance check for card(s) ${missing.join(', ')}. Add them to scripts/balance/checks.ts.`);
   return {

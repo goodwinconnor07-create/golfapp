@@ -23,7 +23,10 @@ export async function shot(page: Page, name: string): Promise<void> {
  * (phones without the app's Home, like the online tests' extra phones).
  */
 export async function startGame(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^(New game|Hosting\? Start a game)$/ }).first().click();
+  await page
+    .getByRole('button', { name: /^(New game|Hosting\? Start a game)$/ })
+    .first()
+    .click();
 }
 
 /** On the name screen: type the name in the box under the picture. */
@@ -49,8 +52,27 @@ export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'B
   }
 }
 
-/** Picks a tier for whoever's turn it is and dismisses the card. Returns the card title. */
+/**
+ * Picks a card from the hand for whoever's turn it is: the card at that level (or, for a Name It card,
+ * the target at that level), a friend if the card needs one, then Play. Returns the card title.
+ */
 export async function pickAndReveal(page: Page, tier: 'Safe' | 'Bold' | 'Insane'): Promise<string> {
+  await page
+    .locator('.hand-list')
+    .getByRole('radio', { name: new RegExp(`^${tier}`) })
+    .first()
+    .click();
+  const friends = page.locator('.friend-chips');
+  if (await friends.isVisible()) await friends.getByRole('radio').first().click();
+  const play = page.getByRole('button', { name: /^Play / });
+  await expect(play).toBeEnabled();
+  const title = ((await play.textContent()) ?? '').replace(/^Play /, '');
+  await play.click();
+  return title;
+}
+
+/** Older saved games (before the Showdown update): pick a level, then the card is drawn and flips. */
+export async function pickLegacy(page: Page, tier: 'Safe' | 'Bold' | 'Insane'): Promise<string> {
   await page.getByRole('radio', { name: new RegExp(tier) }).click();
   await page.getByRole('button', { name: `Draw my ${tier} card` }).click();
   const title = page.locator('.ccard-title');
@@ -58,6 +80,14 @@ export async function pickAndReveal(page: Page, tier: 'Safe' | 'Bold' | 'Insane'
   const text = (await title.textContent()) ?? '';
   await page.getByRole('button', { name: /^Got it/ }).click();
   return text;
+}
+
+/** Game options: only the core deck, so a test's results don't hang on which pack a card came from. */
+export async function coreDeckOnly(page: Page) {
+  for (const pack of ['Name It', 'Beat Yourself', 'Streaks', 'Par 3 & 5', 'Friends', 'Flag Length']) {
+    const toggle = page.getByRole('switch', { name: new RegExp(`^${pack.replace(/[&]/g, '\\$&')}`) });
+    if ((await toggle.getAttribute('aria-checked')) === 'true') await toggle.click();
+  }
 }
 
 /** Enters a score on the score screen, whichever kind of card it is. */
@@ -75,6 +105,15 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   if (await settled.isVisible()) {
     made = (await settled.getAttribute('class'))?.includes('made') ?? made;
     await shot(page, '11a-score-settled');
+  }
+  // Cards about friends or streaks are worked out by the app: just save. Their result shows later.
+  const save = page.getByRole('button', { name: 'Save score' });
+  if (await save.isVisible()) {
+    await save.click();
+    await expect(value).toBeHidden();
+    const flash = page.locator('.flash');
+    if (await flash.isVisible()) await flash.click();
+    return;
   }
   // Completed and Failed save in one tap; when the strokes settle the card, only the matching one is enabled.
   await page.getByRole('button', { name: made ? /^Completed/ : /^Failed/ }).click();

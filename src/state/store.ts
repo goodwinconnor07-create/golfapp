@@ -499,6 +499,9 @@ export function createLocalGame(holes: Hole[]): void {
     players: names.map((name, i) => ({ id: newId(12), name, ...(i === 0 ? lookFields(state.profileLook) : {}) })),
     holes: withCoursePars(holes, course),
     course: course?.name,
+    // The Showdown rules: hands of three, card packs, the Crown (docs/DECISIONS.md).
+    rules: 2,
+    seed: Math.floor(cryptoRng() * 0x1_0000_0000),
   });
   set({ profileName: names[0] });
   setSession({ mode: 'local', code: null, game, pending: [] });
@@ -637,6 +640,17 @@ export function pickTier(playerId: string, tier: Tier, freePass = false): void {
     set({ ui: { ...state.ui, reveal: playerId } });
     haptic('heavy');
   }
+}
+
+/**
+ * Ruleset 2: play a card from your hand. tier is the card's level, or for a Name It card the level
+ * called; friend is the player picked for a card about a friend. Every phone deals the same hands,
+ * so this works with no signal too.
+ */
+export function pickCard(playerId: string, tier: Tier, cardId: string, friend?: string): void {
+  const g = state.game;
+  if (!g) return;
+  if (dispatch({ type: 'pick', playerId, hole: g.current, tier, cardId, ...(friend ? { friend } : {}) })) haptic('heavy');
 }
 
 export function swapCard(playerId: string): void {
@@ -864,6 +878,8 @@ export function submitScore(
   // The shared results reveal shows everyone's result, so skip the splash there.
   if (g && inRoom(g)) splash = false;
   const r = g ? holeResult(g, playerId, hole) : null;
+  // A streak still running has no result to stamp yet; the results say how it's going.
+  if (r?.streak && r.outcome === 'na') splash = false;
   if (r) {
     // With a splash, the buzz comes when the stamp lands instead.
     if (!splash) haptic(r.outcome === 'made' ? 'success' : r.outcome === 'missed' ? 'error' : 'light');

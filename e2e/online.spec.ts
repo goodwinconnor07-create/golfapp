@@ -6,7 +6,12 @@ async function phone(browser: Browser, web = false): Promise<Page> {
   const { viewport, deviceScaleFactor, isMobile, hasTouch, baseURL } = test.info().project.use;
   // Left out, a new phone gets the config's storage (the app's Home); passed, it replaces it.
   const storage = web
-    ? { storageState: { cookies: [], origins: [{ origin: new URL(baseURL!).origin, localStorage: [{ name: 'sendit.howto', value: 'true' }] }] } }
+    ? {
+        storageState: {
+          cookies: [],
+          origins: [{ origin: new URL(baseURL!).origin, localStorage: [{ name: 'sendit.howto', value: 'true' }] }],
+        },
+      }
     : {};
   const context = await browser.newContext({ viewport, deviceScaleFactor, isMobile, hasTouch, baseURL, ...storage });
   return context.newPage();
@@ -170,7 +175,8 @@ test('no signal mid-round: deal, score and catch up later', async ({ browser }) 
   await expect(host.getByRole('heading', { name: 'Results' })).toBeVisible();
 });
 
-test('a silently dead link still gets a card after a few seconds', async ({ browser }) => {
+// Hands are worked out on the phone, so picking never waits on the server.
+test('a silently dead link: picking from the hand still works straight away', async ({ browser }) => {
   const host = await phone(browser);
   // Pass everything through, except that the server never hears about picks.
   let dropPicks = false;
@@ -190,10 +196,9 @@ test('a silently dead link still gets a card after a few seconds', async ({ brow
   await expect(host.getByRole('heading', { name: 'Hana' })).toBeVisible();
 
   dropPicks = true;
-  await host.getByRole('radio', { name: /Bold/ }).click();
-  await host.getByRole('button', { name: 'Draw my Bold card' }).click();
-  await expect(host.getByText('Drawing your card…')).toBeVisible();
-  await expect(host.locator('.ccard-title')).toBeVisible({ timeout: 8_000 });
+  const title = await pickAndReveal(host, 'Bold');
+  await expect(host.getByRole('heading', { name: 'Go play!' })).toBeVisible();
+  await expect(host.locator('.ccard-title').first()).toHaveText(title);
 });
 
 test('the group votes down an honour-system claim', async ({ browser }) => {

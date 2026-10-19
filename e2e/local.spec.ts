@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { enterName, enterScore, pickAndReveal, shot, startGame } from './helpers';
+import { coreDeckOnly, enterName, enterScore, pickAndReveal, pickLegacy, shot, startGame } from './helpers';
 
 test('a one-phone round: setup, picks, scores, fixes and final results', async ({ page }) => {
   await page.goto('/');
@@ -31,6 +31,10 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await shot(page, '04b-lobby-with-guest');
   await page.getByRole('button', { name: 'Game options' }).click();
   await shot(page, '05-options');
+  // The Crown and the card packs are set here before the round. Core only keeps this test's results fixed.
+  await expect(page.getByRole('switch', { name: /The Crown/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('switch', { name: /^Core/ })).toBeDisabled();
+  await coreDeckOnly(page);
   await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: "Let's go!" }).click();
 
@@ -39,15 +43,15 @@ test('a one-phone round: setup, picks, scores, fixes and final results', async (
   await shot(page, '06-par');
   await page.getByRole('button', { name: /PAR\s*4/ }).click();
 
+  // A hand of three: one card from each level. The picked one opens up with its scene.
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible();
+  await expect(page.locator('.hand-list').getByRole('radio')).toHaveCount(3);
   await shot(page, '07-pick');
-  await page.getByRole('radio', { name: /Bold/ }).click();
-  await shot(page, '08-pick-selected');
-  await page.getByRole('button', { name: 'Draw my Bold card' }).click();
-  await expect(page.locator('.ccard.flipped')).toBeVisible();
+  await page.locator('.hand-list').getByRole('radio', { name: /^Bold/ }).click();
+  await expect(page.locator('.hand-card.on .ccard-title')).toBeVisible();
   await page.waitForTimeout(800);
-  await shot(page, '09-reveal');
-  await page.getByRole('button', { name: 'Got it · pass to Alex' }).click();
+  await shot(page, '08-pick-selected');
+  await page.getByRole('button', { name: /^Play / }).click();
 
   await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();
   await pickAndReveal(page, 'Insane');
@@ -156,7 +160,7 @@ test('how to play explains the stakes', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'How to play' }).click();
   // A slideshow: Next (or a swipe) moves on, one idea per slide, ending with Let's play.
-  const titles = ['Pick your risk', 'Get a card', 'Play the hole', 'Score it', 'Lowest score wins', 'Extras'];
+  const titles = ['Pick your card', 'Your hand', 'Play the hole', 'Score it', 'Lowest score wins', 'Extras'];
   for (const [i, title] of titles.entries()) {
     await expect(page.getByRole('heading', { name: title })).toBeInViewport({ ratio: 0.9 });
     await page.waitForTimeout(1600); // let the example play
@@ -226,6 +230,7 @@ test('picking a course fills in the pars', async ({ page }) => {
   await shot(page, '26-course-recent');
 });
 
+// An older saved game (no ruleset 2): it keeps the old rules to the end of the round.
 test('late in the round: 2× stakes, the gap to the leader, no free shot, and redraw', async ({ page }) => {
   await page.goto('/');
   const device = await page.evaluate(() => JSON.parse(localStorage.getItem('sendit.device') ?? '""'));
@@ -290,7 +295,7 @@ test('late in the round: 2× stakes, the gap to the leader, no free shot, and re
   await expect(page.locator('.double-banner')).toContainText('Double stakes');
   await expect(page.getByRole('radio', { name: /Safe/ })).toContainText('Complete −2 · Fail +2');
   await expect(page.getByRole('switch', { name: /free shot/i })).toHaveCount(0);
-  await pickAndReveal(page, 'Safe');
+  await pickLegacy(page, 'Safe');
 
   // Alex is last, but the same rules apply to everyone: no free shot (docs/GAME_BALANCE.md).
   await expect(page.getByRole('heading', { name: 'Alex' })).toBeVisible();

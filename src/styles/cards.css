@@ -292,7 +292,6 @@
   opacity: 0;
 }
 
-
 /* Safe: a small shake and a glint. */
 .ccard-safe.winding {
   animation: wind-safe 0.3s ease-in-out;
@@ -668,4 +667,12 @@
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* Ruleset 2: the number called, the friend picked, or how a streak is going. */
+.ccard-note {
+  margin: 8px 0 0;
+  font-size: var(--fs-small);
+  font-weight: 800;
+  color: var(--tier-ink, var(--ink-2));
 }

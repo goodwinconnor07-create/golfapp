@@ -1,4 +1,5 @@
-import { getCard } from './cards';
+import { ALL_PACKS, DEFAULT_PACKS, getCard } from './cards';
+import { handFor, inHand } from './hand';
 import { isNameBlocked, NAME_BLOCKED } from './names';
 import { drawCard, returnCard, takeCard } from './deck';
 import {
@@ -10,8 +11,12 @@ import {
   getEntry,
   holeComplete,
   isLocked,
+  isV2,
   isVoteable,
+  judgeAuto,
   judgeFromStrokes,
+  nameItTarget,
+  tapChoices,
   lastHoleToPar,
   outcomeChoices,
   ownsPlayer,
@@ -23,6 +28,7 @@ import { freePassAvailable } from './selectors';
 import { isTier } from './tiers';
 import {
   LIMITS,
+  type PackId,
   type Action,
   type ActionContext,
   type Entry,
@@ -41,6 +47,16 @@ export const DEFAULT_SETTINGS: Settings = {
   tiebreakOnStrokes: false,
   mulligans: true,
 };
+
+/** Settings a new ruleset 2 game starts with: every pack but Hard Mode, and the Crown. */
+export const DEFAULT_V2_SETTINGS: Settings = { ...DEFAULT_SETTINGS, packs: [...DEFAULT_PACKS], crown: true };
+
+export const isPackId = (v: unknown): v is PackId => typeof v === 'string' && (ALL_PACKS as readonly string[]).includes(v);
+
+/** A clean pack list: known packs only, in the usual order, and always the core deck. */
+export function cleanPacks(packs: readonly unknown[]): PackId[] {
+  return ALL_PACKS.filter((p) => p === 'core' || packs.includes(p));
+}
 
 export const PLAYER_COLORS = 8;
 
@@ -88,6 +104,10 @@ export interface NewGameInput {
   holes: Hole[];
   course?: string;
   settings?: Partial<Settings>;
+  /** Make a ruleset 2 game (hands, packs, the Crown). The app always does; older tests don't. */
+  rules?: 2;
+  /** Ruleset 2: the seed every hand is worked out from. */
+  seed?: number;
 }
 
 /** A new game in the lobby. The first player belongs to the host's device. */
@@ -114,9 +134,10 @@ export function createGame(input: NewGameInput): Game {
       return list;
     }, []),
     entries: {},
-    settings: { ...DEFAULT_SETTINGS, ...input.settings },
+    settings: { ...(input.rules === 2 ? DEFAULT_V2_SETTINGS : DEFAULT_SETTINGS), ...input.settings },
     decks: {},
     seq: 0,
+    ...(input.rules === 2 ? { rules: 2 as const, seed: (input.seed ?? 1) >>> 0 } : {}),
   };
 }
 
@@ -131,6 +152,8 @@ function shareWithMate(g: Game, playerId: string, hole: number): void {
   m.pickedBy = entry.pickedBy;
   if (entry.cardId) m.cardId = entry.cardId;
   else delete m.cardId;
+  if (entry.target != null) m.target = entry.target;
+  else delete m.target;
   g.entries[key] = m;
 }
 
@@ -159,7 +182,7 @@ function writeScore(
   const card = getCard(entry?.cardId);
   if (!entry || !card || hole.par == null) return 'Draw a card for this hole first.';
   if (tapped !== undefined) {
-    const choices = outcomeChoices(card);
+    const choices = isV2(g) ? tapChoices(g, card, entry.tier) : outcomeChoices(card);
     if (choices.length > 0 && !choices.includes(tapped)) return "That result doesn't fit this card.";
   }
   if (mulligan === true && !entry.mulligan && mulligansLeft(g, playerId) <= 0) return 'No mulligans left.';
@@ -172,7 +195,9 @@ function writeScore(
   // Store the result the strokes settle too, so it survives a later par correction.
   // "Didn't happen" on a situational card stands even if the strokes would rule it out.
   const requested = tapped ?? entry.outcome;
-  const auto = judgeFromStrokes(card, hole.par, strokes, lastHoleToPar(g, playerId, holeIdx));
+  const auto = isV2(g)
+    ? judgeAuto(g, playerId, holeIdx, strokes)
+    : judgeFromStrokes(card, hole.par, strokes, lastHoleToPar(g, playerId, holeIdx));
   const outcome = card.situational && requested === 'na' ? 'na' : (auto ?? requested);
   if (outcome) entry.outcome = outcome;
   else delete entry.outcome;
@@ -296,6 +321,18 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
 
     case 'setSettings': {
       if (!isHost) return fail('Only the host can change game options.');
+      // Packs and the Crown are set before the round and stay fixed once it starts.
+      if (action.settings.packs !== undefined && isV2(g)) {
+        const packs = cleanPacks(action.settings.packs);
+        if (g.status !== 'lobby' && packs.join() !== (g.settings.packs ?? DEFAULT_PACKS).join())
+          return fail('Card packs are set before the round starts.');
+        g.settings.packs = packs;
+      }
+      if (typeof action.settings.crown === 'boolean' && isV2(g)) {
+        if (g.status !== 'lobby' && action.settings.crown !== (g.settings.crown !== false))
+          return fail('The Crown is set before the round starts.');
+        g.settings.crown = action.settings.crown;
+      }
       for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
         const value = action.settings[key];
         if (typeof value !== 'boolean') continue;
@@ -344,6 +381,26 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry: Entry = g.entries[key] ?? {};
       // Picks are locked in: a second pick for the same hole changes nothing.
       if (entry.tier) return unchanged;
+      if (isV2(g)) {
+        // Ruleset 2: the card must come from this player's hand. Name It cards lock in their number now.
+        const card = getCard(action.cardId);
+        if (!action.cardId || !card || !inHand(handFor(g, action.playerId, action.hole), action.cardId, action.tier))
+          return fail("That card isn't in your hand.");
+        if (card.group === 'shadow' || card.group === 'bodyguard') {
+          const friend = action.friend ? findPlayer(action.friend) : undefined;
+          if (!friend || friend.id === action.playerId || mateOf(g, action.playerId) === friend.id)
+            return fail('Pick a friend for this card.');
+          entry.friend = friend.id;
+        }
+        entry.tier = action.tier;
+        entry.cardId = card.id;
+        entry.pickedBy = ctx.deviceId;
+        const target = card.nameIt ? nameItTarget(g, action.playerId, action.hole, card, action.tier) : null;
+        if (target != null) entry.target = target;
+        g.entries[key] = entry;
+        shareWithMate(g, action.playerId, action.hole);
+        break;
+      }
       if (action.freePass) {
         if (!freePassAvailable(g, action.playerId)) return fail('The free shot is for whoever is in last place, once a round.');
         entry.freePass = true;
@@ -364,6 +421,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[key];
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
+      if (isV2(g)) return fail('Pick from your hand instead.');
       if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (!card.needsBunker) return fail('Only bunker cards can be swapped.');
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
@@ -389,6 +447,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       const entry = g.entries[key];
       const card = getCard(entry?.cardId);
       if (!entry || !entry.tier || !card) return unchanged;
+      if (isV2(g)) return fail('No redraws: you picked from your hand.');
       if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
       if (redrawUsed(g, action.playerId))

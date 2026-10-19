@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEntry, ordinal, ownsPlayer, standings, type Game } from '../../game';
+import { getEntry, isV2, ordinal, ownsPlayer, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
@@ -11,6 +11,7 @@ import { GroupReveal } from './GroupReveal';
 import { HoleResults } from './HoleResults';
 import { Lobby } from './Lobby';
 import { ParPick } from './ParPick';
+import { PickHand } from './PickHand';
 import { PickTier } from './PickTier';
 import { PlayHole } from './PlayHole';
 import { Reveal } from './Reveal';
@@ -84,7 +85,7 @@ function Phase({
     case 'par':
       return <ParPick game={game} />;
     case 'pick':
-      return <PickTier game={game} playerId={view.playerId} />;
+      return isV2(game) ? <PickHand game={game} playerId={view.playerId} /> : <PickTier game={game} playerId={view.playerId} />;
     case 'scoreRoom':
       return <ScoreRoom game={game} />;
     case 'resultsReveal':

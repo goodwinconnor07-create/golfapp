@@ -1,4 +1,4 @@
-import { anyPicked, type Par, type Settings } from '../../game';
+import { ALL_PACKS, anyPicked, DEFAULT_PACKS, isV2, PACK_INFO, type PackId, type Par, type Settings } from '../../game';
 import { closeSheet, dispatch, openSheet, useApp } from '../../state/store';
 import { isHost } from '../../state/view';
 import { Sheet, Toggle } from '../../ui/components';
@@ -48,6 +48,7 @@ export function OptionsSheet() {
           onChange={(v) => set({ mulligans: v })}
         />
       </div>
+      {isV2(game) && <ShowdownOptions host={host} />}
       <div className="stack" style={{ marginTop: 12 }}>
         <button type="button" className="btn btn-ghost" onClick={() => openSheet({ name: 'pars' })}>
           Set pars
@@ -98,5 +99,39 @@ export function ParsSheet() {
         Done
       </button>
     </Sheet>
+  );
+}
+
+/** Ruleset 2: the Crown and the card packs. Set before the round, then fixed. */
+function ShowdownOptions({ host }: { host: boolean }) {
+  const game = useApp((s) => s.game);
+  if (!game) return null;
+  const lobby = game.status === 'lobby';
+  const packs = game.settings.packs ?? DEFAULT_PACKS;
+  const setPack = (pack: PackId, on: boolean) =>
+    dispatch({ type: 'setSettings', settings: { packs: on ? [...packs, pack] : packs.filter((p) => p !== pack) } });
+  return (
+    <div style={{ marginTop: 8 }}>
+      <Toggle
+        on={game.settings.crown !== false}
+        disabled={!host || !lobby}
+        title="👑 The Crown"
+        detail="Beat the leader's score on a hole and take a stroke off."
+        onChange={(v) => dispatch({ type: 'setSettings', settings: { crown: v } })}
+      />
+      <p className="section-title" style={{ margin: '16px 0 4px' }}>
+        Card packs{lobby ? '' : ' · set before the round'}
+      </p>
+      {ALL_PACKS.map((pack) => (
+        <Toggle
+          key={pack}
+          on={pack === 'core' || packs.includes(pack)}
+          disabled={!host || !lobby || pack === 'core'}
+          title={PACK_INFO[pack].label}
+          detail={PACK_INFO[pack].blurb}
+          onChange={(v) => setPack(pack, v)}
+        />
+      ))}
+    </div>
   );
 }

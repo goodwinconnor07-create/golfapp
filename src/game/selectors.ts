@@ -1,7 +1,25 @@
-import { getCard } from './cards';
-import { allPicked, entryKey, freePassUsed, holeComplete, holeResult, ownsPlayer, teamOf, type HoleResult } from './rules';
-import { formatDelta, halves } from './tiers';
+import { getCard, type CardDef } from './cards';
+import { hash32 } from './hand';
+import {
+  allPicked,
+  crownBonus,
+  crownOn,
+  entryKey,
+  freePassUsed,
+  getEntry,
+  holeComplete,
+  holeResult,
+  isDoubleHole,
+  isV2,
+  ownsPlayer,
+  stakeFor,
+  streakResult,
+  teamOf,
+  type HoleResult,
+} from './rules';
+import { formatDelta, halves, tiersFor } from './tiers';
 import type { Game, Player, Tier } from './types';
+import { winChances, type WinUnit } from './winChance';
 
 /** Holes where every player has a result. Only these count towards totals. */
 export function completedHoles(game: Game): number[] {
@@ -92,13 +110,16 @@ export function unitHoleResult(game: Game, unitId: string, hole: number): HoleRe
   const a = holeResult(game, team.players[0], hole);
   const b = holeResult(game, team.players[1], hole);
   if (!a || !b) return null;
+  // The Crown goes on the team as a whole.
+  const crown = crownBonus(game, team.id, hole);
   return {
     ...a,
     strokes: (a.strokes + b.strokes) / 2,
-    gameScore: (a.gameScore + b.gameScore) / 2,
-    toPar: (a.toPar + b.toPar) / 2,
+    gameScore: (a.gameScore + b.gameScore) / 2 + crown,
+    toPar: (a.toPar + b.toPar) / 2 + crown,
     mulligan: a.mulligan || b.mulligan,
     ownOutcome: a.outcome,
+    extras: crown ? [{ kind: 'crown', amount: crown }] : [],
   };
 }
 
@@ -107,11 +128,18 @@ export function unitOf(game: Game, playerId: string): Unit | undefined {
   return units(game).find((u) => u.id === playerId || u.members?.some((m) => m.id === playerId));
 }
 
-/** A team's totals: strokes added up, scores averaged over both partners, the card counted once. */
-function teamTotals(game: Game, members: [Player, Player], holes: readonly number[]): PlayerTotals {
+/** A team's totals: strokes added up, scores averaged over both partners, the card counted once, plus the team's Crown. */
+function teamTotals(game: Game, teamId: string, members: [Player, Player], holes: readonly number[]): PlayerTotals {
   const a = playerTotals(game, members[0].id, holes);
   const b = playerTotals(game, members[1].id, holes);
-  return { ...a, real: a.real + b.real, par: (a.par + b.par) / 2, toPar: (a.toPar + b.toPar) / 2, game: (a.game + b.game) / 2 };
+  const crown = holes.reduce((sum, h) => sum + crownBonus(game, teamId, h), 0);
+  return {
+    ...a,
+    real: a.real + b.real,
+    par: (a.par + b.par) / 2,
+    toPar: (a.toPar + b.toPar) / 2 + crown,
+    game: (a.game + b.game) / 2 + crown,
+  };
 }
 
 export interface StandingRow {
@@ -133,7 +161,7 @@ export function standings(game: Game, by: 'game' | 'real' = 'game', holes: reado
   const rows = units(game).map((player, order) => ({
     player,
     order,
-    totals: player.members ? teamTotals(game, player.members, holes) : playerTotals(game, player.id, holes),
+    totals: player.members ? teamTotals(game, player.id, player.members, holes) : playerTotals(game, player.id, holes),
   }));
   rows.sort((a, b) => {
     const [a1, a2] = key(a.totals);
@@ -408,6 +436,21 @@ export function recap(game: Game): Recap {
         playerIds: ouch.ids,
       });
 
+    if (crownOn(game)) {
+      const thief = leaders(
+        units(game).map((u) => ({ id: u.id, value: holes.filter((h) => crownBonus(game, u.id, h) < 0).length })),
+        2,
+      );
+      if (thief)
+        awards.push({
+          id: 'crown',
+          emoji: '👑',
+          title: 'Crown thief',
+          detail: `Beat the leader on ${plural(thief.value, 'hole')}`,
+          playerIds: thief.ids,
+        });
+    }
+
     const safeOnly = totals.filter((x) => x.t.holes >= 3 && x.t.picks.safe === x.t.holes).map((x) => x.id);
     if (safeOnly.length)
       awards.push({ id: 'safe', emoji: '🛡️', title: 'Safety first', detail: 'Picked Safe every hole', playerIds: safeOnly });
@@ -431,6 +474,101 @@ export function recap(game: Game): Recap {
     awards: awards.slice(0, 6),
     highlights,
   };
+}
+
+/** "Bogey", "Double bogey", "Par"… for a score against par. */
+export function toParName(toPar: number): string {
+  const names: Record<number, string> = {
+    [-3]: 'Albatross',
+    [-2]: 'Eagle',
+    [-1]: 'Birdie',
+    0: 'Par',
+    1: 'Bogey',
+    2: 'Double bogey',
+    3: 'Triple bogey',
+  };
+  return names[toPar] ?? (toPar < 0 ? `${-toPar} under par` : `${toPar} over par`);
+}
+
+/** What a Name It call asks for, in words: "Bogey or better · 5 strokes", "On the green in 2", "1 putt or fewer". */
+export function nameItLabel(card: CardDef, tier: Tier, target: number, par: number): string {
+  const kind = card.nameIt?.[tier]?.kind;
+  if (kind === 'average') return `${toParName(target)} or better · ${par + target} strokes`;
+  if (kind === 'green') return `On the green in ${target} or fewer`;
+  return `${target} putt${target === 1 ? '' : 's'} or fewer`;
+}
+
+/** One line under a picked card: the number called, the friend picked, or how a streak is going. */
+export function cardNote(game: Game, playerId: string, hole: number): string | null {
+  const e = getEntry(game, playerId, hole);
+  const card = getCard(e?.cardId);
+  const par = game.holes[hole]?.par;
+  if (!e?.tier || !card || par == null) return null;
+  if (card.nameIt && e.target != null) return `Your call: ${nameItLabel(card, e.tier, e.target, par)}`;
+  if (card.group && e.friend) {
+    const name = game.players.find((p) => p.id === e.friend)?.name ?? 'your friend';
+    return card.group === 'shadow' ? `Shadowing ${name}` : `Guarding ${name}`;
+  }
+  if (card.multi) {
+    const last = Math.min(hole + 2, game.holes.length - 1);
+    const s = e.strokes != null ? streakResult(game, playerId, hole) : null;
+    if (s && s.outcome !== 'running')
+      return s.outcome === 'made' ? `Paid on hole ${game.holes[s.at].number}` : `Broke on hole ${game.holes[s.at].number}`;
+    return `Runs to hole ${game.holes[last].number}`;
+  }
+  return null;
+}
+
+/** How often a streak still running comes off (simulated, ruleset 2). */
+const STREAK_CHANCE = { noDouble: 0.45, hotHand: 0.4 } as const;
+
+const WIN_CACHE = new WeakMap<Game, Record<string, number> | null>();
+
+/**
+ * Live win chances (ruleset 2): each ranked side's chance of winning from here, 0..1, after the holes
+ * finished so far. The same on every phone. Null when there's nothing to show (one side, or not playing).
+ */
+export function winChancesFor(game: Game): Record<string, number> | null {
+  if (WIN_CACHE.has(game)) return WIN_CACHE.get(game)!;
+  let out: Record<string, number> | null = null;
+  if (isV2(game) && game.status === 'playing' && units(game).length >= 2) {
+    const holes = completedHoles(game);
+    const values = tiersFor(Boolean(game.teams), game.rules);
+    const winUnits: WinUnit[] = standings(game, 'game', holes).map((r) => {
+      const pair = Boolean(r.player.members);
+      const pending = pair
+        ? []
+        : holes.flatMap((h) => {
+            const e = getEntry(game, r.player.id, h);
+            const card = getCard(e?.cardId);
+            const s = card?.multi && e?.tier ? streakResult(game, r.player.id, h) : null;
+            if (!card?.multi || !e?.tier || s?.outcome !== 'running') return [];
+            return [
+              { made: stakeFor(game, h, e.tier, 'made'), missed: stakeFor(game, h, e.tier, 'missed'), chance: STREAK_CHANCE[card.multi] },
+            ];
+          });
+      return {
+        id: r.player.id,
+        toPar: r.totals.toPar,
+        golfToPar: r.totals.real - r.totals.par * (pair ? 2 : 1),
+        holes: r.totals.holes,
+        picks: r.totals.picks,
+        pair,
+        pending,
+      };
+    });
+    out = winChances({
+      units: winUnits,
+      remaining: game.holes.flatMap((h, i) => (holes.includes(i) ? [] : [{ par: h.par ?? 4, mult: isDoubleHole(game, i) ? 2 : 1 }])),
+      values: { safe: values.safe, bold: values.bold, insane: values.insane },
+      crown: crownOn(game),
+      wild: false,
+      gold: false,
+      seed: hash32(`${game.id}|${holes.length}`),
+    });
+  }
+  WIN_CACHE.set(game, out);
+  return out;
 }
 
 /** Stand-ins for other phones' ids, which act as passwords on the server and must never be shared. */

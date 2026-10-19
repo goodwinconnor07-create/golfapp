@@ -19,7 +19,15 @@ export function Lobby({ game }: { game: Game }) {
   const canTeam = game.players.length === 4;
   const setTeams = (on: boolean) => {
     const [a, b, c, d] = game.players;
-    dispatch({ type: 'setTeams', teams: on ? [[a.id, b.id], [c.id, d.id]] : null });
+    dispatch({
+      type: 'setTeams',
+      teams: on
+        ? [
+            [a.id, b.id],
+            [c.id, d.id],
+          ]
+        : null,
+    });
   };
 
   const start = () => dispatch({ type: 'start' });
@@ -112,37 +120,38 @@ export function Lobby({ game }: { game: Game }) {
         {/* Each player's picture pops in when they join, then floats gently. Tap yours (or anyone's, as host) to change it. */}
         {game.teams && <TeamPicker game={game} editable={host} />}
         <div className="roster" hidden={!!game.teams}>
-          {!game.teams && game.players.map((p, i) => {
-            const you = p.deviceId === deviceId;
-            const isHostPlayer = p.deviceId === game.hostDeviceId;
-            const inner = (
-              <>
-                <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ['--float-delay' as string]: `${0.6 + i * 0.4}s` }}>
-                  {/* The float (and the shadow and glow) move together, so nothing is left behind. */}
-                  <span className={`roster-float${isHostPlayer ? ' is-host' : ''}`}>
-                    <Avatar player={p} size={72} />
-                    {you && <span className="tag tag-you">You</span>}
+          {!game.teams &&
+            game.players.map((p, i) => {
+              const you = p.deviceId === deviceId;
+              const isHostPlayer = p.deviceId === game.hostDeviceId;
+              const inner = (
+                <>
+                  <span className="roster-pic" style={{ animationDelay: `${i * 0.12}s`, ['--float-delay' as string]: `${0.6 + i * 0.4}s` }}>
+                    {/* The float (and the shadow and glow) move together, so nothing is left behind. */}
+                    <span className={`roster-float${isHostPlayer ? ' is-host' : ''}`}>
+                      <Avatar player={p} size={72} />
+                      {you && <span className="tag tag-you">You</span>}
+                    </span>
                   </span>
-                </span>
-                <span className="roster-name">{p.name}</span>
-              </>
-            );
-            return host || you ? (
-              <button
-                key={p.id}
-                type="button"
-                className="roster-item"
-                aria-label={`${p.name}${you ? ', you' : ''}${isHostPlayer ? ', host' : ''}`}
-                onClick={() => openSheet({ name: 'player', playerId: p.id })}
-              >
-                {inner}
-              </button>
-            ) : (
-              <div key={p.id} className="roster-item" aria-label={p.name}>
-                {inner}
-              </div>
-            );
-          })}
+                  <span className="roster-name">{p.name}</span>
+                </>
+              );
+              return host || you ? (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="roster-item"
+                  aria-label={`${p.name}${you ? ', you' : ''}${isHostPlayer ? ', host' : ''}`}
+                  onClick={() => openSheet({ name: 'player', playerId: p.id })}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div key={p.id} className="roster-item" aria-label={p.name}>
+                  {inner}
+                </div>
+              );
+            })}
         </div>
         {host && canTeam && (
           <button
@@ -176,9 +185,9 @@ export function Lobby({ game }: { game: Game }) {
                   <TierIcon tier="bold" size={18} />
                   <TierIcon tier="insane" size={18} />
                 </span>
-                Before each hole, pick Safe, Bold or Insane.
+                Before each hole, pick one of your three cards: Safe, Bold or Insane.
               </li>
-              <li>Get a card from that level, then play the hole.</li>
+              <li>Play the hole. Beat the leader's score and you take a stroke off.</li>
               <li>Complete it and strokes come off your score. Fail it and they go on. Lowest score wins.</li>
             </ol>
             <button type="button" className="btn-link-small" onClick={() => navigate({ name: 'howto' })}>

@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { completedHoles, formatToPar, getCard, ownsPlayer, rankMoves, standings, unitHoleResult, units, type Game } from '../../game';
+import {
+  completedHoles,
+  crownHolder,
+  formatToPar,
+  getCard,
+  ownsPlayer,
+  rankMoves,
+  standings,
+  unitHoleResult,
+  units,
+  winChancesFor,
+  type Game,
+} from '../../game';
+import { winText } from '../../ui/format';
 import { leaveResults, markResultsRevealed, navigate, resultsRevealSeen, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Move, RankedAvatar, rankLabel } from '../../ui/BoardRow';
-import { CountUp, HoleMeta, TierIcon, Working } from '../../ui/components';
+import { CountUp, HoleMeta, TierIcon, HoleExtras, Working } from '../../ui/components';
 import { Reactions } from '../../ui/Reactions';
 import { confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
 import { ArrowIcon, TrophyIcon } from '../../ui/Icons';
@@ -32,6 +45,10 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
   const before = useMemo(() => standings(game, 'game', holes.slice(0, -1)), [game, holes]);
   const after = useMemo(() => standings(game, 'game', holes), [game, holes]);
   const moves = rankMoves(game, holes);
+  // Win chances and the next crown, once this is the latest finished hole (not on a reload of an older one).
+  const latest = completedHoles(game).at(-1) === hole && hole < game.holes.length - 1;
+  const chances = latest ? winChancesFor(game) : null;
+  const nextCrown = latest ? crownHolder(game, hole + 1) : null;
   // One row per standings unit: a player, or a team in 2v2.
   const results = new Map(units(game).map((u) => [u.id, unitHoleResult(game, u.id, hole)]));
   // Flip order: worst first, so the hole's best score lands last.
@@ -69,7 +86,8 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
         const r = unitHoleResult(game, id, hole);
         const unit = units(game).find((u) => u.id === id);
         // A buzz for your own row only, so the phone doesn't rattle through everyone's.
-        if (r && (unit?.members ?? [{ id }]).some((m) => ownsPlayer(game, deviceId, m.id))) haptic(r.outcome === 'made' ? (r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
+        if (r && (unit?.members ?? [{ id }]).some((m) => ownsPlayer(game, deviceId, m.id)))
+          haptic(r.outcome === 'made' ? (r.tier === 'insane' ? 'heavy' : 'medium') : 'light');
         setFlipped((x) => x + 1);
       },
       flipped === 0 ? 300 : flipped === n - 1 ? HOLD_MS : GAP_MS,
@@ -134,6 +152,11 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                   <span className="prow-name">
                     <span className="board-name-text">{p.name}</span>
                     {isMine && mine.length === 1 && <span className="you-tag">You</span>}
+                    {settled && nextCrown === p.id && (
+                      <span className="crown-mark" role="img" aria-label="wears the crown">
+                        👑
+                      </span>
+                    )}
                     {settled && <Move n={moves[p.id]} />}
                   </span>
                   <span className="prow-detail">
@@ -147,7 +170,9 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                           tier={r.tier}
                           cardTitle={getCard(r.cardId)?.title}
                           doubled={r.doubled}
+                          running={r.streak && r.outcome === 'na'}
                         />
+                        <HoleExtras game={game} extras={r.extras} />
                         <HoleMeta mulligan={r.mulligan} freePass={r.freePass}>
                           <VoteTag game={game} playerId={p.id} hole={hole} />
                         </HoleMeta>
@@ -171,6 +196,7 @@ export function ResultsReveal({ game, hole }: { game: Game; hole: number }) {
                     )}
                   </b>
                   {r && open && !settled && <em className="tick pop">{formatToPar(r.toPar)} this hole</em>}
+                  {settled && chances && <small className="win-chance">{winText(chances[p.id] ?? 0)}</small>}
                 </span>
               </div>
             );

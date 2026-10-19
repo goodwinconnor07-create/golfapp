@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { formatDelta, TIER_ORDER, TIERS, type Player, type Tier } from '../game';
+import { formatDelta, TIER_ORDER, TIERS, TIERS_V2, type Player, type Tier } from '../game';
 import { markHowToSeen } from '../state/persist';
 import { publicOrigin } from '../state/platform';
 import { back } from '../state/store';
@@ -17,13 +17,13 @@ import { ShotScene } from '../ui/ShotScene';
  */
 const SLIDES: { title: string; text: string; demo: () => ReactNode }[] = [
   {
-    title: 'Pick your risk',
-    text: 'Before each hole, everyone picks Safe, Bold or Insane. The harder the level, the more its card is worth.',
+    title: 'Pick your card',
+    text: "Before each hole you get three cards: one Safe, one Bold, one Insane. Pick one. The harder it is, the more it's worth.",
     demo: () => <PickDemo />,
   },
   {
-    title: 'Get a card',
-    text: 'You get a random card from that level. Everyone gets their own.',
+    title: 'Your hand',
+    text: 'Everyone gets their own hand, and it changes every hole. Some cards let you name your own target.',
     demo: () => <ChallengeCard tier="bold" cardId="B17" flip compact />,
   },
   {
@@ -153,9 +153,9 @@ function PickDemo() {
             <TierIcon tier={t} size={30} />
           </span>
           <span className="tier-btn-text">
-            <span className="tier-btn-label">{TIERS[t].label}</span>
+            <span className="tier-btn-label">{TIERS_V2[t].label}</span>
             <span className="tier-btn-stakes">
-              Complete {formatDelta(TIERS[t].made)} · Fail {formatDelta(TIERS[t].missed)}
+              Complete {formatDelta(TIERS_V2[t].made)} · Fail {formatDelta(TIERS_V2[t].missed)}
             </span>
           </span>
           {picked === t && (
@@ -192,7 +192,7 @@ function LeadDemo() {
         className="board-row first reorder climbed"
         style={{ '--from': 1 } as React.CSSProperties}
         score="−4"
-        detail={<Working strokes={5} par={4} adjustment={TIERS.insane.made} outcome="made" tier="insane" cardTitle="One-Putt Green" />}
+        detail={<Working strokes={5} par={4} adjustment={TIERS.insane.made} outcome="made" tier="insane" cardTitle="One and Done" />}
       />
       <PlayerRow
         player={ALEX}
@@ -209,7 +209,8 @@ function LeadDemo() {
 function TwistsDemo() {
   const items = [
     { icon: '2×', text: 'In longer rounds, the last 3 holes count double.' },
-    { icon: '⇄', text: "Don't like your card? Redraw once a round." },
+    { icon: '👑', text: "The Crown: beat the leader's score on a hole and take a stroke off." },
+    { icon: '📈', text: 'After every hole, everyone sees their chance of winning.' },
     { icon: '🔁', text: 'Mulligans: re-hit a bad shot and leave it off your strokes. Two a round.' },
     { icon: '👍', text: 'Cards judged by eye go to a group vote.' },
     { icon: '🏅', text: 'Skins: the best score on a hole wins it. Ties carry over to the next hole.' },

@@ -21,6 +21,8 @@ interface Props {
   hideStakes?: boolean;
   /** The player's last hole, for cards judged against it (null when there isn't one). */
   last?: { strokes: number; par: number } | null;
+  /** A line about this pick: the number called, the friend picked, how a streak is going. */
+  note?: string | null;
 }
 
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
@@ -33,7 +35,17 @@ export function flipDelay(tier: Tier): number {
 export const FLIP_MS = 400;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
-export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par, hideStakes = false, last = null }: Props) {
+export function ChallengeCard({
+  tier,
+  cardId,
+  flip = false,
+  compact = false,
+  stakes,
+  par,
+  hideStakes = false,
+  last = null,
+  note = null,
+}: Props) {
   const card = getCard(cardId);
   const [shown, setShown] = useState(!flip && Boolean(card));
 
@@ -84,7 +96,9 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
               </>
             )}
           </div>
-          {card && !compact && SHOT_ART[card.id] &&
+          {card &&
+            !compact &&
+            SHOT_ART[card.id] &&
             (shown ? (
               // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
               <ShotScene
@@ -102,6 +116,7 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
             <div className="ccard-body">
               <h3 className="ccard-title">{card.title}</h3>
               <p className="ccard-pass">{card.pass}</p>
+              {note && <p className="ccard-note">{note}</p>}
               {card.hint && <p className="ccard-hint">{card.hint}</p>}
               {card.distance && !compact && <p className="ccard-tag">Judged by eye: the group decides.</p>}
             </div>
