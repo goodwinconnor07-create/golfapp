@@ -408,6 +408,30 @@ describe('round flow', () => {
     expect(g.status).toBe('finished');
   });
 
+  it('times each hole and the whole round', () => {
+    const at = (now: number): ActionContext => ({ ...ctx(), now });
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' }, at(1_000));
+    expect(g.holeStarts).toEqual([1_000]);
+    g = playHole(g, 0, [4, 5]);
+    g = run(g, { type: 'nextHole', from: 0 }, at(600_000));
+    expect(g.holeStarts).toEqual([1_000, 600_000]);
+    expect(g.finishedAt).toBeUndefined();
+    g = playHole(g, 1, [4, 4]);
+    g = run(g, { type: 'nextHole', from: 1 }, at(1_200_000));
+    expect(g.finishedAt).toBe(1_200_000);
+    // The times survive an upload; bad ones are dropped.
+    expect(sanitizeUpload(g, HOST, 2_000_000, seeded())).toMatchObject({ holeStarts: [1_000, 600_000], finishedAt: 1_200_000 });
+    expect(sanitizeUpload({ ...g, holeStarts: [600_000, 1_000] }, HOST, 2_000_000, seeded())?.holeStarts).toBeUndefined();
+  });
+
+  it('leaves games from before the clock without one', () => {
+    let g = run(newGame(['Sam', 'Alex'], [4, 4]), { type: 'start' });
+    delete g.holeStarts;
+    g = playHole(g, 0, [4, 5]);
+    g = run(g, { type: 'nextHole', from: 0 });
+    expect(g.holeStarts).toBeUndefined();
+  });
+
   it('shares ranks on ties unless the strokes tiebreak is on', () => {
     let g = run(newGame(['Sam', 'Alex'], [4]), { type: 'start' });
     g = giveCard(g, 'player00', 0, 'S02');

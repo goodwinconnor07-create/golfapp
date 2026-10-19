@@ -98,6 +98,10 @@ export interface Game {
   holes: Hole[];
   /** Index into holes of the hole being played. */
   current: number;
+  /** When each hole started (by hole index), for the clock in the header. Absent in older games. */
+  holeStarts?: number[];
+  /** When the round ended. Absent in older games. */
+  finishedAt?: number;
   players: Player[];
   /** Keyed by entryKey(playerId, holeIndex). */
   entries: Record<string, Entry>;

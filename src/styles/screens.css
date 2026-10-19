@@ -1370,6 +1370,20 @@
   height: 60px;
 }
 
+/* Total time for the round, a quiet line between the standings and the awards. */
+.round-time {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+.round-time b {
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .awards {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2447,10 +2461,17 @@
   transition: width 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
-.hole-progress-count {
+.hole-progress-count,
+.hole-clock {
   font-size: var(--fs-caption);
   font-weight: 800;
   color: var(--ink-3);
+}
+
+/* Fixed width so the line doesn't jiggle as the seconds tick. */
+.hole-clock {
+  min-width: 4ch;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Loading placeholders: grey shapes of what's coming. Each card rocks gently side to side,

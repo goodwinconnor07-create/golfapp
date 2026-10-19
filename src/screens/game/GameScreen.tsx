@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { getEntry, isV2, ordinal, ownsPlayer, standings, type Game } from '../../game';
 import type { ConnStatus } from '../../state/connection';
 import { cancelScoreFor, groupRevealSeen, notDoneYet, openSheet, resultsDone, shownHoles, useApp } from '../../state/store';
 import { gameView, isHost, myPlayers, type GameView } from '../../state/view';
 import { BackBar, SkeletonGame } from '../../ui/components';
+import { clock } from '../../ui/format';
 import { BellIcon, GearIcon, MenuIcon, TrophyIcon } from '../../ui/Icons';
 import { Final } from './Final';
 import { GroupReveal } from './GroupReveal';
@@ -174,6 +176,7 @@ function GameTopBar({
           aria-valuemax={game.holes.length}
           aria-valuenow={game.current + 1}
         >
+          <HoleClock key={game.current} start={game.holeStarts?.[game.current]} />
           <span className="hole-progress-track">
             <i style={{ width: `${((game.current + 1) / game.holes.length) * 100}%` }} />
           </span>
@@ -190,6 +193,23 @@ function GameTopBar({
         </span>
       )}
     </div>
+  );
+}
+
+/** How long the current hole has been going. Counts up, no limit. Hidden for games from before the clock. */
+function HoleClock({ start }: { start?: number }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (start == null) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [start]);
+  if (start == null) return null;
+  const text = clock(now - start);
+  return (
+    <span className="hole-clock num" role="timer" aria-label={`Time on this hole ${text}`}>
+      {text}
+    </span>
   );
 }
 

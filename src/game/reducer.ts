@@ -366,6 +366,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.players.length === 0) return fail('Add at least one player.');
       g.status = 'playing';
       g.current = 0;
+      g.holeStarts = [ctx.now];
       break;
     }
 
@@ -589,8 +590,14 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
     case 'nextHole': {
       if (g.status !== 'playing' || action.from !== g.current) return unchanged;
       if (!holeComplete(g, g.current)) return fail('Waiting for everyone to finish the hole.');
-      if (g.current >= g.holes.length - 1) g.status = 'finished';
-      else g.current += 1;
+      if (g.current >= g.holes.length - 1) {
+        g.status = 'finished';
+        g.finishedAt = ctx.now;
+      } else {
+        g.current += 1;
+        // Games started before the clock existed have no start times, so they stay without one.
+        if (g.holeStarts) g.holeStarts = [...g.holeStarts.slice(0, g.current), ctx.now];
+      }
       break;
     }
 
@@ -598,6 +605,7 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (g.status === 'finished') return unchanged;
       if (!isHost) return fail('Only the host can end the round.');
       g.status = 'finished';
+      g.finishedAt = ctx.now;
       break;
     }
 
