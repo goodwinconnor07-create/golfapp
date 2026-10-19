@@ -22,16 +22,19 @@ function onlineGame(): Game {
   });
   g.code = 'BCDFG';
   g = act(g, { type: 'addPlayer', id: 'player0gus', name: 'Gus', claim: true }, GUEST).game;
-  for (const [id, card] of [['player0sam', 'S01'], ['player0gus', 'B03']] as const) {
+  for (const [id, card] of [
+    ['player0sam', 'S01'],
+    ['player0gus', 'B03'],
+  ] as const) {
     g.entries[entryKey(id, 0)] = { tier: getCard(card)!.tier, cardId: card, pickedBy: HOST };
   }
   return g;
 }
 
 describe('push notifications', () => {
-  it("tells everyone but the host when the round starts", () => {
+  it('tells everyone but the host when the round starts', () => {
     const { notes } = act(onlineGame(), { type: 'start' });
-    expect(notes).toEqual([{ devices: [GUEST], title: 'Pine Hollow', body: 'Sam started the round. Pick your risk for hole 1.' }]);
+    expect(notes).toEqual([{ devices: [GUEST], title: 'Pine Hollow', body: 'Sam started the round. Pick your card for hole 1.' }]);
   });
 
   it('says results are in only when the last score of the hole lands, to the others', () => {
@@ -46,7 +49,11 @@ describe('push notifications', () => {
   it('asks the other players to vote on a claim judged by eye', () => {
     const { game } = act(onlineGame(), { type: 'start' });
     const { notes } = act(game, { type: 'score', playerId: 'player0gus', hole: 0, strokes: 4, outcome: 'made' }, GUEST);
-    expect(notes).toContainEqual({ devices: [HOST], title: 'Pine Hollow', body: 'Gus says they completed "The Long Drive". Fair? Vote now.' });
+    expect(notes).toContainEqual({
+      devices: [HOST],
+      title: 'Pine Hollow',
+      body: 'Gus says they completed "The Long Drive". Fair? Vote now.',
+    });
   });
 
   it('tells the approver about a score fix request', () => {
@@ -54,12 +61,25 @@ describe('push notifications', () => {
     game = act(game, { type: 'score', playerId: 'player0sam', hole: 0, strokes: 5 }).game;
     game = act(game, { type: 'score', playerId: 'player0gus', hole: 0, strokes: 4, outcome: 'missed' }, GUEST).game;
     game = act(game, { type: 'nextHole', from: 0 }).game;
-    const { notes } = act(game, { type: 'requestFix', id: 'fix0000001', playerId: 'player0gus', hole: 0, strokes: 3, outcome: 'missed' }, GUEST);
+    const { notes } = act(
+      game,
+      { type: 'requestFix', id: 'fix0000001', playerId: 'player0gus', hole: 0, strokes: 3, outcome: 'missed' },
+      GUEST,
+    );
     expect(notes).toEqual([{ devices: [HOST], title: 'Pine Hollow', body: 'Gus wants to change their score on hole 1.' }]);
   });
 
   it('never notifies in a one-phone game', () => {
-    const g = createGame({ id: 'game000002', hostDeviceId: HOST, now: 0, players: [{ id: 'p1', name: 'A' }, { id: 'p2', name: 'B' }], holes: makeHoles(3) });
+    const g = createGame({
+      id: 'game000002',
+      hostDeviceId: HOST,
+      now: 0,
+      players: [
+        { id: 'p1', name: 'A' },
+        { id: 'p2', name: 'B' },
+      ],
+      holes: makeHoles(3),
+    });
     expect(notesFor(g, { ...g, status: 'playing' }, { type: 'start' }, HOST)).toEqual([]);
   });
 });

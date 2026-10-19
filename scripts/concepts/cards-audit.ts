@@ -18,11 +18,17 @@ for (const id of ids) {
   const def = CARDS.find((d) => d.id === id);
   const tier = def?.tier ?? '-';
   const row = HS.map((h) => {
-    let s = 0, w = 0;
-    for (const p of c.pars) { s += PAR_W[p] * odds(t, id, p, h); w += PAR_W[p]; }
+    let s = 0,
+      w = 0;
+    for (const p of c.pars) {
+      s += PAR_W[p] * odds(t, id, p, h);
+      w += PAR_W[p];
+    }
     return s / w;
   });
   const ev = def ? row[2] * TIERS[def.tier].made + (1 - row[2]) * TIERS[def.tier].missed : NaN;
   const judged = c.auto ? 'strokes' : c.eye ? 'EYE' : 'honour';
-  console.log(`${id.padEnd(4)} ${String(tier).padEnd(7)} ${c.title.slice(0, 25).padEnd(25)} ${c.pars.join('').padEnd(6)} ${row.map((x) => pct(x).padStart(4)).join('')}  ${(row[0] / Math.max(row[4], 0.001)).toFixed(2).padStart(5)}  ${ev.toFixed(2).padStart(5)}  ${judged}`);
+  console.log(
+    `${id.padEnd(4)} ${String(tier).padEnd(7)} ${c.title.slice(0, 25).padEnd(25)} ${c.pars.join('').padEnd(6)} ${row.map((x) => pct(x).padStart(4)).join('')}  ${(row[0] / Math.max(row[4], 0.001)).toFixed(2).padStart(5)}  ${ev.toFixed(2).padStart(5)}  ${judged}`,
+  );
 }

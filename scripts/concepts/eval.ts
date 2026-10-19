@@ -47,7 +47,10 @@ export interface Metrics {
   made: Record<string, number>;
 }
 
-export function evaluate(c: Concept, opts: { games?: number; probGames?: number; probR?: number; thinkGames?: number; seed?: number } = {}): Metrics {
+export function evaluate(
+  c: Concept,
+  opts: { games?: number; probGames?: number; probR?: number; thinkGames?: number; seed?: number } = {},
+): Metrics {
   const G = opts.games ?? 1500;
   const PG = opts.probGames ?? 250;
   const PR = opts.probR ?? 120;
@@ -101,7 +104,13 @@ export function evaluate(c: Concept, opts: { games?: number; probGames?: number;
     vTot = 0;
   for (let g = 0; g < G; g++) {
     const hs = similar(rng, 4);
-    const r = playRound(c, hs, hs.map(() => persona(rng)), 18, rng);
+    const r = playRound(
+      c,
+      hs,
+      hs.map(() => persona(rng)),
+      18,
+      rng,
+    );
     const n = 18;
     const win = winners(r.g);
     const at = (h: number) => {
@@ -165,7 +174,14 @@ export function evaluate(c: Concept, opts: { games?: number; probGames?: number;
     live = 0;
   for (let g = 0; g < PG; g++) {
     const hs = similar(rng, 4);
-    const r = playRound(c, hs, hs.map(() => persona(rng)), 18, rng, PR);
+    const r = playRound(
+      c,
+      hs,
+      hs.map(() => persona(rng)),
+      18,
+      rng,
+      PR,
+    );
     const P = r.probs!;
     let s = 0,
       sl = 0;
@@ -237,7 +253,9 @@ export function print(m: Metrics) {
     `  skill: best ${f(m.bestMixed)} worst ${f(m.worstMixed)} 10v20 ${p(m.oneVone)} golfWinner ${p(m.golfWinner)} cardVar ${p(m.cardVarShare)}`,
   );
   console.log(
-    `  luck: eyeClaims ${m.eyeClaims.toFixed(1)} eyeStrokes ${m.eyeStrokes.toFixed(1)} drawSD ${f(m.drawLuckSD)} repeats ${p(m.repeatRate)} distinct ${m.distinct.toFixed(1)} | picks ${Object.entries(m.picks)
+    `  luck: eyeClaims ${m.eyeClaims.toFixed(1)} eyeStrokes ${m.eyeStrokes.toFixed(1)} drawSD ${f(m.drawLuckSD)} repeats ${p(m.repeatRate)} distinct ${m.distinct.toFixed(1)} | picks ${Object.entries(
+      m.picks,
+    )
       .map(([t, x]) => `${t[0]}${p(x)}`)
       .join(' ')} made ${Object.entries(m.made)
       .map(([t, x]) => `${t[0]}${p(x)}`)

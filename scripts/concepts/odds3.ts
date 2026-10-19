@@ -4,12 +4,25 @@ buildBank(5000);
 const rng = mulberry32(9);
 const HS = [8, 14, 20, 26, 32];
 const row = (label: string, deck: Record<string, string>, persona: Persona, want: (c: string) => boolean) => {
-  const c = { ...BASE, name: label, decision: 'hand' as const, deck, double: false, values: { safe: [-1, 0], bold: [-1, 0], insane: [-1, 0] } as Record<string, [number, number]> };
+  const c = {
+    ...BASE,
+    name: label,
+    decision: 'hand' as const,
+    deck,
+    double: false,
+    values: { safe: [-1, 0], bold: [-1, 0], insane: [-1, 0] } as Record<string, [number, number]>,
+  };
   const r = HS.map((h) => {
-    let made = 0, n = 0;
+    let made = 0,
+      n = 0;
     for (let k = 0; k < 250; k++) {
       const out = playRound(c, [h, h, h, h], [persona, 'balanced', 'balanced', 'balanced'], 18, rng);
-      out.traces.forEach((t) => { if (want(t.cards[0])) { n++; if (t.made[0]) made++; } });
+      out.traces.forEach((t) => {
+        if (want(t.cards[0])) {
+          n++;
+          if (t.made[0]) made++;
+        }
+      });
     }
     return Math.round((100 * made) / Math.max(1, n));
   });

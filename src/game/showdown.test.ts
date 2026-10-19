@@ -127,7 +127,8 @@ describe('hands', () => {
     }
     const coreOnly = run(v2Game(undefined, undefined, 3, false, true), { type: 'setSettings', settings: { packs: ['core'] } });
     const started = run(coreOnly, { type: 'start' });
-    for (let h = 0; h < 6; h++) for (const t of TIER_ORDER) expect(getCard(handFor(started, 'player00', h)![t])!.pack ?? 'core').toBe('core');
+    for (let h = 0; h < 6; h++)
+      for (const t of TIER_ORDER) expect(getCard(handFor(started, 'player00', h)![t])!.pack ?? 'core').toBe('core');
   });
 
   it("don't repeat a card for a player while a fresh one fits", () => {
@@ -157,7 +158,13 @@ describe('hands', () => {
 
   it('are shared by 2v2 partners and never hold cards about one player', () => {
     let g = v2Game(['Sam', 'Alex', 'Jay', 'Kim'], [4, 4, 4, 4, 4, 4], 9, false, true);
-    g = run(g, { type: 'setTeams', teams: [['player00', 'player01'], ['player02', 'player03']] });
+    g = run(g, {
+      type: 'setTeams',
+      teams: [
+        ['player00', 'player01'],
+        ['player02', 'player03'],
+      ],
+    });
     g = run(g, { type: 'start' });
     for (let h = 0; h < 4; h++) {
       expect(handFor(g, 'player01', h)).toEqual(handFor(g, 'player00', h));

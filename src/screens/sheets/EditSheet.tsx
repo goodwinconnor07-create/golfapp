@@ -6,7 +6,11 @@ import {
   stakeFor,
   isDoubleHole,
   getEntry,
+  isV2,
+  judgeAuto,
   judgeFromStrokes,
+  tapChoices,
+  cardNote,
   lastHoleToPar,
   mulliganAllowance,
   mulligansLeft,
@@ -36,8 +40,11 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   const player = game?.players.find((p) => p.id === playerId);
   if (!game || !entry?.tier || !card || !player || par == null) return null;
 
-  const auto = judgeFromStrokes(card, par, strokes, lastHoleToPar(game, playerId, hole));
-  const choices = outcomeChoices(card);
+  const v2 = isV2(game);
+  const auto = v2 ? judgeAuto(game, playerId, hole, strokes) : judgeFromStrokes(card, par, strokes, lastHoleToPar(game, playerId, hole));
+  const choices = v2 ? tapChoices(game, card, entry.tier) : outcomeChoices(card);
+  // Ruleset 2 cards about friends or streaks: worked out from everyone's scores, nothing to tap.
+  const workedOut = v2 && choices.length === 0 && auto === null;
   const effective: Outcome | undefined = card.situational && outcome === 'na' ? 'na' : (auto ?? outcome);
   const adjustment = effective ? stakeFor(game, hole, entry.tier, effective, entry.freePass) : null;
   const showChoices = choices.length > 0 && auto === null;
@@ -85,7 +92,7 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
   return (
     <Sheet title={`Fix ${player.name}'s hole ${game.holes[hole].number}`}>
       <div className="stack" style={{ gap: 16 }}>
-        <ChallengeCard compact hideStakes tier={entry.tier} cardId={entry.cardId} />
+        <ChallengeCard compact hideStakes tier={entry.tier} cardId={entry.cardId} note={cardNote(game, playerId, hole)} />
         <StrokePicker strokes={strokes} par={par} onChange={setStrokes} label={`Strokes taken · par ${par}`} />
         {auto && <AutoNote outcome={auto} />}
         {(showChoices || auto) && (
@@ -133,7 +140,12 @@ export function EditSheet({ playerId, hole }: { playerId: string; hole: number }
         )}
         {/* Stuck to the bottom of the sheet, so it's on screen without scrolling. */}
         <div className="sheet-foot">
-          <button type="button" className="btn btn-xl btn-dark" disabled={!effective || (access === 'request' && unchanged)} onClick={save}>
+          <button
+            type="button"
+            className="btn btn-xl btn-dark"
+            disabled={(!effective && !workedOut) || (access === 'request' && unchanged)}
+            onClick={save}
+          >
             {access === 'request' ? 'Ask to change' : 'Save score'}
           </button>
           {pending && pending.by === deviceId && (

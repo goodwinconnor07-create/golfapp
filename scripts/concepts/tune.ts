@@ -20,10 +20,14 @@ export function fixedSpread(c: Concept, G: number, seed = 3) {
 }
 
 export function* grid3(): Generator<Record<string, [number, number]>> {
-  for (const sm of [-1, -2]) for (const bm of [-2, -3, -4]) for (const bf of [2, 3]) for (const im of [-5, -6, -7, -8, -9, -10, -11, -12, -14]) for (const iff of [3, 4]) {
-    if (iff <= bf || bm >= sm) continue;
-    yield { safe: [sm, 1], bold: [bm, bf], insane: [im, iff] };
-  }
+  for (const sm of [-1, -2])
+    for (const bm of [-2, -3, -4])
+      for (const bf of [2, 3])
+        for (const im of [-5, -6, -7, -8, -9, -10, -11, -12, -14])
+          for (const iff of [3, 4]) {
+            if (iff <= bf || bm >= sm) continue;
+            yield { safe: [sm, 1], bold: [bm, bf], insane: [im, iff] };
+          }
 }
 
 export function tune(c: Concept, grid: Iterable<Record<string, [number, number]>>, G = 700, keep = 6, confirmG = 2500) {

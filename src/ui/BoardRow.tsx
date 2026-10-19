@@ -83,6 +83,7 @@ export function BoardRow({
   delay,
   move = 0,
   scoreLabel,
+  crown = false,
 }: {
   row: StandingRow;
   sub?: ReactNode;
@@ -90,6 +91,8 @@ export function BoardRow({
   move?: number;
   /** Label under the big number; null when the list has one column heading instead. */
   scoreLabel?: string | null;
+  /** Wears the crown on the next hole (ruleset 2). */
+  crown?: boolean;
 }) {
   return (
     <PlayerRow
@@ -99,6 +102,11 @@ export function BoardRow({
       name={
         <>
           {row.player.name}
+          {crown && (
+            <span className="crown-mark" role="img" aria-label="wears the crown">
+              👑
+            </span>
+          )}
           <Move n={move} />
         </>
       }

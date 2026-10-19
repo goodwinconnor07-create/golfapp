@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import {
+  completedHoles,
+  crownHolder,
+  winChancesFor,
   formatToPar,
   getEntry,
   holeStatus,
@@ -16,7 +19,7 @@ import { navigate, shownHoles, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Move, rankLabel } from '../../ui/BoardRow';
 import { Avatar, OutcomeMark, Sheet, SumTable, TierIcon } from '../../ui/components';
-import { plural, roundLine } from '../../ui/format';
+import { plural, roundLine, winText } from '../../ui/format';
 
 const NOW = { playing: 'Playing', done: 'Scoring', scored: 'Scored' } as const;
 
@@ -43,6 +46,10 @@ export function StandingsSheet() {
   const meId = me ? (rows.find((r) => r.player.id === me.id || r.player.members?.some((m) => m.id === me.id))?.player.id ?? me.id) : null;
   const live = online && game.status === 'playing' && game.players.some((p) => !mine.includes(p));
   const doubles = game.holes.map((h, i) => (isDoubleHole(game, i) ? h.number : null)).filter((n) => n != null);
+  // Win chances and the crown follow the holes this phone has seen, so the sheet never spoils a reveal.
+  const upToDate = holes.length === completedHoles(game).length;
+  const chances = upToDate && holes.length > 0 ? winChancesFor(game) : null;
+  const crown = upToDate && game.status === 'playing' ? crownHolder(game, game.current) : null;
 
   return (
     <Sheet title="Standings">
@@ -76,6 +83,11 @@ export function StandingsSheet() {
                 <span className="standings-main">
                   <span className="standings-name">
                     <span className="group-name-text">{p.name}</span>
+                    {crown === p.id && (
+                      <span className="crown-mark" role="img" aria-label="wears the crown">
+                        👑
+                      </span>
+                    )}
                     {meId === p.id && <span className="you-tag">{p.members ? 'Your team' : 'You'}</span>}
                     <Move n={move} />
                   </span>
@@ -89,9 +101,20 @@ export function StandingsSheet() {
                     )}
                   </span>
                 </span>
-                <b className="standings-total num">{formatToPar(row.totals.toPar)}</b>
+                <span className="standings-score">
+                  <b className="standings-total num">{formatToPar(row.totals.toPar)}</b>
+                  {chances && <small className="win-chance">{winText(chances[p.id] ?? 0)}</small>}
+                </span>
               </button>
-              {isOpen && <RowDetail game={game} player={p} total={row.totals.toPar} strokes={p.members ? undefined : row.totals.real} holes={holes} />}
+              {isOpen && (
+                <RowDetail
+                  game={game}
+                  player={p}
+                  total={row.totals.toPar}
+                  strokes={p.members ? undefined : row.totals.real}
+                  holes={holes}
+                />
+              )}
             </div>
           );
         })}

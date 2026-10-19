@@ -11,3 +11,9 @@ export function joinNames(names: string[]): string {
 export function roundLine(totals: { real: number; made: number; holes: number }): string {
   return `${plural(totals.real, 'stroke')} · ${totals.made} of ${plural(totals.holes, 'card')} completed`;
 }
+
+/** A win chance as people say it: "41% to win", with "<1%" and ">99%" at the ends. */
+export function winText(p: number): string {
+  const pct = p < 0.005 ? '<1%' : p > 0.995 ? '>99%' : `${Math.round(p * 100)}%`;
+  return `${pct} to win`;
+}

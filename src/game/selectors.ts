@@ -1,4 +1,4 @@
-import { getCard } from './cards';
+import { getCard, type CardDef } from './cards';
 import { hash32 } from './hand';
 import {
   allPicked,
@@ -133,7 +133,13 @@ function teamTotals(game: Game, teamId: string, members: [Player, Player], holes
   const a = playerTotals(game, members[0].id, holes);
   const b = playerTotals(game, members[1].id, holes);
   const crown = holes.reduce((sum, h) => sum + crownBonus(game, teamId, h), 0);
-  return { ...a, real: a.real + b.real, par: (a.par + b.par) / 2, toPar: (a.toPar + b.toPar) / 2 + crown, game: (a.game + b.game) / 2 + crown };
+  return {
+    ...a,
+    real: a.real + b.real,
+    par: (a.par + b.par) / 2,
+    toPar: (a.toPar + b.toPar) / 2 + crown,
+    game: (a.game + b.game) / 2 + crown,
+  };
 }
 
 export interface StandingRow {
@@ -435,7 +441,14 @@ export function recap(game: Game): Recap {
         units(game).map((u) => ({ id: u.id, value: holes.filter((h) => crownBonus(game, u.id, h) < 0).length })),
         2,
       );
-      if (thief) awards.push({ id: 'crown', emoji: '👑', title: 'Crown thief', detail: `Beat the leader on ${plural(thief.value, 'hole')}`, playerIds: thief.ids });
+      if (thief)
+        awards.push({
+          id: 'crown',
+          emoji: '👑',
+          title: 'Crown thief',
+          detail: `Beat the leader on ${plural(thief.value, 'hole')}`,
+          playerIds: thief.ids,
+        });
     }
 
     const safeOnly = totals.filter((x) => x.t.holes >= 3 && x.t.picks.safe === x.t.holes).map((x) => x.id);
@@ -463,6 +476,49 @@ export function recap(game: Game): Recap {
   };
 }
 
+/** "Bogey", "Double bogey", "Par"… for a score against par. */
+export function toParName(toPar: number): string {
+  const names: Record<number, string> = {
+    [-3]: 'Albatross',
+    [-2]: 'Eagle',
+    [-1]: 'Birdie',
+    0: 'Par',
+    1: 'Bogey',
+    2: 'Double bogey',
+    3: 'Triple bogey',
+  };
+  return names[toPar] ?? (toPar < 0 ? `${-toPar} under par` : `${toPar} over par`);
+}
+
+/** What a Name It call asks for, in words: "Bogey or better · 5 strokes", "On the green in 2", "1 putt or fewer". */
+export function nameItLabel(card: CardDef, tier: Tier, target: number, par: number): string {
+  const kind = card.nameIt?.[tier]?.kind;
+  if (kind === 'average') return `${toParName(target)} or better · ${par + target} strokes`;
+  if (kind === 'green') return `On the green in ${target} or fewer`;
+  return `${target} putt${target === 1 ? '' : 's'} or fewer`;
+}
+
+/** One line under a picked card: the number called, the friend picked, or how a streak is going. */
+export function cardNote(game: Game, playerId: string, hole: number): string | null {
+  const e = getEntry(game, playerId, hole);
+  const card = getCard(e?.cardId);
+  const par = game.holes[hole]?.par;
+  if (!e?.tier || !card || par == null) return null;
+  if (card.nameIt && e.target != null) return `Your call: ${nameItLabel(card, e.tier, e.target, par)}`;
+  if (card.group && e.friend) {
+    const name = game.players.find((p) => p.id === e.friend)?.name ?? 'your friend';
+    return card.group === 'shadow' ? `Shadowing ${name}` : `Guarding ${name}`;
+  }
+  if (card.multi) {
+    const last = Math.min(hole + 2, game.holes.length - 1);
+    const s = e.strokes != null ? streakResult(game, playerId, hole) : null;
+    if (s && s.outcome !== 'running')
+      return s.outcome === 'made' ? `Paid on hole ${game.holes[s.at].number}` : `Broke on hole ${game.holes[s.at].number}`;
+    return `Runs to hole ${game.holes[last].number}`;
+  }
+  return null;
+}
+
 /** How often a streak still running comes off (simulated, ruleset 2). */
 const STREAK_CHANCE = { noDouble: 0.45, hotHand: 0.4 } as const;
 
@@ -487,7 +543,9 @@ export function winChancesFor(game: Game): Record<string, number> | null {
             const card = getCard(e?.cardId);
             const s = card?.multi && e?.tier ? streakResult(game, r.player.id, h) : null;
             if (!card?.multi || !e?.tier || s?.outcome !== 'running') return [];
-            return [{ made: stakeFor(game, h, e.tier, 'made'), missed: stakeFor(game, h, e.tier, 'missed'), chance: STREAK_CHANCE[card.multi] }];
+            return [
+              { made: stakeFor(game, h, e.tier, 'made'), missed: stakeFor(game, h, e.tier, 'missed'), chance: STREAK_CHANCE[card.multi] },
+            ];
           });
       return {
         id: r.player.id,

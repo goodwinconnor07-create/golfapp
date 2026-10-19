@@ -975,7 +975,19 @@ describe('2v2 teams', () => {
     const g = newGame(NAMES);
     expect(applyAction(g, { type: 'setTeams', teams: TEAMS }, ctx(OTHER)).ok).toBe(false);
     expect(applyAction(newGame(['Sam', 'Alex', 'Kim']), { type: 'setTeams', teams: TEAMS }, ctx()).ok).toBe(false);
-    expect(applyAction(g, { type: 'setTeams', teams: [['player00', 'player01'], ['player01', 'player02']] }, ctx()).ok).toBe(false);
+    expect(
+      applyAction(
+        g,
+        {
+          type: 'setTeams',
+          teams: [
+            ['player00', 'player01'],
+            ['player01', 'player02'],
+          ],
+        },
+        ctx(),
+      ).ok,
+    ).toBe(false);
     const t = run(g, { type: 'setTeams', teams: TEAMS });
     expect(t.teams).toHaveLength(2);
     expect(mateOf(t, 'player00')).toBe('player01');
@@ -989,7 +1001,8 @@ describe('2v2 teams', () => {
   it('gives both partners the same card as soon as one picks, first tap wins', () => {
     let g = teamGame();
     g = run(g, { type: 'pick', playerId: 'player01', hole: 0, tier: 'bold' });
-    const a = g.entries[entryKey('player00', 0)], b = g.entries[entryKey('player01', 0)];
+    const a = g.entries[entryKey('player00', 0)],
+      b = g.entries[entryKey('player01', 0)];
     expect(a.tier).toBe('bold');
     expect(a.cardId).toBeDefined();
     expect(a.cardId).toBe(b.cardId);
@@ -1036,7 +1049,12 @@ describe('2v2 teams', () => {
 
   it('ranks teams by the average of both partners, in halves', () => {
     let g = teamGame();
-    for (const [id, strokes, outcome] of [['player00', 4, 'made'], ['player01', 5, 'made'], ['player02', 5, 'missed'], ['player03', 4, 'missed']] as const) {
+    for (const [id, strokes, outcome] of [
+      ['player00', 4, 'made'],
+      ['player01', 5, 'made'],
+      ['player02', 5, 'missed'],
+      ['player03', 4, 'missed'],
+    ] as const) {
       g = giveCard(g, id, 0, 'S02');
       g = score(g, id, 0, strokes, outcome);
     }

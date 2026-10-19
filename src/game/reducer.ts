@@ -71,7 +71,8 @@ const RETIRED_AVATAR_EMOJIS = ['⛳', '🏌️', '🐦', '🦅', '🔥', '🦈',
 export const REACTIONS = ['🔥', '👏', '😂', '🫣', '🤡'] as const;
 export const isReaction = (v: unknown): v is string => typeof v === 'string' && (REACTIONS as readonly string[]).includes(v);
 
-export const isAvatarEmoji = (v: unknown): v is string => typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
+export const isAvatarEmoji = (v: unknown): v is string =>
+  typeof v === 'string' && ((AVATAR_EMOJIS as readonly string[]).includes(v) || RETIRED_AVATAR_EMOJIS.includes(v));
 
 /** The wanted colour if nobody else has it, else the first free one. */
 export function freeColor(players: Pick<Player, 'id' | 'color'>[], want?: number, exceptId?: string): number {
@@ -194,7 +195,9 @@ function writeScore(
   // Store the result the strokes settle too, so it survives a later par correction.
   // "Didn't happen" on a situational card stands even if the strokes would rule it out.
   const requested = tapped ?? entry.outcome;
-  const auto = isV2(g) ? judgeAuto(g, playerId, holeIdx, strokes) : judgeFromStrokes(card, hole.par, strokes, lastHoleToPar(g, playerId, holeIdx));
+  const auto = isV2(g)
+    ? judgeAuto(g, playerId, holeIdx, strokes)
+    : judgeFromStrokes(card, hole.par, strokes, lastHoleToPar(g, playerId, holeIdx));
   const outcome = card.situational && requested === 'na' ? 'na' : (auto ?? requested);
   if (outcome) entry.outcome = outcome;
   else delete entry.outcome;
@@ -321,11 +324,13 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       // Packs and the Crown are set before the round and stay fixed once it starts.
       if (action.settings.packs !== undefined && isV2(g)) {
         const packs = cleanPacks(action.settings.packs);
-        if (g.status !== 'lobby' && packs.join() !== (g.settings.packs ?? DEFAULT_PACKS).join()) return fail('Card packs are set before the round starts.');
+        if (g.status !== 'lobby' && packs.join() !== (g.settings.packs ?? DEFAULT_PACKS).join())
+          return fail('Card packs are set before the round starts.');
         g.settings.packs = packs;
       }
       if (typeof action.settings.crown === 'boolean' && isV2(g)) {
-        if (g.status !== 'lobby' && action.settings.crown !== (g.settings.crown !== false)) return fail('The Crown is set before the round starts.');
+        if (g.status !== 'lobby' && action.settings.crown !== (g.settings.crown !== false))
+          return fail('The Crown is set before the round starts.');
         g.settings.crown = action.settings.crown;
       }
       for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
@@ -348,7 +353,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
         break;
       }
       const ids = action.teams.flat();
-      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2)) return fail('Teams need exactly four players, two on each side.');
+      if (g.players.length !== 4 || action.teams.length !== 2 || action.teams.some((t) => t.length !== 2))
+        return fail('Teams need exactly four players, two on each side.');
       if (new Set(ids).size !== 4 || ids.some((id) => !findPlayer(id))) return fail('Each player goes on one team.');
       g.teams = action.teams.map(([a, b], i) => ({ id: `team${i + 1}`, players: [a, b] as [string, string] }));
       break;
@@ -381,7 +387,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
           return fail("That card isn't in your hand.");
         if (card.group === 'shadow' || card.group === 'bodyguard') {
           const friend = action.friend ? findPlayer(action.friend) : undefined;
-          if (!friend || friend.id === action.playerId || mateOf(g, action.playerId) === friend.id) return fail('Pick a friend for this card.');
+          if (!friend || friend.id === action.playerId || mateOf(g, action.playerId) === friend.id)
+            return fail('Pick a friend for this card.');
           entry.friend = friend.id;
         }
         entry.tier = action.tier;
@@ -442,7 +449,8 @@ export function applyAction(game: Game, action: Action, ctx: ActionContext): App
       if (isV2(g)) return fail('No redraws: you picked from your hand.');
       if (!actsFor(action.playerId)) return fail("That's not your card.");
       if (scoringStarted(g, action.playerId, action.hole)) return fail('This hole is already scored.');
-      if (redrawUsed(g, action.playerId)) return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
+      if (redrawUsed(g, action.playerId))
+        return fail(g.teams ? 'Your team has used its redraw this round.' : "You've used your redraw this round.");
       const oldId = card.id;
       const opts = { exclude: [oldId] };
       entry.redrawn = true;

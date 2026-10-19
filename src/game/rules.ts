@@ -19,13 +19,24 @@ export function isDoubleHole(game: Pick<Game, 'holes'>, hole: number): boolean {
  * Strokes a card adds or takes off on this hole: the tier's modifier, doubled on the
  * last holes, and nothing for a failed free shot. The tier values themselves never change.
  */
-export function stakeFor(game: Pick<Game, 'holes' | 'teams' | 'rules'>, hole: number, tier: Tier, outcome: Outcome, freePass = false): number {
+export function stakeFor(
+  game: Pick<Game, 'holes' | 'teams' | 'rules'>,
+  hole: number,
+  tier: Tier,
+  outcome: Outcome,
+  freePass = false,
+): number {
   if (outcome === 'missed' && freePass) return 0;
   return adjustmentFor(tier, outcome, Boolean(game.teams), game.rules) * (isDoubleHole(game, hole) ? 2 : 1);
 }
 
 /** What completing and failing a card is worth on this hole, for showing on cards and buttons. */
-export function cardStakes(game: Pick<Game, 'holes' | 'teams' | 'rules'>, hole: number, tier: Tier, freePass = false): { made: number; missed: number } {
+export function cardStakes(
+  game: Pick<Game, 'holes' | 'teams' | 'rules'>,
+  hole: number,
+  tier: Tier,
+  freePass = false,
+): { made: number; missed: number } {
   return { made: stakeFor(game, hole, tier, 'made'), missed: stakeFor(game, hole, tier, 'missed', freePass) };
 }
 
@@ -299,7 +310,9 @@ interface CrownState {
 
 /** The ranked sides: each player, or each team as its two players. */
 function sides(game: Game): { id: string; members: string[] }[] {
-  return game.teams ? game.teams.map((t) => ({ id: t.id, members: [...t.players] })) : game.players.map((p) => ({ id: p.id, members: [p.id] }));
+  return game.teams
+    ? game.teams.map((t) => ({ id: t.id, members: [...t.players] }))
+    : game.players.map((p) => ({ id: p.id, members: [p.id] }));
 }
 
 function crownState(game: Game, upTo: number): CrownState {
@@ -484,7 +497,12 @@ export function holeResult(game: Game, playerId: string, hole: number): HoleResu
   if (!base || game.teams) return base; // in 2v2 the Crown goes on the team (unitHoleResult)
   const crown = crownBonus(game, playerId, hole);
   if (!crown) return base;
-  return { ...base, gameScore: base.gameScore + crown, toPar: base.toPar + crown, extras: [...base.extras, { kind: 'crown', amount: crown }] };
+  return {
+    ...base,
+    gameScore: base.gameScore + crown,
+    toPar: base.toPar + crown,
+    extras: [...base.extras, { kind: 'crown', amount: crown }],
+  };
 }
 
 /** The hole result without the Crown (which needs everyone's results on the holes before). */
@@ -510,14 +528,16 @@ function v2HoleResult(game: Game, playerId: string, hole: number): HoleResult | 
   if (outcome == null) return null;
   const streak = card.multi ? (streakResult(game, playerId, hole) ?? undefined) : undefined;
   // A streak card counts nothing on its own hole unless it was settled there.
-  const adjustment = card.multi && (!streak || streak.at !== hole || streak.outcome === 'running') ? 0 : stakeFor(game, hole, entry.tier, outcome);
+  const adjustment =
+    card.multi && (!streak || streak.at !== hole || streak.outcome === 'running') ? 0 : stakeFor(game, hole, entry.tier, outcome);
   const extras: HoleExtra[] = [];
   // Streaks picked on an earlier hole and settled on this one pay out here.
   for (let s = Math.max(0, hole - MULTI_HOLES + 1); s < hole; s++) {
     const e = getEntry(game, playerId, s);
     if (!getCard(e?.cardId)?.multi || !e?.tier) continue;
     const r = streakResult(game, playerId, s);
-    if (r && r.outcome !== 'running' && r.at === hole) extras.push({ kind: 'streak', amount: stakeFor(game, s, e.tier, r.outcome), cardId: e.cardId, from: s });
+    if (r && r.outcome !== 'running' && r.at === hole)
+      extras.push({ kind: 'streak', amount: stakeFor(game, s, e.tier, r.outcome), cardId: e.cardId, from: s });
   }
   const extra = extras.reduce((a, x) => a + x.amount, 0);
   return {
@@ -543,9 +563,7 @@ function legacyHoleResult(game: Game, playerId: string, hole: number): HoleResul
   const par = game.holes[hole]?.par ?? null;
   const own = resolveOutcome(entry, par, lastHoleToPar(game, playerId, hole));
   const mate = mateOf(game, playerId);
-  const outcome = mate
-    ? teamResolve(own, resolveOutcome(getEntry(game, mate, hole), par, lastHoleToPar(game, mate, hole)))
-    : own;
+  const outcome = mate ? teamResolve(own, resolveOutcome(getEntry(game, mate, hole), par, lastHoleToPar(game, mate, hole))) : own;
   if (!entry || !entry.tier || !entry.cardId || entry.strokes == null || outcome == null) return null;
   const adjustment = stakeFor(game, hole, entry.tier, outcome, entry.freePass);
   return {

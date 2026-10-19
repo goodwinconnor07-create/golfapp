@@ -10,18 +10,41 @@ export type { Rng };
 // ── Hole bank ──────────────────────────────────────────────────────────────
 export const H_GRID = Array.from({ length: 21 }, (_, i) => i * 2); // 0..40
 const FTM = 0.3048;
-type BankCard = { id: string; pars: readonly number[]; check: (f: ReturnType<typeof facts>, log: import('../balance/golf').HoleLog, ctx: { prevToPar: number | null }) => boolean };
+type BankCard = {
+  id: string;
+  pars: readonly number[];
+  check: (f: ReturnType<typeof facts>, log: import('../balance/golf').HoleLog, ctx: { prevToPar: number | null }) => boolean;
+};
 /** New cards the golf model can judge by itself (round 2 ideas). Flagstick ≈ 7 ft, putter ≈ 3 ft. */
 const EXTRA: BankCard[] = [
   { id: 'F01', pars: [3, 4, 5], check: (f) => f.holedPutt != null && f.holedPutt >= 7 * FTM }, // Flag Length
-  { id: 'F02', pars: [3, 4, 5], check: (f) => f.shots.some((x) => x.kind === 'short' && x.fromLie !== 'green' && (x.holed || x.to <= 3 * FTM)) }, // Putter Length
-  { id: 'F03', pars: [3, 4, 5], check: (f) => f.shots.some((x) => x.approach && x.penalty === 0 && (x.holed || (x.toLie === 'green' && x.to <= 7 * FTM))) }, // Inside the Flag
+  {
+    id: 'F02',
+    pars: [3, 4, 5],
+    check: (f) => f.shots.some((x) => x.kind === 'short' && x.fromLie !== 'green' && (x.holed || x.to <= 3 * FTM)),
+  }, // Putter Length
+  {
+    id: 'F03',
+    pars: [3, 4, 5],
+    check: (f) => f.shots.some((x) => x.approach && x.penalty === 0 && (x.holed || (x.toLie === 'green' && x.to <= 7 * FTM))),
+  }, // Inside the Flag
   { id: 'T01', pars: [3], check: (f) => f.teeProx < Infinity }, // Dance Floor
   { id: 'T02', pars: [3], check: (f, l) => f.teeProx === Infinity && l.strokes - l.par <= 0 }, // Up and Down
-  { id: 'T03', pars: [5], check: (f, l) => f.penalties === 0 && f.shots.every((x) => x.kind !== 'full' || x.holed || x.dist >= 0.45 * Math.min(x.from, l.drive)) }, // Three Good Shots
+  {
+    id: 'T03',
+    pars: [5],
+    check: (f, l) => f.penalties === 0 && f.shots.every((x) => x.kind !== 'full' || x.holed || x.dist >= 0.45 * Math.min(x.from, l.drive)),
+  }, // Three Good Shots
   { id: 'T04', pars: [5], check: (f) => f.green != null && f.green <= 3 }, // Go For It
   { id: 'T05', pars: [5], check: (_f, l) => l.strokes - l.par <= 1 }, // Big Number Dodge
-  { id: 'F04', pars: [3, 4, 5], check: (f) => { const p = f.shots.find((x) => x.kind === 'putt'); return Boolean(p && p.holed && p.from >= 7 * FTM); } }, // Flag Length, first putt
+  {
+    id: 'F04',
+    pars: [3, 4, 5],
+    check: (f) => {
+      const p = f.shots.find((x) => x.kind === 'putt');
+      return Boolean(p && p.holed && p.from >= 7 * FTM);
+    },
+  }, // Flag Length, first putt
   { id: 'T06', pars: [3], check: (f, l) => f.teeProx < Infinity && (l.length * 7) % 20 < 9 }, // Called Shot (land on the third you named ≈ 45% of greens hit)
 ];
 const BANK_CARDS: BankCard[] = [...CANDIDATES.filter((c) => !c.relative), ...EXTRA];
@@ -114,21 +137,63 @@ export const GROUP = new Set(['G01', 'G02', 'G03', 'G04', 'G05']);
 export const MULTI: Record<string, number> = { M01: 3, M02: 3, M03: 3, M04: 3, M05: 3 };
 /** Club limits: play the hole as a worse (or better) golfer, then hit the target to par. [handicap shift in grid steps, target] */
 export const CLUB: Record<string, [number, number]> = { K01: [3, 1], K02: [2, 1], K03: [1, 1], K04: [7, 1], K05: [-3, 0], K06: [1, 1] };
-for (const id of [...Object.keys(NAME_IT), ...Object.keys(REL), ...DUEL, ...Object.keys(PP), ...SELF, ...CALL, ...GROUP, ...Object.keys(MULTI), ...Object.keys(CLUB)]) PARS_OF[id] ??= [3, 4, 5];
+for (const id of [
+  ...Object.keys(NAME_IT),
+  ...Object.keys(REL),
+  ...DUEL,
+  ...Object.keys(PP),
+  ...SELF,
+  ...CALL,
+  ...GROUP,
+  ...Object.keys(MULTI),
+  ...Object.keys(CLUB),
+])
+  PARS_OF[id] ??= [3, 4, 5];
 PARS_OF.K02 = [4, 5];
 export const CARD_TITLES: Record<string, string> = {
   ...Object.fromEntries(CANDIDATES.map((c) => [c.id, c.title])),
   D01: 'Beat a Rival',
   D02: 'Top of the Hole',
   D03: 'Match a Rival',
-  F01: 'Flag Length', F02: 'Putter Length', F03: 'Inside the Flag',
-  T01: 'Dance Floor', T02: 'Up and Down', T03: 'Three Good Shots', T04: 'Go For It', T05: 'Big Number Dodge', T06: 'Called Shot',
-  N1: 'Name Your Number', N2: 'Name Your Green', N3: 'Name Your Putts', S26: 'Steady Eddie (v2)', F04: 'Flag Length (first putt)',
-  S20: 'Personal Best', S21: 'Steady Eddie', S22: 'No Repeat', S23: 'Better Half', S24: 'Putts Report', S25: 'Same Again',
-  C01: 'Call It', C02: 'Over/Under', C03: 'Call the Putts',
-  G01: 'Shadow', G02: 'Copycat', G03: 'Underdog', G04: 'Bodyguard', G05: 'Jinx',
-  M01: 'Three-Hole Streak', M02: 'Hot Hand', M03: 'Slow Burn', M04: 'Clean Run', M05: 'No Three-Putts Club',
-  K01: 'Three-Club Hole', K02: 'No Driver', K03: 'Putter Off the Fringe', K04: 'One Iron', K05: 'Tee It Forward', K06: 'Short Bag',
+  F01: 'Flag Length',
+  F02: 'Putter Length',
+  F03: 'Inside the Flag',
+  T01: 'Dance Floor',
+  T02: 'Up and Down',
+  T03: 'Three Good Shots',
+  T04: 'Go For It',
+  T05: 'Big Number Dodge',
+  T06: 'Called Shot',
+  N1: 'Name Your Number',
+  N2: 'Name Your Green',
+  N3: 'Name Your Putts',
+  S26: 'Steady Eddie (v2)',
+  F04: 'Flag Length (first putt)',
+  S20: 'Personal Best',
+  S21: 'Steady Eddie',
+  S22: 'No Repeat',
+  S23: 'Better Half',
+  S24: 'Putts Report',
+  S25: 'Same Again',
+  C01: 'Call It',
+  C02: 'Over/Under',
+  C03: 'Call the Putts',
+  G01: 'Shadow',
+  G02: 'Copycat',
+  G03: 'Underdog',
+  G04: 'Bodyguard',
+  G05: 'Jinx',
+  M01: 'Three-Hole Streak',
+  M02: 'Hot Hand',
+  M03: 'Slow Burn',
+  M04: 'Clean Run',
+  M05: 'No Three-Putts Club',
+  K01: 'Three-Club Hole',
+  K02: 'No Driver',
+  K03: 'Putter Off the Fringe',
+  K04: 'One Iron',
+  K05: 'Tee It Forward',
+  K06: 'Short Bag',
   P01: 'Personal Par',
   P02: 'Beat Your Average',
   P03: 'Way Above Average',
@@ -159,13 +224,41 @@ export interface Concept {
   cardPoints?: boolean;
   /** Points formats: place each hole on strokes against your own running average (a handicap the round builds). */
   net?: boolean;
-  addons?: { noRepeat?: boolean; wild?: boolean; gold?: boolean; holeWin?: boolean; hex?: boolean; callout?: boolean; king?: boolean; predict?: boolean; press?: boolean; showdown?: boolean };
+  addons?: {
+    noRepeat?: boolean;
+    wild?: boolean;
+    gold?: boolean;
+    holeWin?: boolean;
+    hex?: boolean;
+    callout?: boolean;
+    king?: boolean;
+    predict?: boolean;
+    press?: boolean;
+    showdown?: boolean;
+  };
 }
 
 export const BASE_DECK: Record<string, string> = {
-  S01: 'safe', S02: 'safe', S04: 'safe', S06: 'safe', S10: 'safe', S11: 'safe', S12: 'safe', S16: 'safe',
-  B16: 'bold', B17: 'bold', B18: 'bold', B19: 'bold', B20: 'bold',
-  I16: 'insane', I17: 'insane', I18: 'insane', I19: 'insane', I20: 'insane', I21: 'insane', I22: 'insane',
+  S01: 'safe',
+  S02: 'safe',
+  S04: 'safe',
+  S06: 'safe',
+  S10: 'safe',
+  S11: 'safe',
+  S12: 'safe',
+  S16: 'safe',
+  B16: 'bold',
+  B17: 'bold',
+  B18: 'bold',
+  B19: 'bold',
+  B20: 'bold',
+  I16: 'insane',
+  I17: 'insane',
+  I18: 'insane',
+  I19: 'insane',
+  I20: 'insane',
+  I21: 'insane',
+  I22: 'insane',
 };
 export const BASE: Concept = {
   name: 'Today: stroke play, blind level, deck v2',
@@ -178,7 +271,17 @@ export const BASE: Concept = {
 };
 
 // ── Players ───────────────────────────────────────────────────────────────
-export type Persona = `call:${string}` | 'sandbag' | 'hotHand' | 'cautious' | 'balanced' | 'reckless' | 'thinker' | 'random' | `fixed${number}` | 'protect';
+export type Persona =
+  | `call:${string}`
+  | 'sandbag'
+  | 'hotHand'
+  | 'cautious'
+  | 'balanced'
+  | 'reckless'
+  | 'thinker'
+  | 'random'
+  | `fixed${number}`
+  | 'protect';
 export interface Player {
   h: number;
   hi: number;
@@ -375,7 +478,10 @@ function specialOdds(g: G, i: number, d: Dealt): number | null {
   if (id === 'S25') return prev == null ? pLE(dist, 1) - pLE(dist, 0) : pLE(dist, prev) - pLE(dist, prev - 1);
   if (id === 'C01') return dist[modeOf(dist)];
   if (id === 'C02') return Math.max(pLE(dist, 0), 1 - pLE(dist, 0));
-  if (id === 'C03') { const pd = bank(P.hi, par).puttDist; return pd[modeOf(pd)]; }
+  if (id === 'C03') {
+    const pd = bank(P.hi, par).puttDist;
+    return pd[modeOf(pd)];
+  }
   if (GROUP.has(id)) return id === 'G04' ? 0.6 : id === 'G05' ? 0.55 : id === 'G03' ? 0.45 : 0.6;
   return null;
 }
@@ -513,12 +619,12 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
 
   // Press: once per nine, double your own card stakes for the rest of that nine.
   if (A.press) {
-    if (g.hole % 9 === 0) for (let i = 0; i < n; i++) (g.pressed[i] = 0), (g.pressUsed[i] = 0);
+    if (g.hole % 9 === 0) for (let i = 0; i < n; i++) ((g.pressed[i] = 0), (g.pressUsed[i] = 0));
     for (let i = 0; i < n; i++) {
       if (g.pressUsed[i] || g.hole % 9 > 6) continue;
       const behind = rankOf(g, i) > 1;
       const pr = g.pl[i].persona === 'reckless' ? 0.35 : 0.2;
-      if (behind && rng() < pr) (g.pressed[i] = 1), (g.pressUsed[i] = 1);
+      if (behind && rng() < pr) ((g.pressed[i] = 1), (g.pressUsed[i] = 1));
     }
   }
   // Hex: a token won by completing an Insane card. Play it on someone: they can't pick Safe this hole.
@@ -544,7 +650,9 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     if (c.decision === 'hand') {
       hand = ov && ov.player === i && ov.hand ? ov.hand : tiers.map((t) => deal(g, i, t, held, rng));
       opts = hand.flatMap((d) =>
-        NAME_IT[d.id] ? Object.keys(NAME_IT[d.id]).map((t) => ({ tier: t, dealt: { ...d, tier: t, call: t } })) : [{ tier: d.tier, dealt: d }],
+        NAME_IT[d.id]
+          ? Object.keys(NAME_IT[d.id]).map((t) => ({ tier: t, dealt: { ...d, tier: t, call: t } }))
+          : [{ tier: d.tier, dealt: d }],
       );
     } else opts = tiers.map((t) => ({ tier: t }));
     let k: number;
@@ -609,7 +717,8 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
       const b = bank(rowHi[i], par);
       ok = d.id === 'N1' ? tp[i] <= x : d.id === 'N2' ? b.green[rows[i]] <= x : b.putts[rows[i]] <= x;
     } else if (CLUB[d.id]) ok = tp[i] <= CLUB[d.id][1];
-    else if (MULTI[d.id] || GROUP.has(d.id)) ok = false; // settled below / later
+    else if (MULTI[d.id] || GROUP.has(d.id))
+      ok = false; // settled below / later
     else if (SELF.has(d.id) || CALL.has(d.id)) ok = selfCheck(g, i, d.id, tp[i], bank(rowHi[i], par).putts[rows[i]], par);
     else ok = bank(rowHi[i], par).out[rows[i] * K + IDX[d.id]] === 1;
     made.push(ok);
@@ -622,11 +731,23 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     if (!GROUP.has(id)) continue;
     const os = others(i).length ? others(i) : g.pl.map((_, j) => j).filter((j) => j !== i);
     const meanOf = (j: number) => bank(g.pl[j].hi, par).mean;
-    if (id === 'G01') { const f = os.reduce((a, j) => (meanOf(j) > meanOf(a) ? j : a), os[0]); made[i] = tp[i] <= tp[f]; }
-    else if (id === 'G02') { const f = (i + n - 1) % n; made[i] = tp[i] <= tp[f]; }
-    else if (id === 'G03') { const a = ahead(i); const pool2 = a.length ? a : os; made[i] = pool2.some((j) => tp[i] < tp[j]); }
-    else if (id === 'G04') { const f = os.reduce((a, j) => (cardOdds(g, j, dealt[j]) > cardOdds(g, a, dealt[a]) ? j : a), os[0]); made[i] = made[f]; }
-    else if (id === 'G05') { const f = os.reduce((a, j) => (cardOdds(g, j, dealt[j]) < cardOdds(g, a, dealt[a]) ? j : a), os[0]); made[i] = !made[f]; }
+    if (id === 'G01') {
+      const f = os.reduce((a, j) => (meanOf(j) > meanOf(a) ? j : a), os[0]);
+      made[i] = tp[i] <= tp[f];
+    } else if (id === 'G02') {
+      const f = (i + n - 1) % n;
+      made[i] = tp[i] <= tp[f];
+    } else if (id === 'G03') {
+      const a = ahead(i);
+      const pool2 = a.length ? a : os;
+      made[i] = pool2.some((j) => tp[i] < tp[j]);
+    } else if (id === 'G04') {
+      const f = os.reduce((a, j) => (cardOdds(g, j, dealt[j]) > cardOdds(g, a, dealt[a]) ? j : a), os[0]);
+      made[i] = made[f];
+    } else if (id === 'G05') {
+      const f = os.reduce((a, j) => (cardOdds(g, j, dealt[j]) < cardOdds(g, a, dealt[a]) ? j : a), os[0]);
+      made[i] = !made[f];
+    }
   }
 
   // Score
@@ -651,7 +772,7 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
   const f = c.format;
   if (c.cardPoints && f !== 'stroke') {
     // Place on real strokes; the card is worth points on its own.
-    for (let i = 0; i < n; i++) (g.pts[i] -= hs[i] - tp[i]), (g.cpts[i] -= hs[i] - tp[i]);
+    for (let i = 0; i < n; i++) ((g.pts[i] -= hs[i] - tp[i]), (g.cpts[i] -= hs[i] - tp[i]));
     for (let i = 0; i < n; i++) hs[i] = c.net ? tp[i] - ppBefore[i] : tp[i];
   }
   if (f === 'stableford') for (let i = 0; i < n; i++) g.pts[i] += Math.max(0, 2 - hs[i]);
@@ -667,7 +788,8 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     const side = (i: number) => i === wolf || i === partner;
     let a = Infinity,
       b = Infinity;
-    for (let i = 0; i < n; i++) if (side(i)) a = Math.min(a, hs[i]);
+    for (let i = 0; i < n; i++)
+      if (side(i)) a = Math.min(a, hs[i]);
       else b = Math.min(b, hs[i]);
     if (a !== b) {
       const wolfWins = a < b;
@@ -707,8 +829,8 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
       if (w < 0) continue;
       const l = w === i ? o : i;
       const s = 2 * m;
-      if (f === 'stroke') (g.tot[w] -= s / 2), (g.tot[l] += s / 2);
-      else (g.pts[w] += s / 2), (g.pts[l] -= s / 2);
+      if (f === 'stroke') ((g.tot[w] -= s / 2), (g.tot[l] += s / 2));
+      else ((g.pts[w] += s / 2), (g.pts[l] -= s / 2));
     }
   }
   // King of the hill: anyone who beats the sole leader's hole score gets a stroke (or point).
@@ -744,7 +866,8 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
   // Wild hole (about 1 in 6): the outright worst score +2, the outright best −2.
   if (A.wild && g.hole > 0 && rng() < 1 / 6) {
     if (!rollout) g.wildHoles++;
-    const lo = Math.min(...hs), hi = Math.max(...hs);
+    const lo = Math.min(...hs),
+      hi = Math.max(...hs);
     if (hs.filter((x) => x === lo).length === 1) bump(g, hs.indexOf(lo), -2 * m);
     if (hs.filter((x) => x === hi).length === 1) bump(g, hs.indexOf(hi), 2 * m);
   }
@@ -771,16 +894,26 @@ function selfCheck(g: G, i: number, id: string, t: number, putts: number, par: n
   const P = g.pl[i];
   const dist = distOf(P.hi, par);
   switch (id) {
-    case 'S20': return t <= (h.length ? Math.min(...h.map((x) => x.tp)) : 1);
-    case 'S21': return prev == null ? t <= 2 : Math.abs(t - prev) <= 1;
-    case 'S22': return prev == null ? t !== 1 : t !== prev;
-    case 'S23': return t < (h.length >= 3 ? avg(h.slice(-3).map((x) => x.tp)) : personalPar(g, i)) - 1e-9;
-    case 'S24': return putts < (h.reduce((a, x) => a + x.putts, 0) + 2 * 2.2) / (h.length + 2) - 1e-9;
-    case 'S25': return prev == null ? t === 1 : t === prev;
-    case 'S26': return t <= (prev == null ? 2 : prev + 1);
-    case 'C01': return t === modeOf(dist) - TP_OFF;
-    case 'C02': return pLE(dist, 0) >= 0.5 ? t <= 0 : t >= 1;
-    case 'C03': return putts === modeOf(bank(P.hi, par).puttDist);
+    case 'S20':
+      return t <= (h.length ? Math.min(...h.map((x) => x.tp)) : 1);
+    case 'S21':
+      return prev == null ? t <= 2 : Math.abs(t - prev) <= 1;
+    case 'S22':
+      return prev == null ? t !== 1 : t !== prev;
+    case 'S23':
+      return t < (h.length >= 3 ? avg(h.slice(-3).map((x) => x.tp)) : personalPar(g, i)) - 1e-9;
+    case 'S24':
+      return putts < (h.reduce((a, x) => a + x.putts, 0) + 2 * 2.2) / (h.length + 2) - 1e-9;
+    case 'S25':
+      return prev == null ? t === 1 : t === prev;
+    case 'S26':
+      return t <= (prev == null ? 2 : prev + 1);
+    case 'C01':
+      return t === modeOf(dist) - TP_OFF;
+    case 'C02':
+      return pLE(dist, 0) >= 0.5 ? t <= 0 : t >= 1;
+    case 'C03':
+      return putts === modeOf(bank(P.hi, par).puttDist);
   }
   return false;
 }

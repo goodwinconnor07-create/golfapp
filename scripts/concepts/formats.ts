@@ -9,11 +9,25 @@ if (process.argv[3]) c.values = JSON.parse(process.argv[3]);
 const rng = mulberry32(5);
 const G = Number(process.env.G ?? 2000);
 const out: string[] = [];
-for (const [label, k, n] of [['4p 18', 4, 18], ['3p 18', 3, 18], ['1v1 18', 2, 18], ['4p 9', 4, 9], ['1v1 9', 2, 9]] as const) {
-  let l3 = 0, last3 = 0, cmb = 0;
+for (const [label, k, n] of [
+  ['4p 18', 4, 18],
+  ['3p 18', 3, 18],
+  ['1v1 18', 2, 18],
+  ['4p 9', 4, 9],
+  ['1v1 9', 2, 9],
+] as const) {
+  let l3 = 0,
+    last3 = 0,
+    cmb = 0;
   for (let g = 0; g < G; g++) {
     const hs = similar(rng, k);
-    const r = playRound(c, hs, hs.map(() => person(rng)), n, rng);
+    const r = playRound(
+      c,
+      hs,
+      hs.map(() => person(rng)),
+      n,
+      rng,
+    );
     const win = winners(r.g);
     const at = (h: number) => {
       const ks = r.keys[h];

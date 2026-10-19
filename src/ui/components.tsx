@@ -12,11 +12,14 @@ import {
   CODE_LENGTH,
   formatDelta,
   formatToPar,
+  getCard,
   isNameBlocked,
   LIMITS,
   NAME_BLOCKED,
   toParWords,
   TIERS,
+  type Game,
+  type HoleExtra,
   type Outcome,
   type Par,
   type Player,
@@ -615,6 +618,7 @@ export function Working({
   tier,
   cardTitle,
   doubled,
+  running,
 }: {
   strokes: number;
   par: Par;
@@ -623,10 +627,14 @@ export function Working({
   tier: Tier;
   cardTitle?: string;
   doubled?: boolean;
+  /** A streak card still going: no result on this hole yet. */
+  running?: boolean;
 }) {
   const golf = golfPart(strokes, par);
   const card = cardTitle ?? `${TIERS[tier].label} card`;
-  const label = `${golf}, ${card} ${OUTCOME_WORD[outcome]} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
+  const label = running
+    ? `${golf}, ${card} still running`
+    : `${golf}, ${card} ${OUTCOME_WORD[outcome]} ${formatDelta(adjustment)}${doubled ? ', doubled' : ''}`;
   return (
     <span className="working" aria-label={label}>
       <span className="working-golf">{golf}</span>
@@ -635,12 +643,35 @@ export function Working({
           <TierIcon tier={tier} size={14} />
         </span>
         <span className="working-title">{card}</span>
-        <span className={`working-delta ${outcome}`}>
-          <OutcomeMark outcome={outcome} size={13} />
-          {formatDelta(adjustment)}
-          {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
-        </span>
+        {running ? (
+          <span className="working-delta running">running</span>
+        ) : (
+          <span className={`working-delta ${outcome}`}>
+            <OutcomeMark outcome={outcome} size={13} />
+            {formatDelta(adjustment)}
+            {doubled && adjustment !== 0 && <span className="working-x">2×</span>}
+          </span>
+        )}
       </span>
+    </span>
+  );
+}
+
+/** Streak payouts and the Crown under a hole's working: "👑 Beat the leader −1", "🔥 Hot Hand, from hole 4 −9". */
+export function HoleExtras({ game, extras }: { game: Game; extras: HoleExtra[] }) {
+  if (!extras.length) return null;
+  return (
+    <span className="hole-extras">
+      {extras.map((x, i) => (
+        <span key={i} className={`hole-extra ${x.amount < 0 ? 'made' : 'missed'}`}>
+          <span>
+            {x.kind === 'crown'
+              ? '👑 Beat the leader'
+              : `🔥 ${getCard(x.cardId)?.title ?? 'Streak'}, from hole ${game.holes[x.from ?? 0]?.number ?? ''}`}
+          </span>
+          <b className="num">{formatDelta(x.amount)}</b>
+        </span>
+      ))}
     </span>
   );
 }

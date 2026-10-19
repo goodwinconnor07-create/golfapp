@@ -1,28 +1,26 @@
 import type { ComponentType, SVGProps } from 'react';
 import { closeSheet } from '../../state/store';
 import { Sheet } from '../../ui/components';
-import { BoltIcon, ClockIcon, FlagIcon, FlameIcon, ShareIcon, TrophyIcon, UsersIcon } from '../../ui/Icons';
+import { BoltIcon, FlameIcon, TrophyIcon, UsersIcon } from '../../ui/Icons';
 
 /** The newest story on Home's News card. Add new ones at the top. */
 export const NEWS = {
   tag: 'New',
-  title: 'Version 1.0 is here',
-  text: "See what's in it",
+  title: 'The Showdown update',
+  text: 'Hands, the Crown and win chances',
 };
 
 const FEATURES: { icon: ComponentType<SVGProps<SVGSVGElement>>; title: string; text: string }[] = [
-  { icon: FlameIcon, title: 'Pick your risk', text: 'Safe, Bold or Insane before every hole, with a new card each time.' },
-  { icon: UsersIcon, title: 'Everyone on their own phone', text: 'Friends join with a code, link or QR code. No app needed.' },
-  { icon: FlagIcon, title: 'Find your course', text: 'Search for it and every par fills itself in.' },
-  { icon: BoltIcon, title: 'Twists', text: 'Mulligans, and the last 3 holes count double.' },
-  { icon: TrophyIcon, title: 'Live standings', text: 'See who leads after every hole, and react to big moments.' },
-  { icon: ShareIcon, title: 'Share the results', text: 'A results picture for the group chat when the round ends.' },
-  { icon: ClockIcon, title: 'Past games', text: 'Every round is saved, and Play again starts with the same group.' },
+  { icon: FlameIcon, title: 'Pick from a hand', text: 'Three cards before every hole, one from each level. You choose.' },
+  { icon: BoltIcon, title: '40 cards', text: 'Name your own target, beat your own average, streaks, and cards about your friends.' },
+  { icon: TrophyIcon, title: 'The Crown', text: "Beat the leader's score on a hole and take a stroke off." },
+  { icon: TrophyIcon, title: 'Live win chances', text: 'After every hole, see everyone’s chance of winning.' },
+  { icon: UsersIcon, title: 'Card packs', text: 'Switch packs on or off in Game options. Hard Mode is there if you want it.' },
 ];
 
 export function NewsSheet() {
   return (
-    <Sheet title="Version 1.0">
+    <Sheet title="The Showdown update">
       <div className="news-list">
         {FEATURES.map(({ icon: Icon, title, text }) => (
           <div key={title} className="news-item">

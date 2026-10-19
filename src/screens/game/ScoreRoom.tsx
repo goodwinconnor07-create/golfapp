@@ -1,7 +1,7 @@
 import { formatToPar, getCard, getEntry, holeResult, holeStatus, ownsPlayer, type Game, type Player } from '../../game';
 import { confirm, enterScoreFor, notDoneYet, openSheet, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
-import { Avatar, Working } from '../../ui/components';
+import { Avatar, HoleExtras, Working } from '../../ui/components';
 import { joinNames } from '../../ui/format';
 import { GroupList } from '../../ui/GroupList';
 
@@ -74,12 +74,14 @@ export function ScoreRoom({ game }: { game: Game }) {
                   tier={r.tier}
                   cardTitle={getCard(r.cardId)?.title}
                   doubled={r.doubled}
+                  running={r.streak && r.outcome === 'na'}
                 />
                 <span className="my-result-total">
                   <b className="num">{formatToPar(r.toPar)}</b>
                   <small>This hole</small>
                 </span>
               </span>
+              <HoleExtras game={game} extras={r.extras} />
             </div>
           );
         })}

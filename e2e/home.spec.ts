@@ -42,8 +42,8 @@ test.describe('after a round', () => {
 
   test('Home has News for regulars, and the story opens in a sheet', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /Version 1.0 is here/ }).click();
-    await expect(page.getByRole('dialog')).toContainText('Pick your risk');
+    await page.getByRole('button', { name: /The Showdown update/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('The Crown');
     await shot(page, '01d-news');
     await page.getByRole('button', { name: "Let's play" }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
@@ -68,15 +68,15 @@ test.describe('first time', () => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'CardShot' })).toBeVisible();
     await shot(page, '01a-home');
-    await expect(page.getByRole('button', { name: /Version 1.0 is here/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /The Showdown update/ })).toHaveCount(0);
     await page.getByRole('button', { name: /^How to play/ }).click();
-    await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pick your card' })).toBeVisible();
   });
 
   test('a new host sees How to play once and can skip it', async ({ page }) => {
     await page.goto('/');
     await startGame(page);
-    await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pick your card' })).toBeVisible();
     await page.getByRole('button', { name: 'Skip' }).click();
     await expect(page.getByRole('textbox', { name: 'Your name' })).toBeVisible();
     // The second time goes straight to the name screen.
@@ -89,7 +89,7 @@ test.describe('first time', () => {
     await page.goto('/');
     await startGame(page);
     // Let each slide settle before tapping Next again (the slides scroll across).
-    for (const title of ['Get a card', 'Play the hole', 'Score it', 'Lowest score wins', 'Extras']) {
+    for (const title of ['Your hand', 'Play the hole', 'Score it', 'Lowest score wins', 'Extras']) {
       await page.getByRole('button', { name: 'Next', exact: true }).click();
       await expect(page.getByRole('heading', { name: title })).toBeInViewport({ ratio: 0.9 });
     }
@@ -109,6 +109,6 @@ test.describe('the website', () => {
     await expect(page.getByLabel('Game code')).toBeVisible();
     await shot(page, '01c-web-home');
     await page.getByRole('button', { name: 'How to play' }).click();
-    await expect(page.getByRole('heading', { name: 'Pick your risk' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pick your card' })).toBeVisible();
   });
 });
