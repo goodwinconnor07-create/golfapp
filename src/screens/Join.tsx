@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { cleanName, CODE_LENGTH, isNameBlocked, normalizeCode, type GameInfo } from '../game';
+import { cleanName, CODE_LENGTH, freeColor, isNameBlocked, normalizeCode, type GameInfo } from '../game';
 import { fetchGameInfo } from '../state/api';
 import { confirm, joinGame, navigate, openSheet, resetTo, setDraftNames, useApp } from '../state/store';
 import { haptic } from '../ui/effects';
-import { Avatar, BackBar, Blobs, HeroPicture } from '../ui/components';
+import { Avatar, BackBar, Blobs, NameAndPicture, TierIcon } from '../ui/components';
 
 /**
  * Step 1: type (or arrive with) the 5-letter code. `home`: the website's Home, which is this
@@ -104,6 +104,17 @@ export function Join({ initialCode, home = false }: { initialCode?: string; home
         {server === 'down' && <p className="note">Can't reach the server right now. Check your signal.</p>}
         {/* The website has no button: the code is looked up as soon as all 5 letters are in. */}
         {home && busy && <span className="spinner join-home-busy" aria-label="Looking for the game" />}
+        {/* A friend arriving here may never have heard of the game: one line on what it is. */}
+        {home && !busy && (
+          <p className="join-home-about">
+            <span className="how-step-icons" aria-hidden>
+              <TierIcon tier="safe" size={18} />
+              <TierIcon tier="bold" size={18} />
+              <TierIcon tier="insane" size={18} />
+            </span>
+            A golf party game: before each hole, pick Safe, Bold or Insane and play the card you get.
+          </p>
+        )}
       </div>
       {!home && (
         <div className="screen-foot">
@@ -144,37 +155,52 @@ export function JoinWho({ info }: { info: GameInfo }) {
           {info.status === 'finished' ? ' · finished' : ''}
         </p>
 
-        <div className="stack">
-          {free.map((p) => (
-            <button key={p.id} type="button" className="player-row press" onClick={() => joinGame(info, { playerId: p.id })}>
-              <Avatar player={p} size={48} />
-              <span className="name">{p.name}</span>
-              <span className="tag tag-you">That's me</span>
-            </button>
-          ))}
-          {taken.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="player-row press"
-              onClick={() =>
-                confirm({
-                  title: `Are you ${p.name}?`,
-                  body: `${p.name} is already playing on another phone. Joining moves them to this one.`,
-                  confirm: `I'm ${p.name}`,
-                  onConfirm: () => joinGame(info, { playerId: p.id }),
-                })
-              }
-            >
-              <Avatar player={p} size={48} />
-              <span className="name">{p.name}</span>
-              <span className="tag tag-joined">On a phone</span>
-            </button>
-          ))}
-        </div>
+        {info.players.length > 0 && (
+          <>
+            <p className="section-title">{free.length > 0 ? 'Tap your name' : 'Already playing'}</p>
+            <div className="stack">
+              {free.map((p) => (
+                <button key={p.id} type="button" className="player-row press" onClick={() => joinGame(info, { playerId: p.id })}>
+                  <Avatar player={p} size={48} />
+                  <span className="name">{p.name}</span>
+                  <span className="tag tag-you">That's me</span>
+                </button>
+              ))}
+              {taken.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="player-row press"
+                  onClick={() =>
+                    confirm({
+                      title: `Are you ${p.name}?`,
+                      body: `${p.name} is already playing on another phone. Joining moves them to this one.`,
+                      confirm: `I'm ${p.name}`,
+                      onConfirm: () => joinGame(info, { playerId: p.id }),
+                    })
+                  }
+                >
+                  <Avatar player={p} size={48} />
+                  <span className="name">{p.name}</span>
+                  <span className="tag tag-joined">On a phone</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {info.canJoinAsNew ? (
-          <HeroPicture name={name} look={look} nameTag onChange={() => openSheet({ name: 'look', editName: true })} />
+          <>
+            {info.players.length > 0 && <p className="section-title">{free.length > 0 ? 'Not on the list?' : 'Your name and picture'}</p>}
+            {/* The colour you'll actually get: someone already in the game may have your usual one. */}
+            <NameAndPicture
+              name={name}
+              look={{ ...look, color: freeColor(info.players, look.color) }}
+              onName={(value) => setDraftNames([value])}
+              onPicture={() => openSheet({ name: 'look', typed: name })}
+              onDone={() => cleanName(name) && !isNameBlocked(name) && joinGame(info, { name })}
+            />
+          </>
         ) : (
           free.length === 0 && (
             <p className="tile-flat" style={{ margin: 0 }}>
@@ -185,18 +211,13 @@ export function JoinWho({ info }: { info: GameInfo }) {
       </div>
       {info.canJoinAsNew && (
         <div className="screen-foot">
-          {info.players.length > 0 && (
-            <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
-              Not on the list? Tap the picture to add yourself.
-            </p>
-          )}
           <button
             type="button"
             className="btn btn-xl btn-blue"
             disabled={!cleanName(name) || isNameBlocked(name)}
             onClick={() => joinGame(info, { name })}
           >
-            Join as {cleanName(name) || 'me'}
+            {cleanName(name) ? `Join as ${cleanName(name)}` : 'Type your name to join'}
           </button>
         </div>
       )}

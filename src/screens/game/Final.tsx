@@ -6,7 +6,7 @@ import { navigate, startNewGame, toast } from '../../state/store';
 import { BoardRow } from '../../ui/BoardRow';
 import { Avatar } from '../../ui/components';
 import { colourWipe, confetti, CONFETTI, haptic, reducedMotion } from '../../ui/effects';
-import { duration, joinNames, plural } from '../../ui/format';
+import { duration, joinNames, plural, roundLine } from '../../ui/format';
 import { BoltIcon, ShareIcon, TrophyIcon } from '../../ui/Icons';
 import { resultsImage } from '../../ui/resultsImage';
 import { EditList } from './EditList';
@@ -37,6 +37,10 @@ function shareText(game: Game, rc: Recap): string {
   if (extras.length) lines.push('');
   for (const a of extras) lines.push(`${a.emoji} ${a.title}: ${names(game, a.playerIds)} (${a.detail})`);
   return lines.join('\n');
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function download(file: File) {
@@ -133,6 +137,12 @@ export function Final({ game }: { game: Game }) {
 
   const winnerNames = game.teams ? rc.winners.map((w) => w.player.name).join(' and ') : joinNames(rc.winners.map((w) => w.player.name));
   const headline = rc.winners.length > 1 ? `${winnerNames} tie!` : `${winnerNames} wins!`;
+  // The podium already shows each score, so the line under the headline gives the margin instead.
+  const runnerUp = rc.byGame.find((r) => r.rank > 1);
+  const margin = rc.winners.length > 1 || !runnerUp ? 0 : runnerUp.totals.toPar - rc.winners[0].totals.toPar;
+  const subline = margin
+    ? `Won by ${margin} after ${plural(rc.holesPlayed, 'hole')}`
+    : `${rc.winners.length > 1 ? 'Level' : capitalise(toParWords(rc.winners[0]?.totals.toPar ?? 0))} after ${plural(rc.holesPlayed, 'hole')}`;
 
   return (
     <>
@@ -144,7 +154,7 @@ export function Final({ game }: { game: Game }) {
             </h1>
             {step >= 3 && (
               <p className="h3 muted center" style={{ margin: '-8px 0 0' }}>
-                {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
+                {subline}
               </p>
             )}
             {/* Read in place order; laid out 2-1-3 like a real podium. */}
@@ -168,7 +178,7 @@ export function Final({ game }: { game: Game }) {
                   {headline}
                 </h1>
                 <p className="h3 muted" style={{ margin: 0 }}>
-                  {toParWords(rc.winners[0].totals.toPar)} after {plural(rc.holesPlayed, 'hole')}
+                  {capitalise(toParWords(rc.winners[0].totals.toPar))} after {plural(rc.holesPlayed, 'hole')}
                 </p>
               </div>
             ) : (
@@ -179,7 +189,7 @@ export function Final({ game }: { game: Game }) {
               </div>
             )}
 
-            <p className="section-title">Against par · lowest wins</p>
+            <p className="section-title">Lowest score wins</p>
             <div className="board">
               {rc.byGame.map((row, i) => (
                 <BoardRow key={row.player.id} row={row} delay={i * 70} sub={detail(row)} />
@@ -214,7 +224,7 @@ export function Final({ game }: { game: Game }) {
 
         {rc.highlights.length > 0 && (
           <>
-            <p className="section-title">Insane challenges completed</p>
+            <p className="section-title">Insane cards completed</p>
             {rc.highlights.map((h) => (
               <div key={`${h.playerId}-${h.hole}`} className="highlight">
                 <BoltIcon width={24} height={24} style={{ color: 'var(--insane)', flex: 'none' }} />
@@ -254,14 +264,7 @@ export function Final({ game }: { game: Game }) {
 }
 
 function detail(row: StandingRow) {
-  return (
-    <span className="board-detail">
-      <span>
-        {row.totals.made} of {row.totals.holes} cards made
-      </span>{' '}
-      · <span>{row.totals.real} strokes</span>
-    </span>
-  );
+  return <span className="board-detail">{roundLine(row.totals)}</span>;
 }
 
 /** One podium step. pos 0 is 1st. Hidden steps show a "?" until their turn. */
@@ -278,7 +281,8 @@ function PodiumStep({ row, pos, shown }: { row: StandingRow; pos: number; shown:
           )}
           <Avatar player={row.player} size={pos === 0 ? 72 : 56} />
           <b className="pod-name">{row.player.name}</b>
-          <span className="pod-score num">{formatToPar(row.totals.toPar)}</span>
+          {/* "Even" in words: a bare "E" meant nothing to players who don't follow golf. */}
+          <span className="pod-score num">{row.totals.toPar === 0 ? 'Even' : formatToPar(row.totals.toPar)}</span>
           <span className="sr-only">
             {place}: {row.player.name}, {formatToPar(row.totals.toPar)}
           </span>

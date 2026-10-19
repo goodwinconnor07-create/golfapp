@@ -51,9 +51,11 @@ export function GroupReveal({ game }: { game: Game }) {
       <div className="screen-body" onClick={done ? undefined : skip}>
         <div>
           <h1 className="h1">Everyone's in!</h1>
-          <p className="muted" style={{ margin: '6px 0 0' }}>
-            {isDoubleHole(game, h) ? 'Double stakes on this hole. ' : ''}Here's who's playing what.
-          </p>
+          {isDoubleHole(game, h) && (
+            <p className="muted" style={{ margin: '6px 0 0' }}>
+              Double stakes on this hole.
+            </p>
+          )}
         </div>
         {count > 0 ? (
           <div className="reveal-count" key={count} aria-live="polite">
@@ -95,7 +97,8 @@ export function GroupReveal({ game }: { game: Game }) {
         )}
       </div>
       <div className="screen-foot">
-        <button type="button" className="btn btn-xl btn-green" disabled={!done} onClick={doneGroupReveal}>
+        {/* Never greyed out: during the countdown the first tap skips to the end. */}
+        <button type="button" className="btn btn-xl btn-green" onClick={done ? doneGroupReveal : skip}>
           Go play!
         </button>
       </div>

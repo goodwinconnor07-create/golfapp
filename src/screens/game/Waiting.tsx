@@ -20,7 +20,7 @@ export function WaitPicks({ game }: { game: Game }) {
       <div>
         <h1 className="h1">Locked in!</h1>
         <p className="muted" style={{ margin: '6px 0 0' }}>
-          Everyone's cards show once the whole group has picked.
+          Cards show when everyone has picked.
         </p>
       </div>
       <div className="stack">

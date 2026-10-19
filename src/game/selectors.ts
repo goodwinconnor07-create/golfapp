@@ -244,7 +244,8 @@ export function gapText(game: Game, playerId: string): string | null {
   const me = rows.find((r) => r.player.id === playerId || r.player.members?.some((m) => m.id === playerId));
   if (!me) return null;
   const leaders = rows.filter((r) => r.rank === 1);
-  const n = (v: number) => `${halves(v)} stroke${v === 1 ? '' : 's'}`;
+  // No unit: the gap is game score (strokes plus cards), so "strokes" would be wrong. Halves for team averages.
+  const n = (v: number) => halves(v);
   if (me.rank === 1) {
     if (leaders.length > 1) {
       const others = leaders.filter((r) => r !== me).map((r) => r.player.name);
@@ -322,7 +323,7 @@ export function recap(game: Game): Recap {
         id: 'sent',
         emoji: '🔥',
         title: 'Sent it',
-        detail: `Completed ${plural(sent.value, 'Insane challenge')}`,
+        detail: `Completed ${plural(sent.value, 'Insane card')}`,
         playerIds: sent.ids,
       });
 
@@ -383,7 +384,7 @@ export function recap(game: Game): Recap {
         id: 'shark',
         emoji: '🎯',
         title: 'Card shark',
-        detail: `Completed ${shark.value} of ${plural(holes.length, 'challenge')}`,
+        detail: `Completed ${shark.value} of ${plural(holes.length, 'card')}`,
         playerIds: shark.ids,
       });
 
@@ -403,7 +404,7 @@ export function recap(game: Game): Recap {
         id: 'ouch',
         emoji: '😬',
         title: 'Ouch',
-        detail: `${formatDelta(ouch.value)} from failed challenges`,
+        detail: `${formatDelta(ouch.value)} from failed cards`,
         playerIds: ouch.ids,
       });
 

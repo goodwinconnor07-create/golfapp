@@ -34,14 +34,15 @@ export function History() {
                   <span className="history-trophy" aria-hidden>
                     <TrophyIcon width={22} height={22} />
                   </span>
+                  {/* The round on top, who won underneath; the full order opens below. */}
                   <span className="history-text">
-                    <b>{winners.map((p) => p.name).join(' & ')}</b>
+                    <b>{r.course || dateText(r.finishedAt)}</b>
                     <small>
-                      {dateText(r.finishedAt)} · {r.course ? `${r.course} · ` : ''}
+                      {r.course ? `${dateText(r.finishedAt)} · ` : ''}
                       {r.holes} {r.holes === 1 ? 'hole' : 'holes'}
+                      {winners.length > 0 && ` · ${winners.map((p) => p.name).join(' & ')} ${winners.length > 1 ? 'tied' : 'won'}`}
                     </small>
                   </span>
-                  <span className="history-score">{formatToPar(winners[0]?.toPar ?? 0)}</span>
                 </button>
                 {expanded && (
                   <span className="history-players">
@@ -68,7 +69,7 @@ export function History() {
       </div>
       {records.length > 0 && (
         <div className="screen-foot">
-          <button type="button" className="btn btn-link" onClick={() => clearHistory(() => setRecords([]))}>
+          <button type="button" className="btn btn-link danger" onClick={() => clearHistory(() => setRecords([]))}>
             Clear past games
           </button>
         </div>

@@ -4,7 +4,7 @@ import { haptic, reducedMotion } from './effects';
 import { CheckIcon, CrossIcon } from './Icons';
 import { SHOT_ART } from './shotArt';
 import { ShotScene } from './ShotScene';
-import { TierIcon, TIER_LOOK, Pips } from './components';
+import { TierIcon } from './components';
 
 interface Props {
   tier: Tier;
@@ -17,6 +17,10 @@ interface Props {
   stakes?: { made: number; missed: number };
   /** The hole's par, for scenes that show a score. */
   par?: number;
+  /** Leave the ✓/✗ values off the band (the score screen puts them on its buttons instead). */
+  hideStakes?: boolean;
+  /** The player's last hole, for cards judged against it (null when there isn't one). */
+  last?: { strokes: number; par: number } | null;
 }
 
 /** How long the card back waits before flipping. Insane winds up with a shake first. */
@@ -29,7 +33,7 @@ export function flipDelay(tier: Tier): number {
 export const FLIP_MS = 400;
 
 /** A challenge card: tier band on top, title and exact pass condition below. */
-export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par }: Props) {
+export function ChallengeCard({ tier, cardId, flip = false, compact = false, stakes, par, hideStakes = false, last = null }: Props) {
   const card = getCard(cardId);
   const [shown, setShown] = useState(!flip && Boolean(card));
 
@@ -68,19 +72,32 @@ export function ChallengeCard({ tier, cardId, flip = false, compact = false, sta
           <div className="ccard-band">
             <TierIcon tier={tier} size={compact ? 20 : 26} />
             <span className="ccard-tier">{t.label}</span>
-            <Pips n={TIER_LOOK[tier].pips} />
             <span className="spacer" />
-            <span className="ccard-stake">
-              <CheckIcon width={18} height={18} /> {formatDelta(stakes?.made ?? t.made)}
-            </span>
-            <span className="ccard-stake">
-              <CrossIcon width={18} height={18} /> {formatDelta(stakes?.missed ?? t.missed)}
-            </span>
+            {!hideStakes && (
+              <>
+                <span className="ccard-stake" aria-label={`Complete it: ${formatDelta(stakes?.made ?? t.made)}`}>
+                  <CheckIcon width={18} height={18} /> {formatDelta(stakes?.made ?? t.made)}
+                </span>
+                <span className="ccard-stake" aria-label={`Fail it: ${formatDelta(stakes?.missed ?? t.missed)}`}>
+                  <CrossIcon width={18} height={18} /> {formatDelta(stakes?.missed ?? t.missed)}
+                </span>
+              </>
+            )}
           </div>
-          {card && !compact && shown && SHOT_ART[card.id] && (
-            // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
-            <ShotScene art={SHOT_ART[card.id]} par={par} delay={flip ? (FLIP_MS + 120) / 1000 : 0.3} />
-          )}
+          {card && !compact && SHOT_ART[card.id] &&
+            (shown ? (
+              // Starts once the flip has landed and the text has settled, so only one thing moves at a time.
+              <ShotScene
+                art={SHOT_ART[card.id]}
+                par={par}
+                delay={flip ? (FLIP_MS + 40) / 1000 : 0.3}
+                vs={card.vsLastHole && { ...card.vsLastHole, last }}
+              />
+            ) : (
+              // Holds the scene's room before the flip, so the back is already the card's full height
+              // and the card doesn't grow as it turns over.
+              <span className="putt-scene putt-scene-slot" />
+            ))}
           {card && (
             <div className="ccard-body">
               <h3 className="ccard-title">{card.title}</h3>

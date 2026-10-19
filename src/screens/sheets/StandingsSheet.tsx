@@ -15,7 +15,8 @@ import {
 import { navigate, shownHoles, useApp } from '../../state/store';
 import { myPlayers } from '../../state/view';
 import { Move, rankLabel } from '../../ui/BoardRow';
-import { Avatar, Sheet, TierIcon } from '../../ui/components';
+import { Avatar, OutcomeMark, Sheet, SumTable, TierIcon } from '../../ui/components';
+import { plural, roundLine } from '../../ui/format';
 
 const NOW = { playing: 'Playing', done: 'Scoring', scored: 'Scored' } as const;
 
@@ -84,15 +85,13 @@ export function StandingsSheet() {
                         Now: {tier && <TierIcon tier={tier} size={14} />} {NOW[status]}
                       </>
                     ) : (
-                      <>
-                        {row.totals.real} strokes · {row.totals.made} of {row.totals.holes} cards
-                      </>
+                      roundLine(row.totals)
                     )}
                   </span>
                 </span>
                 <b className="standings-total num">{formatToPar(row.totals.toPar)}</b>
               </button>
-              {isOpen && <RowDetail game={game} player={p} total={row.totals.toPar} holes={holes} />}
+              {isOpen && <RowDetail game={game} player={p} total={row.totals.toPar} strokes={p.members ? undefined : row.totals.real} holes={holes} />}
             </div>
           );
         })}
@@ -120,11 +119,23 @@ function gapLine(rows: StandingRow[], id: string): string {
 }
 
 /** One player's round: each hole against par with its card, then golf + cards = total. */
-function RowDetail({ game, player, total, holes }: { game: Game; player: Player; total: number; holes: number[] }) {
+function RowDetail({
+  game,
+  player,
+  total,
+  strokes,
+  holes,
+}: {
+  game: Game;
+  player: Player;
+  total: number;
+  /** Real strokes, for a player (a team's golf is averaged, so a stroke count would confuse). */
+  strokes?: number;
+  holes: number[];
+}) {
   const results = holes.map((i) => unitHoleResult(game, player.id, i));
   const cards = results.reduce((a, r) => a + (r?.adjustment ?? 0), 0);
   const golf = total - cards;
-  const t = { toPar: total };
   const shown = new Set(holes);
   return (
     <div className="row-detail">
@@ -149,10 +160,11 @@ function RowDetail({ game, player, total, holes }: { game: Game; player: Player;
               </small>
               {r ? (
                 <>
-                  <b className="num">{formatToPar(r.toPar)}</b>
+                  {/* Team halves ("−2½") need a smaller size to fit nine cells across. */}
+                  <b className={`num${formatToPar(r.toPar).length > 2 ? ' tight' : ''}`}>{formatToPar(r.toPar)}</b>
                   <span className={`hbh-card tier-ink-${r.tier}`}>
                     <TierIcon tier={r.tier} size={12} />
-                    {r.outcome === 'made' ? '✓' : r.outcome === 'missed' ? '✗' : '–'}
+                    <OutcomeMark outcome={r.outcome} size={11} />
                   </span>
                 </>
               ) : (
@@ -163,10 +175,14 @@ function RowDetail({ game, player, total, holes }: { game: Game; player: Player;
         })}
       </div>
       {holes.length > 0 && (
-        <p className="sum-line" aria-label={`Golf ${formatToPar(golf)} plus cards ${formatToPar(cards)} equals ${formatToPar(t.toPar)}`}>
-          <span className="sum-pill">Golf {formatToPar(golf)}</span>+<span className="sum-pill">Cards {formatToPar(cards)}</span>=
-          <b className="num">{formatToPar(t.toPar)}</b>
-        </p>
+        <SumTable
+          className="row-sum"
+          lines={[
+            { label: strokes == null ? 'Golf' : `Golf · ${plural(strokes, 'stroke')}`, value: formatToPar(golf) },
+            { label: 'Cards', value: formatToPar(cards) },
+          ]}
+          total={{ label: 'Total', value: formatToPar(total) }}
+        />
       )}
     </div>
   );

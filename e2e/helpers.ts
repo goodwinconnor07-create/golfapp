@@ -26,12 +26,9 @@ export async function startGame(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^(New game|Hosting\? Start a game)$/ }).first().click();
 }
 
-/** On the new game screen: tap the picture, type the name in the sheet, close it. */
+/** On the name screen: type the name in the box under the picture. */
 export async function enterName(page: Page, name: string) {
-  await page.getByRole('button', { name: /your name and picture/ }).click();
   await page.getByRole('textbox', { name: 'Your name' }).fill(name);
-  await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByRole('dialog')).toBeHidden();
 }
 
 export async function newGame(page: Page, names: string[], holes: 'Front 9' | 'Back 9' | '18 holes' = 'Front 9') {
@@ -72,7 +69,6 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
     await page.getByRole('button', { name: current < strokes ? 'More strokes' : 'Fewer strokes' }).click();
   }
   await expect(value).toHaveText(String(strokes));
-  const save = page.getByRole('button', { name: 'Save score' });
   // Cards drawn at random can be settled by strokes alone ("The Clean Par" fails on a bogey
   // whatever you tap). Then the splash must match what the score screen said, not what we wanted.
   const settled = page.locator('.auto-result');
@@ -80,8 +76,8 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
     made = (await settled.getAttribute('class'))?.includes('made') ?? made;
     await shot(page, '11a-score-settled');
   }
-  if (await save.isVisible()) await save.click();
-  else await page.getByRole('button', { name: made ? /Completed/ : /Failed/ }).click();
+  // Completed and Failed save in one tap; when the strokes settle the card, only the matching one is enabled.
+  await page.getByRole('button', { name: made ? /^Completed/ : /^Failed/ }).click();
   // Online with friends there's no splash: the shared reveal shows results instead.
   const flash = page.locator('.flash');
   if (!splash) {
@@ -101,13 +97,21 @@ export async function enterScore(page: Page, strokes: number, made: boolean, sho
   await expect(flash).toBeHidden();
 }
 
-/** Everyone has picked: the 3-2-1 group reveal plays, then "Go play!" moves on. */
+/**
+ * Online, everyone has picked: the 3-2-1 group reveal plays. "Go play!" is never greyed out: a tap
+ * during the countdown skips to the end, the next one moves on.
+ */
 export async function passGroupReveal(page: Page, shotName?: string) {
   await expect(page.getByRole('heading', { name: "Everyone's in!" })).toBeVisible();
   const go = page.getByRole('button', { name: 'Go play!' });
-  await expect(go).toBeEnabled({ timeout: 8_000 });
-  if (shotName) await shot(page, shotName);
+  await expect(go).toBeEnabled();
+  if (shotName) {
+    await page.waitForTimeout(3_200);
+    await shot(page, shotName);
+  }
   await go.click();
+  // Skipped the countdown? Then the reveal is still up: tap again to move on.
+  if (await page.getByRole('heading', { name: "Everyone's in!" }).isVisible()) await go.click();
   await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
 }
 

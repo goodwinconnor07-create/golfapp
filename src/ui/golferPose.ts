@@ -48,11 +48,13 @@ const SIDE_ADDRESS: Pose = { a: -20, c: null, lean: 42, hipX: -22.5, hipY: -16.8
 const SIDE_IMPACT: Pose = { a: -23, c: null, lean: 38, hipX: -21.6, hipY: -17.2, span: 1, heel: 0.2, look: 0 };
 
 /** Seconds from the start of the swing: backswing starts, top, impact, finish. */
+// Brisk, so the ball is in the air soon after the flip; still about the 3:1 backswing-to-downswing
+// tempo of a real swing.
 const TIMES: Record<Swing, [number, number, number, number]> = {
-  full: [0.12, 0.72, 1.0, 1.5],
-  splash: [0.1, 0.6, 0.86, 1.3],
-  chip: [0.1, 0.48, 0.72, 1.05],
-  putt: [0.1, 0.5, 0.74, 1.05],
+  full: [0.04, 0.4, 0.6, 1.0],
+  splash: [0.04, 0.36, 0.54, 0.9],
+  chip: [0.04, 0.3, 0.46, 0.75],
+  putt: [0.04, 0.32, 0.48, 0.75],
 };
 
 const TOP: Record<View, Record<Swing, Partial<Pose>>> = {

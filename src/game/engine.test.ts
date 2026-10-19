@@ -625,8 +625,8 @@ describe('double stakes, free shot, redraw and votes', () => {
     g = parHunter(g, 'player00', 0, 4);
     g = parHunter(g, 'player01', 0, 5);
     g = run(g, { type: 'nextHole', from: 0 });
-    expect(gapText(g, 'player01')).toBe("You're 5 strokes behind Sam");
-    expect(gapText(g, 'player00')).toBe('You lead Alex by 5 strokes');
+    expect(gapText(g, 'player01')).toBe("You're 5 behind Sam");
+    expect(gapText(g, 'player00')).toBe('You lead Alex by 5');
     // Alex makes an Insane card, Sam fails: Alex takes the lead.
     g = structuredClone(g);
     g.entries[entryKey('player01', 1)] = { tier: 'insane', cardId: 'I01', pickedBy: HOST };
@@ -808,6 +808,21 @@ describe('who can change a score (online)', () => {
     let g = run(online(), { type: 'score', playerId: 'player01', hole: 0, strokes: 6, outcome: 'missed' }, alex);
     g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 7, outcome: 'missed' });
     expect(g.edits?.[0]).toMatchObject({ playerId: 'player01', how: 'Host', from: { strokes: 6 }, to: { strokes: 7 } });
+  });
+
+  it('lists a one-phone fix once the group has moved on, but not a typo fixed straight away', () => {
+    let g = run(newGame(), { type: 'start' });
+    g = giveCard(g, 'player00', 0, 'S02');
+    g = giveCard(g, 'player01', 0, 'S02');
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 5, outcome: 'made' });
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 6, outcome: 'made' });
+    expect(g.edits).toBeUndefined();
+    g = run(g, { type: 'score', playerId: 'player01', hole: 0, strokes: 4, outcome: 'made' });
+    g = run(g, { type: 'nextHole', from: 0 });
+    g = run(g, { type: 'score', playerId: 'player00', hole: 0, strokes: 7, outcome: 'made' });
+    expect(g.edits).toEqual([
+      expect.objectContaining({ playerId: 'player00', how: 'Fixed later', from: expect.objectContaining({ strokes: 6 }) }),
+    ]);
   });
 
   it('turns away fix requests in a one-phone game', () => {
@@ -1077,7 +1092,7 @@ describe('2v2 teams', () => {
     expect(rows[0].totals.real).toBe(9);
     expect(formatToPar(-2.5)).toBe('\u22122½');
     expect(halves(0.5)).toBe('½');
-    expect(gapText(run(g, { type: 'nextHole', from: 0 }), 'player02')).toBe("You're 5 strokes behind Sam & Alex");
+    expect(gapText(run(g, { type: 'nextHole', from: 0 }), 'player02')).toBe("You're 5 behind Sam & Alex");
   });
 
   it('shares one redraw between partners, and only before anyone scores', () => {

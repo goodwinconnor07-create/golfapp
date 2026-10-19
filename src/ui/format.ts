@@ -23,3 +23,8 @@ export function duration(ms: number): string {
   const h = Math.floor(m / 60);
   return h ? `${h}h ${m % 60}m` : `${m}m`;
 }
+
+/** "13 strokes · 2 of 3 cards completed": the same detail line on standings, final results and the picture. */
+export function roundLine(totals: { real: number; made: number; holes: number }): string {
+  return `${plural(totals.real, 'stroke')} · ${totals.made} of ${plural(totals.holes, 'card')} completed`;
+}

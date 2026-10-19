@@ -42,7 +42,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **Joining late:** new players can join until the first hole is finished. Anyone can claim a name the host typed in at any time.
 - **Ending early:** only holes everyone finished count towards totals.
 - **Join codes:** 5 consonants, so a code can never spell a word. Online games are deleted 14 days after their last change.
-- **Colour-blind support:** the levels are teal, orange and violet, and each also has its own icon (shield, flame, bolt) and 1, 2 or 3 bars.
+- **Colour-blind support:** the levels are teal, orange and violet, and each also has its own icon (shield, flame, bolt) and its name. (The 1, 2 or 3 bars were dropped in the Oct 2026 UX audit: nobody could tell what they meant.)
 - **End-of-round awards:** fewest strokes, sent it (most Insane cards made), comeback, biggest swing, card shark, daredevil, ouch, and safety first. Only the ones that apply show up.
 
 ## Open questions for later
@@ -85,7 +85,7 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - **Free shot** (switched off in Oct 2026, see Game balance v2). Whoever is in last place (after at least one finished hole; not when everyone is tied) can play one card a round where failing costs nothing. Completing it still counts in full (doubled on the last holes). Players tied for last can each use theirs. It's chosen on the pick screen before the card is drawn.
 - **Redraw.** Each player can swap one card a round for another from the same tier, on the card screen, before scoring.
 - **Group vote.** On cards judged by eye (distance cards), when a player says they completed it, everyone else in an online game gets 👍 Fair / 👎 No way on their own phone. More 👎 than 👍 turns it into a fail. Ties and no votes leave the claim standing. Voting is open while the hole is being played and closes when the group moves on. Players without their own phone don't vote. One-phone games have no vote.
-- **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once.
+- **Group reveal.** When everyone has picked, each phone counts down 3-2-1 and flips every player's level over at once. Online with friends on other phones only (product owner, UX audit): on one phone everyone just watched the picks. Go play! is never greyed out; a tap during the countdown skips it.
 - **Standings while picking.** The pick screen says how far you are behind the leader (or ahead of second).
 - **Leaderboard movement.** Places gained or lost on the last hole show as a lasting ▲2 / ▼1 chip by the name, and a new leader gets one "takes the lead" moment.
 
@@ -99,6 +99,9 @@ The spec ([SPEC.md](SPEC.md)) leaves some things open. This is what the app does
 - With everyone on one phone, there's no room: scoring works as before, with the splash.
 
 ## Showing a hole's score (Oct 2026)
+
+Superseded by the receipt and two-line rows in "UX audit" below; kept for the history.
+
 
 - The product owner found "5 − 4 = 1" next to "−3 to par" confusing, so every hole now shows its working against par as two pills that add up to the big number: **[Bogey +1] + [✓ Card −4]** → **−3**. The golf pill uses the usual names (Birdie −1, Par, Bogey +1…; plain "Par", never "Par 0"). The card pill is green when made and red when missed, with ✓/✗ as well, and notes "(2×)" on double-stakes holes and "free shot" when a free shot makes a fail cost 0.
 - The splash and the fix-a-score sheet show the pills large with the total: [Bogey +1] + [✓ Card −4] = −3. The splash no longer repeats "3 under on this hole".
@@ -119,9 +122,9 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 - **Typo window:** you can fix your own score freely until the group moves on to the next hole.
 - **Locked in:** once the group moves on (or the round ends), a fix becomes a request. The player whose score it is approves it; if you're asking about your own, the host approves. The asker can cancel. One open request per score; a new one replaces it.
 - **Host:** can fix any score directly, as referee.
-- **Where requests show:** a bell next to the trophy (online games). A red iOS-style count shows how many wait on you; tapping it opens Notifications with Approve (green) and Deny (red), or "No new notifications".
+- **Where requests show:** a bell next to the trophy (online games), only while something waits on you (UX audit: an always-on bell took header room for a rare event). A red iOS-style count shows how many; tapping it opens Notifications with Approve (green) and Deny (red). Notifications is always in the menu too, with the same count.
 - **Shown to everyone:** every change to a locked-in score (or to someone else's) is recorded and listed under "Score changes" on the scorecard and final results, and the cell gets a ✎ mark.
-- **One-phone games:** unchanged; everyone's on one phone, so fixes are direct and unrecorded.
+- **One-phone games:** everyone's on one phone, so fixes are direct (no approval). Since the UX audit, a fix to a hole the group has moved on from is listed under Score changes as "Fixed later", so a card never changes without a trace. A typo fixed before Next hole isn't listed (same as online).
 - Enforced on the server (`scoreAccess()` in `rules.ts`), not just hidden in the app.
 
 ## Drawing a card (Oct 2026)
@@ -140,7 +143,7 @@ Replaces "anyone can enter or fix any score". The product owner wanted real game
 ## Standings drama (Oct 2026)
 
 - Every hole: standings rows slide from their old place to the new one, with a green glow for a climb and red for a drop, and a ▲/▼ chip that stays; scores count up.
-- Big moments only, once per hole, after the standings settle: a new leader (crown and confetti), a tie for the lead, halfway in an 18-hole round, and the double-stakes holes coming up. It fades on its own after about 2.5 seconds and never blocks taps (Next hole works straight through). No extra screen per hole.
+- Big moments only, once per hole, after the standings settle: a tie for the lead (a new leader moved to its results line in the UX audit), halfway in an 18-hole round, and the double-stakes holes coming up. It fades on its own after about 2.5 seconds and never blocks taps (Next hole works straight through). No extra screen per hole.
 
 ## Small-phone layout (Oct 2026)
 
@@ -217,7 +220,7 @@ The panel's calls (easy to change):
 - **Waiting room.** Same group list. Adds your own result (the online stand-in for the result splash), "Next: Hole 6 · Par 3", and who took a mulligan. The heading names only players still on the course.
 - **Not done yet.** Hole done can be taken back until a score is in (`holeDone` with `undo`). Shown on the score screen and in the waiting room.
 - **Host scoring for someone.** A Cancel link backs out. If the host enters a score for a player on another phone, that phone gets a note ("The host entered your score: 6").
-- **Results as one list.** Rows start in the old standings order; each hole flips over worst first (with a short hold before the best), its score ticks into the total, then the rows re-sort into the new standings with ▲/▼ chips. About 3 seconds for 4 players; any tap skips, and Next hole's first tap only skips. Buzzes only for your own row. Screen readers get the settled standings once. "Best hole" marks the hole's best score (more than one if tied); the gold row is the leader. Overtakes show under the title once the rows settle. The lead change is one line there plus the existing moment between holes (the inline banner is gone).
+- **Results as one list.** Rows start in the old standings order; each hole flips over worst first (with a short hold before the best), its score ticks into the total, then the rows re-sort into the new standings with ▲/▼ chips. About 3 seconds for 4 players; any tap skips, and Next hole's first tap only skips. Buzzes only for your own row. Screen readers get the settled standings once. The gold row is the leader. Overtakes show under the title once the rows settle, and the lead change is one line there (with confetti). The "Best hole" pill and the separate new-leader moment were dropped in the UX audit (see below).
 - **Reactions.** The one-tap reactions and heckles above show on the settled results, once the reveal ends. Free chat was ruled out (moderation and App Store rules for under-18s).
 - **Standings sheet.** "After 4 of 9 holes · holes 7–9 count 2×", your gap to the player just ahead ("2nd · 3 behind Jay"), and one row per player: place ("1st", "=2nd"), ▲/▼, name (You on yours), then what they're doing now (online) or strokes and cards made. Tap a row for the round hole by hole (level, ✓/✗, 2× marked) and Golf + Cards = total. The pill and sheet only count a hole once this phone has seen its results.
 - **One-phone hole results.** One "Total" heading over the score column instead of "To par" under each number. The note that said the pills add up to the big number is gone (only true on hole 1).
@@ -247,7 +250,7 @@ Asked for by the product owner. Apple's Liquid Glass look on the layer that floa
 
 ## Pictures and colours (Oct 2026)
 
-- Picture choices: your letter, ⛳️ 🏌️‍♂️ 🏌️‍♀️ 😈 ⭐️ 😀 😤 🥱 🤫 🫪 🐐 👑 🍀. The earlier emojis are retired: they're not offered, but players who picked one keep it.
+- Picture choices: your letter, ⛳️ 🏌️‍♂️ 🏌️‍♀️ 😈 ⭐️ 😀 😤 🥱 🤫 😎 🐐 👑 🍀. The earlier emojis are retired: they're not offered, but players who picked one keep it. (🫪 was swapped for 😎 in the UX audit: it's Unicode 16 and showed as an empty box before iOS 18.4.)
 - Colours: blue, red, yellow, green, orange, purple, then pink and black so a full table of 8 players each gets their own. Colours are saved by position, so games already in progress show the new colours in the same slots. Yellow gets dark lettering.
 - "What's your name?" and the join screen both show a big floating picture, with the name box above the button.
 
@@ -298,3 +301,45 @@ Asked for by the product owner.
 - **One React button** under each result instead of five emoji buttons. Tapping it opens the five emojis; picking one closes it.
 - **Your pick shows once**, as an outlined tally (tap it to take it back), instead of both a pressed button and a tally.
 - **Emoji flood:** when someone reacts to your hole, your phone fills with that emoji rising up the screen for about 2 seconds, with "Gus 🤡" in the middle. It never blocks taps. If it arrives while your results are still flipping over, it waits until they've settled. Reduce Motion shows just the name tag.
+
+## UX audit (Oct 2026)
+
+A five-pass audit of every screen (code read, screenshots at 390px and 360px, a wording sweep, a scripted tap count, and simulated first-time players: a non-golfer, a casual teen and a club golfer). The product owner asked for every finding to be fixed and made two calls; the rest are mine (easy to change). Scoring and rules are unchanged.
+
+Decided by the product owner:
+
+- **Group reveal online only**, with a Go play! button that skips the countdown (see Round twists).
+- **Skins stay, and are explained:** an Extras slide line in How to play, a "Skin" ribbon on the scorecard (not a bare letter), and a one-line key.
+
+My calls:
+
+- **One way to show a hole's score.** Result rows show two short lines: "Bogey +1", then the card by name with its level icon and "✓ −2" (green) or "✗ +3" (red). The ✓/✗ are icons, never a typed ✗, which read as "times". Where the sum is the point (score splash, Fix a score, How to play, the standings detail) it's written like a receipt, numbers lined up: "Bogey · 5 strokes +1 / ✓ Card completed −2 / This hole −1". This replaces the pill pairs and the "[Bogey +1 | BOLD −2]" pill from "Showing a hole's score" above.
+- **Names:** the round's number is "Total" everywhere (results column, rows, How to play), the hole's is "This hole". Cards, never challenges. Completed, never made. The gap to another player has no unit ("You're 2 behind Sam"), because it's game score, not strokes. Card counts read "13 strokes · 2 of 3 cards completed" everywhere, the shared picture included.
+- **Lower is better, said once:** the first pick of a round says "Pick your risk. Lowest score wins."; How to play says "−2 is 2 under, E is even". The stroke counter adds plain words ("Bogey · 1 over"). The podium says "Even" instead of a bare "E".
+- **Score screen:** strokes first (label "Strokes taken · par 4"), then the card without its stakes, then Completed and Failed with what each is worth underneath. They always stay two buttons: when the strokes settle the card, the other one greys out and one slim line says why. "Not done yet" (or Cancel for the host) is a text link under them, not a back arrow in the header, so the header never changes.
+- **Fix a score:** Completed / Failed is a segmented choice (it doesn't save on its own), Save score is stuck to the bottom of the sheet, and the title says what it is ("Fix Sam's hole 1").
+- **Results:** the heading is "Results" on one phone too (the top bar already says the hole), with "This hole" and "Total" over the columns. Each row names the card. The rank badge sits on the avatar's bottom edge so it doesn't cover the letter. No "Best hole" pill, no blue ring for your row (a "You" tag instead), votes in words ("Voted down 👍 1 · 👎 2"). Reactions work as in "Reactions: React button and emoji flood" above. In 2v2 a team row shows the shared card once, with the partners' averaged golf score.
+- **A new leader is announced once:** the "👑 Sam takes the lead" line under the heading, which now brings the confetti. The full-screen moment is only for a tie for the lead, halfway in 18, and the 2× holes coming up.
+- **Header:** "8 left" or "Last hole" instead of "1/9", which read as a bug next to "Hole 10" on the back nine. The trophy says "Scores" until there's a place to show. The gear is a real cog (the old one read as brightness). End round now has a stop icon; the flag means "Hole done".
+- **Pick screen:** one line for where you stand instead of a rank badge, a sentence and a score box.
+- **Colours that meant nothing are gone:** par buttons, hole-count buttons and join-code tiles are all one dark colour, so teal, orange and violet only ever mean Safe, Bold and Insane.
+  - Reversed in part (product owner, Oct 18): par buttons and join-code tiles have colour again because all-black felt flat. Par 3 is blue, par 4 green, par 5 purple; the code tiles use the old mix. The hole-count buttons got colour too (Front 9 green, Back 9 blue, 18 holes purple).
+- **Card flip keeps one height:** the shot scene's room is held on the card before the flip, so the back is already as tall as the face and the card doesn't grow as it turns over.
+- **New players:** the name is a normal text box under the picture (tap the picture for emoji and colour). Guests get a three-step "How it works" in the lobby while they wait. Home leads with How to play until the phone has finished a round; News is for regulars. The website's join screen says what the game is in one line. The mulligan button says "Mulligan: re-hit a shot" with "2 left" in words (the old dots meant nothing). The waiting room labels your number "This hole", and "Change" is "Fix".
+- **Scorecard:** a Game score / Strokes switch (Strokes shows real strokes per hole and in total), level icons in cells instead of coloured dots, 🔁 for a mulligan instead of "M".
+- **Copy:** cut lines that restated the screen ("Play the hole for real…", "Here's who's playing what", "Redrawn. This one's yours.", "It's on the sign at the tee", the scorecard's three-sentence footnote) and fixed ones that were wrong ("Next you'll get a code" before the course step; "A few extras keep it close", when no rule helps whoever's behind).
+- **Smaller fixes:** visible off state on switches; red "Clear past games"; one "You" tag style; pop-up messages move to the top while a sheet is open; Past games shows the course and date with the winner once; the shared picture gives the winning margin and each award's detail; the join screen previews the colour you'll actually get; "Tidy Hole" shows the two-putt scene; How to play's examples use cards still in the deck.
+
+## Shot scenes: accurate, readable, quicker (Oct 2026)
+
+An audit of every card's scene (frame-by-frame captures at 390px and 360px, Reduce Motion, and five simulated players: a club golfer, a non-golfer teen, a group organiser, a motion designer and an older golfer). The panel scored the scenes about 6/10. Nobody wanted more detail; they wanted each picture to show what its card asks, a ball they can see, and less waiting. The product owner approved the plan: keep the six scene types, let each card set its own details, make them easier to read and shorter. Card text and scoring are unchanged.
+
+- **Last-hole cards show the real last hole** (product owner's call). Hold the Line, Bounce Back and Big Improvement show a scorecard with LAST HOLE (the player's strokes on it, marked, with its par) next to THIS HOLE (the score this hole needs, marked, "or better"). On the first hole, or with no score for the last hole, the left side says "first hole" and the right shows the card's first-hole target. The tag is worked out too ("need par or better"). It's only a picture of the rule, so it doesn't change how cards are judged.
+- **Scorecard marks follow golf:** a circle for birdie, two circles for eagle or better, a box per stroke over (up to three).
+- **Putts are drawn to length:** a 3–4 footer starts close to the hole, 10 feet and lag putts use the whole strip. Lag It Close has a 3 ft ring that lights up as the first putt stops inside it. A holed putt ends with the ball in the cup, as the Reduce Motion picture always did (it used to vanish).
+- **Drives match the card:** The Lay-Up is played from the fairway with an iron (no tee or tee box). The Safe Start shows the first cut of rough and the ball finishes in it. Tee markers are yellow (the everyday tees) instead of red.
+- **No Bunker Visit:** the bunker on the line in has a red dashed outline and the ball carries it onto the green.
+- **The target lights up** as the ball gets there (fairway, first cut, ring or green) and stays softly lit in the final picture.
+- **Easier to see:** the golfer on the tee is about 1.5× bigger, the ball has a thin dark edge and two faint copies trailing it in flight, and every arc stays inside the strip on a 360px phone. The ring's "30 ft" label sits under the ring, off the bunker. The flag is shorter so its top isn't cut off, the scorecard is smaller so it fits on short phones, and the pencil no longer leaves a dot before it starts. Penalty-Free has no stakes where the golfer stands, so none overlap him.
+- **About half as long:** the scene starts as the flip lands, the swing is brisker (backswing to downswing still about 3:1), flights and rolls are shorter, and the tag fades in as the ball lands instead of after. The finished picture now shows about 2 seconds after the flip, down from about 4. Tap to replay is unchanged.
+- **Not changed:** One and Done ("a chip-in counts") still shows a putt, since the card is about putting.

@@ -29,7 +29,7 @@ function saveRecent(course: CourseDetail) {
 const PRESETS = [
   { label: 'Front 9', count: 9, start: 1, className: 'btn-green' },
   { label: 'Back 9', count: 9, start: 10, className: 'btn-blue' },
-  { label: '18 holes', count: 18, start: 1, className: 'btn-dark' },
+  { label: '18 holes', count: 18, start: 1, className: 'btn-insane' },
 ];
 
 /** Front 9, Back 9 or 18, with each one's total par when the course has pars. A 9-hole course only plays 9. */

@@ -46,7 +46,7 @@ describe('push notifications', () => {
   it('asks the other players to vote on a claim judged by eye', () => {
     const { game } = act(onlineGame(), { type: 'start' });
     const { notes } = act(game, { type: 'score', playerId: 'player0gus', hole: 0, strokes: 4, outcome: 'made' }, GUEST);
-    expect(notes).toContainEqual({ devices: [HOST], title: 'Pine Hollow', body: 'Gus says they made "The Long Drive". Do you agree? Vote now.' });
+    expect(notes).toContainEqual({ devices: [HOST], title: 'Pine Hollow', body: 'Gus says they completed "The Long Drive". Fair? Vote now.' });
   });
 
   it('tells the approver about a score fix request', () => {

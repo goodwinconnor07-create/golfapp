@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { enterScore, newGame, passGroupReveal, pickAndReveal, shot } from './helpers';
+import { enterScore, newGame, pickAndReveal, shot } from './helpers';
 
 test('2v2 teams: switch on, drag to swap, start with teams', async ({ page }) => {
   await page.goto('/');
@@ -51,9 +51,8 @@ test('2v2 teams: a team shares one card and scores as a pair', async ({ page }) 
   await pickAndReveal(page, 'Bold');
   await expect(page.getByRole('heading', { name: 'Jo' })).toBeVisible();
   await pickAndReveal(page, 'Safe');
-  await expect(page.locator('.reveal-row')).toHaveCount(2);
-  await expect(page.locator('.reveal-row').first()).toContainText('Sam & Alex');
-  await passGroupReveal(page, 'teams-group-reveal');
+  // Everyone is on this phone, so no 3-2-1 reveal (that's online only): straight to Go play!.
+  await expect(page.getByRole('heading', { name: 'Go play!' })).toBeVisible();
   await shot(page, 'teams-play');
   await page.getByRole('button', { name: /Hole done/ }).click();
 
@@ -62,7 +61,7 @@ test('2v2 teams: a team shares one card and scores as a pair', async ({ page }) 
   await scoreMiss(page, 6);
   await enterScore(page, 4, true);
   await scoreMiss(page, 5);
-  await expect(page.getByText('Hole 1 done!')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Results' })).toBeVisible();
   await shot(page, 'teams-results');
   await expect(page.locator('.board-row')).toHaveCount(2);
   // Sam & Alex: golf (+1, +2) averages to +1½, the Bold card counts once at −4, so −2½.
@@ -70,8 +69,8 @@ test('2v2 teams: a team shares one card and scores as a pair', async ({ page }) 
   const team1 = page.locator('.standings-row', { hasText: 'Sam & Alex' });
   await expect(team1.locator('.standings-total')).toHaveText('−2½');
   await team1.getByRole('button').click();
-  await expect(team1.locator('.sum-line')).toContainText('Golf +1½');
-  await expect(team1.locator('.sum-line')).toContainText('Cards −4');
+  await expect(team1.locator('.row-sum')).toContainText(/Golf\s*\+1½/);
+  await expect(team1.locator('.row-sum')).toContainText(/Cards\s*−4/);
   await shot(page, 'teams-standings');
   await page.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Fix a score' }).click();
@@ -92,9 +91,10 @@ async function scoreMiss(page: Page, strokes: number) {
     const current = Number(await value.textContent());
     await page.getByRole('button', { name: current < strokes ? 'More strokes' : 'Fewer strokes' }).click();
   }
+  // When the strokes settle the card, only the matching button is enabled.
   const settled = page.locator('.auto-result');
-  if (await settled.isVisible()) await page.getByRole('button', { name: 'Save score' }).click();
-  else await page.getByRole('button', { name: /Failed/ }).click();
+  const made = (await settled.isVisible()) && ((await settled.getAttribute('class')) ?? '').includes('made');
+  await page.getByRole('button', { name: made ? /^Completed/ : /^Failed/ }).click();
   const flash = page.locator('.flash');
   await expect(flash).toBeVisible();
   await flash.click();

@@ -25,15 +25,15 @@ export function OptionsSheet() {
           on={game.settings.distanceCards}
           disabled={!host}
           title="Distance cards"
-          detail="Cards like “within 15 feet”, judged by eye. Online, the group votes on them."
+          detail="Cards like “within 15 feet”. The group votes on them."
           onChange={(v) => set({ distanceCards: v })}
         />
         {/* Situation cards are all retired in deck v2 (docs/GAME_BALANCE.md), so their option is hidden. */}
         <Toggle
           on={game.settings.tiebreakOnStrokes}
           disabled={!host}
-          title="Break ties on strokes taken"
-          detail="Off: equal scores share the place."
+          title="Break ties on real strokes"
+          detail="Fewer strokes wins a tie."
           onChange={(v) => set({ tiebreakOnStrokes: v })}
         />
         <Toggle
@@ -42,7 +42,7 @@ export function OptionsSheet() {
           title="Mulligans"
           detail={
             game.status === 'lobby'
-              ? `Each player can re-hit ${game.holes.length <= 9 ? '2' : '4'} bad shots this round without counting them.`
+              ? `${game.holes.length <= 9 ? '2' : '4'} re-hits each that don't count.`
               : `Set before the round: ${game.settings.mulligans ? `${game.holes.length <= 9 ? '2' : '4'} each` : 'off'}.`
           }
           onChange={(v) => set({ mulligans: v })}
@@ -69,7 +69,7 @@ export function ParsSheet() {
   return (
     <Sheet title="Pars">
       <p className="note" style={{ marginTop: 0, textAlign: 'left' }}>
-        Set them now or leave them: the app asks on each tee if a par is missing.
+        Leave any blank and you'll be asked on the tee.
       </p>
       {game.holes.map((hole, i) => {
         const locked = !host && anyPicked(game, i);

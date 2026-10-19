@@ -79,12 +79,7 @@ function SharedPhoneHole({ game }: { game: Game }) {
   return (
     <>
       <div className="screen-body">
-        <div>
-          <h1 className="h1">Go play!</h1>
-          <p className="muted" style={{ margin: '6px 0 0' }}>
-            Play the hole for real, then come back to score it.
-          </p>
-        </div>
+        <h1 className="h1">Go play!</h1>
         {game.players.map((p, i) => {
           const e = getEntry(game, p.id, h);
           const shown = open.has(p.id) || !e?.tier;
@@ -130,13 +125,13 @@ function SharedPhoneHole({ game }: { game: Game }) {
 }
 
 /**
- * Mulligans, right where they happen: tokens for what's left and a button to take one. Undo works
- * until the hole is locked in. Other players' phones just see that one was taken.
+ * Mulligans, right where they happen: a button to take one, with how many are left in words (the
+ * old dots meant nothing to new players). Undo works until the hole is locked in. Other players'
+ * phones just see that one was taken.
  */
 function MulliganBar({ game, playerId, canTake }: { game: Game; playerId: string; canTake: boolean }) {
   const h = game.current;
   const taken = Boolean(getEntry(game, playerId, h)?.mulligan);
-  const allowance = mulliganAllowance(game);
   const left = mulligansLeft(game, playerId);
   const take = (on: boolean) => {
     if (dispatch({ type: 'mulligan', playerId, hole: h, on })) haptic(on ? 'success' : 'light');
@@ -144,15 +139,9 @@ function MulliganBar({ game, playerId, canTake }: { game: Game; playerId: string
   if (!canTake && !taken) return null;
   return (
     <div className={`mulligan-bar${taken ? ' taken' : ''}`}>
-      <span className="mulligan-tokens" aria-label={`${left} of ${allowance} mulligans left`}>
-        {Array.from({ length: allowance }, (_, i) => (
-          // The token for this hole's mulligan pops when it's spent.
-          <i key={i} className={i < left ? 'on' : taken && i === left ? 'spent pop' : ''} />
-        ))}
-      </span>
       {taken ? (
         <>
-          <span className="mulligan-text">🔁 Mulligan taken</span>
+          <span className="mulligan-text pop">🔁 Mulligan taken · {left} left</span>
           {canTake && (
             <button type="button" className="btn-link-small" onClick={() => take(false)}>
               Undo
@@ -161,7 +150,8 @@ function MulliganBar({ game, playerId, canTake }: { game: Game; playerId: string
         </>
       ) : left > 0 ? (
         <button type="button" className="btn btn-sm btn-outline btn-auto mulligan-btn" onClick={() => take(true)}>
-          🔁 Take a mulligan
+          🔁 Mulligan: re-hit a shot
+          <span className="mulligan-left">{left} left</span>
         </button>
       ) : (
         <span className="mulligan-text muted">No mulligans left</span>
