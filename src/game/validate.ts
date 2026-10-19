@@ -5,7 +5,7 @@ import { CARDS, getCard } from './cards';
 import { shuffle } from './deck';
 import { isDeviceId } from './ids';
 import { isNameBlocked } from './names';
-import { cleanCourse, cleanName, DEFAULT_SETTINGS, isAvatarEmoji, isReaction, PLAYER_COLORS } from './reducer';
+import { cleanCourse, cleanName, cleanPacks, DEFAULT_SETTINGS, isAvatarEmoji, isPackId, isReaction, PLAYER_COLORS } from './reducer';
 import { isTier, TIER_ORDER } from './tiers';
 import { LIMITS, type Action, type Entry, type Game, type Hole, type Outcome, type Par, type Player, type Settings } from './types';
 
@@ -63,6 +63,14 @@ export function parseAction(input: unknown): Action | null {
         if (typeof v !== 'boolean') return null;
         settings[key] = v;
       }
+      if (a.settings.packs !== undefined) {
+        if (!Array.isArray(a.settings.packs) || a.settings.packs.length > 20 || !a.settings.packs.every(isPackId)) return null;
+        settings.packs = cleanPacks(a.settings.packs);
+      }
+      if (a.settings.crown !== undefined) {
+        if (typeof a.settings.crown !== 'boolean') return null;
+        settings.crown = a.settings.crown;
+      }
       return { type: 'setSettings', settings };
     }
     case 'setTeams': {
@@ -82,6 +90,7 @@ export function parseAction(input: unknown): Action | null {
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole) || !isTier(a.tier)) return null;
       if (a.cardId !== undefined && !getCard(typeof a.cardId === 'string' ? a.cardId : undefined)) return null;
       if (a.freePass !== undefined && typeof a.freePass !== 'boolean') return null;
+      if (a.friend !== undefined && !isPlayerId(a.friend)) return null;
       return {
         type: 'pick',
         playerId: a.playerId,
@@ -89,6 +98,7 @@ export function parseAction(input: unknown): Action | null {
         tier: a.tier,
         ...(a.cardId === undefined ? {} : { cardId: a.cardId as string }),
         ...(a.freePass ? { freePass: true } : {}),
+        ...(a.friend === undefined ? {} : { friend: a.friend as string }),
       };
     case 'holeDone':
       if (!isPlayerId(a.playerId) || !isInt(a.hole, 0, maxHole)) return null;
@@ -200,10 +210,15 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
   const status = input.status === 'playing' || input.status === 'finished' ? input.status : 'lobby';
   const current = isInt(input.current, 0, holes.length - 1) ? input.current : 0;
 
+  const v2 = input.rules === 2 && isInt(input.seed, 0, 0xffffffff);
   const settings: Settings = { ...DEFAULT_SETTINGS };
   if (isObj(input.settings)) {
     for (const key of ['distanceCards', 'situationCards', 'tiebreakOnStrokes', 'mulligans'] as const) {
       if (typeof input.settings[key] === 'boolean') settings[key] = input.settings[key] as boolean;
+    }
+    if (v2) {
+      if (Array.isArray(input.settings.packs)) settings.packs = cleanPacks(input.settings.packs.filter(isPackId));
+      if (typeof input.settings.crown === 'boolean') settings.crown = input.settings.crown;
     }
   }
 
@@ -215,8 +230,12 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
       if (!ids.has(pid) || !isInt(hole, 0, current) || `${pid}:${hole}` !== key || !isObj(raw)) continue;
       if (!isTier(raw.tier)) continue;
       const card = getCard(typeof raw.cardId === 'string' ? raw.cardId : undefined);
-      if (!card || card.tier !== raw.tier) continue;
+      // A Name It card's level is the one the player called; any other card has to match its level.
+      if (!card || (card.nameIt ? !card.nameIt[raw.tier] : card.tier !== raw.tier)) continue;
+      if (card.v2 && !v2) continue; // older games never hold the new cards
       const entry: Entry = { tier: raw.tier, cardId: card.id };
+      if (v2 && card.nameIt && isInt(raw.target, -10, 20)) entry.target = raw.target;
+      if (v2 && card.group && typeof raw.friend === 'string' && ids.has(raw.friend) && raw.friend !== pid) entry.friend = raw.friend;
       if (isDeviceId(raw.pickedBy)) entry.pickedBy = raw.pickedBy;
       if (isInt(raw.strokes, LIMITS.minStrokes, LIMITS.maxSavedStrokes)) entry.strokes = raw.strokes;
       if (isOutcome(raw.outcome) && (raw.outcome !== 'na' || card.situational)) entry.outcome = raw.outcome;
@@ -256,6 +275,7 @@ export function sanitizeUpload(input: unknown, hostDeviceId: string, now: number
     settings,
     decks: {},
     seq: 0,
+    ...(v2 ? { rules: 2 as const, seed: input.seed as number } : {}),
   };
   // Teams only survive if they're still two pairs of exactly four known players.
   if (Array.isArray(input.teams) && input.teams.length === 2 && players.length === 4) {

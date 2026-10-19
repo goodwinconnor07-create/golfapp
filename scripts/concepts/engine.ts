@@ -21,6 +21,7 @@ const EXTRA: BankCard[] = [
   { id: 'T03', pars: [5], check: (f, l) => f.penalties === 0 && f.shots.every((x) => x.kind !== 'full' || x.holed || x.dist >= 0.45 * Math.min(x.from, l.drive)) }, // Three Good Shots
   { id: 'T04', pars: [5], check: (f) => f.green != null && f.green <= 3 }, // Go For It
   { id: 'T05', pars: [5], check: (_f, l) => l.strokes - l.par <= 1 }, // Big Number Dodge
+  { id: 'F04', pars: [3, 4, 5], check: (f) => { const p = f.shots.find((x) => x.kind === 'putt'); return Boolean(p && p.holed && p.from >= 7 * FTM); } }, // Flag Length, first putt
   { id: 'T06', pars: [3], check: (f, l) => f.teeProx < Infinity && (l.length * 7) % 20 < 9 }, // Called Shot (land on the third you named ≈ 45% of greens hit)
 ];
 const BANK_CARDS: BankCard[] = [...CANDIDATES.filter((c) => !c.relative), ...EXTRA];
@@ -40,6 +41,7 @@ interface Bank {
   mean: number;
   putts: Int8Array;
   pen: Uint8Array;
+  green: Int8Array; // strokes to reach the green (9 = never)
   puttDist: Float64Array; // putts 0..5
 }
 let BANKS: Bank[][] = [];
@@ -54,6 +56,7 @@ export function buildBank(N = 6000, seed = 11) {
       const dist = new Float64Array(TP_N);
       const putts = new Int8Array(N);
       const pen = new Uint8Array(N);
+      const green = new Int8Array(N);
       const puttDist = new Float64Array(6);
       for (let j = 0; j < N; j++) {
         const log = playHole(skill(h), makeHole(par, rng), rng, rng() < 0.22);
@@ -61,6 +64,7 @@ export function buildBank(N = 6000, seed = 11) {
         tp[j] = log.strokes - par;
         putts[j] = Math.min(5, f.putts);
         pen[j] = f.penalties > 0 ? 1 : 0;
+        green[j] = Math.min(9, f.green ?? 9);
         puttDist[putts[j]] += 1 / N;
         dist[Math.min(TP_N - 1, Math.max(0, tp[j] + TP_OFF))] += 1 / N;
         for (let c = 0; c < K; c++) {
@@ -73,7 +77,7 @@ export function buildBank(N = 6000, seed = 11) {
       }
       let mean = 0;
       for (let j = 0; j < N; j++) mean += tp[j] / N;
-      return { n: N, tp, out, odds, dist, mean, putts, pen, puttDist };
+      return { n: N, tp, out, odds, dist, mean, putts, pen, puttDist, green };
     }),
   );
 }
@@ -97,14 +101,20 @@ export const DUEL = new Set(['D01', 'D02', 'D03']);
 const PP: Record<string, number> = { P01: 0, P02: 1, P03: 2 };
 const personalPar = (g: G, i: number) => (g.golf[i] + 2) / (g.hole + 2);
 // Round 2 ideas judged at the end of the hole from the round so far (S = self, C = call it, G = group).
-export const SELF = new Set(['S20', 'S21', 'S22', 'S23', 'S24', 'S25']);
+export const SELF = new Set(['S20', 'S21', 'S22', 'S23', 'S24', 'S25', 'S26']);
+/** Name It: pick a target, judged "or better"; the target sets the level. tier → target. */
+export const NAME_IT: Record<string, Record<string, string>> = {
+  N1: { safe: 'pp+1', bold: 'pp', insane: 'pp-1' }, // Name Your Number (score vs your average)
+  N2: { safe: 'par', bold: 'par-1', insane: 'par-2' }, // Name Your Green (strokes to reach the green)
+  N3: { safe: '2', insane: '1' }, // Name Your Putts
+};
 export const CALL = new Set(['C01', 'C02', 'C03']);
 export const GROUP = new Set(['G01', 'G02', 'G03', 'G04', 'G05']);
 /** Multi-hole cards: held this hole, paid when they finish (M). */
 export const MULTI: Record<string, number> = { M01: 3, M02: 3, M03: 3, M04: 3, M05: 3 };
 /** Club limits: play the hole as a worse (or better) golfer, then hit the target to par. [handicap shift in grid steps, target] */
 export const CLUB: Record<string, [number, number]> = { K01: [3, 1], K02: [2, 1], K03: [1, 1], K04: [7, 1], K05: [-3, 0], K06: [1, 1] };
-for (const id of [...Object.keys(REL), ...DUEL, ...Object.keys(PP), ...SELF, ...CALL, ...GROUP, ...Object.keys(MULTI), ...Object.keys(CLUB)]) PARS_OF[id] ??= [3, 4, 5];
+for (const id of [...Object.keys(NAME_IT), ...Object.keys(REL), ...DUEL, ...Object.keys(PP), ...SELF, ...CALL, ...GROUP, ...Object.keys(MULTI), ...Object.keys(CLUB)]) PARS_OF[id] ??= [3, 4, 5];
 PARS_OF.K02 = [4, 5];
 export const CARD_TITLES: Record<string, string> = {
   ...Object.fromEntries(CANDIDATES.map((c) => [c.id, c.title])),
@@ -113,6 +123,7 @@ export const CARD_TITLES: Record<string, string> = {
   D03: 'Match a Rival',
   F01: 'Flag Length', F02: 'Putter Length', F03: 'Inside the Flag',
   T01: 'Dance Floor', T02: 'Up and Down', T03: 'Three Good Shots', T04: 'Go For It', T05: 'Big Number Dodge', T06: 'Called Shot',
+  N1: 'Name Your Number', N2: 'Name Your Green', N3: 'Name Your Putts', S26: 'Steady Eddie (v2)', F04: 'Flag Length (first putt)',
   S20: 'Personal Best', S21: 'Steady Eddie', S22: 'No Repeat', S23: 'Better Half', S24: 'Putts Report', S25: 'Same Again',
   C01: 'Call It', C02: 'Over/Under', C03: 'Call the Putts',
   G01: 'Shadow', G02: 'Copycat', G03: 'Underdog', G04: 'Bodyguard', G05: 'Jinx',
@@ -167,7 +178,7 @@ export const BASE: Concept = {
 };
 
 // ── Players ───────────────────────────────────────────────────────────────
-export type Persona = 'hotHand' | 'cautious' | 'balanced' | 'reckless' | 'thinker' | 'random' | `fixed${number}` | 'protect';
+export type Persona = `call:${string}` | 'sandbag' | 'hotHand' | 'cautious' | 'balanced' | 'reckless' | 'thinker' | 'random' | `fixed${number}` | 'protect';
 export interface Player {
   h: number;
   hi: number;
@@ -276,6 +287,7 @@ interface Dealt {
   tier: string;
   rival: number; // for D01/D03
   gold?: boolean; // rare: double stakes
+  call?: string; // Name It: the tier whose target was called
 }
 function cardOdds(g: G, i: number, d: Dealt): number {
   const par = g.pars[g.hole];
@@ -312,7 +324,26 @@ function modeOf(d: Float64Array) {
   for (let k = 1; k < d.length; k++) if (d[k] > d[b]) b = k;
   return b;
 }
+export const ppRound = (g: G, i: number) => Math.floor(personalPar(g, i) + 0.5);
+function nameItTarget(g: G, i: number, id: string, call: string): number {
+  const t = NAME_IT[id][call];
+  const par = g.pars[g.hole];
+  if (t.startsWith('pp')) return ppRound(g, i) + (t === 'pp+1' ? 1 : t === 'pp' ? 0 : -1);
+  if (t.startsWith('par')) return par + (t === 'par' ? 0 : t === 'par-1' ? -1 : -2);
+  return Number(t);
+}
 function specialOdds(g: G, i: number, d: Dealt): number | null {
+  if (NAME_IT[d.id] && d.call) {
+    const P = g.pl[i];
+    const par = g.pars[g.hole];
+    const x = nameItTarget(g, i, d.id, d.call);
+    const b = bank(P.hi, par);
+    if (d.id === 'N1') return pLE(distOf(P.hi, par), x);
+    let n = 0;
+    const lim = Math.min(b.n, 1500);
+    for (let j = 0; j < lim; j++) n += (d.id === 'N2' ? b.green[j] : b.putts[j]) <= x ? 1 : 0;
+    return n / lim;
+  }
   const par = g.pars[g.hole];
   const P = g.pl[i];
   const dist = distOf(P.hi, par);
@@ -340,6 +371,7 @@ function specialOdds(g: G, i: number, d: Dealt): number | null {
     for (let k = 0; k < 6; k++) if (k < target - 1e-9) s += pd[k];
     return s;
   }
+  if (id === 'S26') return pLE(dist, prev == null ? 2 : prev + 1);
   if (id === 'S25') return prev == null ? pLE(dist, 1) - pLE(dist, 0) : pLE(dist, prev) - pLE(dist, prev - 1);
   if (id === 'C01') return dist[modeOf(dist)];
   if (id === 'C02') return Math.max(pLE(dist, 0), 1 - pLE(dist, 0));
@@ -387,6 +419,10 @@ function gumbel(rng: Rng) {
 }
 function personaPick(g: G, i: number, opts: Opt[], rng: Rng, persona: Persona): number {
   if (persona === 'random') return Math.floor(rng() * opts.length);
+  if (persona.startsWith('call:')) {
+    const k = opts.findIndex((o) => o.dealt?.call === persona.slice(5));
+    return k >= 0 ? k : 0;
+  }
   if (persona === 'hotHand') {
     // Measuring Hot Hand only: take it whenever it isn't already running, else play Safe.
     const running = g.pending.some((p) => p.i === i && p.id === 'M02');
@@ -507,7 +543,9 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     let hand: Dealt[] | null = null;
     if (c.decision === 'hand') {
       hand = ov && ov.player === i && ov.hand ? ov.hand : tiers.map((t) => deal(g, i, t, held, rng));
-      opts = hand.map((d) => ({ tier: d.tier, dealt: d }));
+      opts = hand.flatMap((d) =>
+        NAME_IT[d.id] ? Object.keys(NAME_IT[d.id]).map((t) => ({ tier: t, dealt: { ...d, tier: t, call: t } })) : [{ tier: d.tier, dealt: d }],
+      );
     } else opts = tiers.map((t) => ({ tier: t }));
     let k: number;
     if (ov && ov.player === i) k = ov.opt;
@@ -552,7 +590,7 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     const b = bank(rowHi[i], par);
     const j = Math.floor(rng() * b.n);
     rows.push(j);
-    tp.push(b.tp[j]);
+    tp.push(b.tp[j] + (g.pl[i].persona === 'sandbag' && g.hole < 3 ? 2 : 0));
   }
   const made: boolean[] = [];
   for (let i = 0; i < n; i++) {
@@ -566,7 +604,11 @@ export function playOneHole(g: G, rng: Rng, ov: Override | null, rollout: boolea
     else if (d.id === 'D01') ok = tp[i] < tp[d.rival];
     else if (d.id === 'D03') ok = tp[i] <= tp[d.rival];
     else if (d.id === 'D02') ok = tp.every((x, o) => o === i || tp[i] < x);
-    else if (CLUB[d.id]) ok = tp[i] <= CLUB[d.id][1];
+    else if (NAME_IT[d.id]) {
+      const x = nameItTarget(g, i, d.id, d.call ?? 'bold');
+      const b = bank(rowHi[i], par);
+      ok = d.id === 'N1' ? tp[i] <= x : d.id === 'N2' ? b.green[rows[i]] <= x : b.putts[rows[i]] <= x;
+    } else if (CLUB[d.id]) ok = tp[i] <= CLUB[d.id][1];
     else if (MULTI[d.id] || GROUP.has(d.id)) ok = false; // settled below / later
     else if (SELF.has(d.id) || CALL.has(d.id)) ok = selfCheck(g, i, d.id, tp[i], bank(rowHi[i], par).putts[rows[i]], par);
     else ok = bank(rowHi[i], par).out[rows[i] * K + IDX[d.id]] === 1;
@@ -735,6 +777,7 @@ function selfCheck(g: G, i: number, id: string, t: number, putts: number, par: n
     case 'S23': return t < (h.length >= 3 ? avg(h.slice(-3).map((x) => x.tp)) : personalPar(g, i)) - 1e-9;
     case 'S24': return putts < (h.reduce((a, x) => a + x.putts, 0) + 2 * 2.2) / (h.length + 2) - 1e-9;
     case 'S25': return prev == null ? t === 1 : t === prev;
+    case 'S26': return t <= (prev == null ? 2 : prev + 1);
     case 'C01': return t === modeOf(dist) - TP_OFF;
     case 'C02': return pLE(dist, 0) >= 0.5 ? t <= 0 : t >= 1;
     case 'C03': return putts === modeOf(bank(P.hi, par).puttDist);

@@ -29,8 +29,18 @@ export const TEAM_TIERS: Record<Tier, TierDef> = {
   insane: { id: 'insane', label: 'Insane', made: -12, missed: 4 },
 };
 
-/** The values in play: solo or team. */
-export const tiersFor = (teams: boolean): Record<Tier, TierDef> => (teams ? TEAM_TIERS : TIERS);
+/**
+ * Ruleset 2 (players pick from a hand of three): players take the good Insane cards, so Insane lands
+ * more often (about 30–40% instead of 28%) and its fail costs one more. Simulated in scripts/concepts.
+ */
+export const TIERS_V2: Record<Tier, TierDef> = {
+  safe: TIERS.safe,
+  bold: TIERS.bold,
+  insane: { id: 'insane', label: 'Insane', made: -9, missed: 4 },
+};
+
+/** The values in play: solo or team, older games or ruleset 2. Team values are the same in both. */
+export const tiersFor = (teams: boolean, rules?: 2): Record<Tier, TierDef> => (teams ? TEAM_TIERS : rules === 2 ? TIERS_V2 : TIERS);
 
 export const TIER_ORDER: readonly Tier[] = ['safe', 'bold', 'insane'];
 
@@ -39,8 +49,8 @@ export function isTier(value: unknown): value is Tier {
 }
 
 /** Strokes added to (or taken off) the game score for this tier and outcome. */
-export function adjustmentFor(tier: Tier, outcome: Outcome, teams = false): number {
-  const t = tiersFor(teams)[tier];
+export function adjustmentFor(tier: Tier, outcome: Outcome, teams = false, rules?: 2): number {
+  const t = tiersFor(teams, rules)[tier];
   if (outcome === 'made') return t.made;
   if (outcome === 'missed') return t.missed;
   return 0;

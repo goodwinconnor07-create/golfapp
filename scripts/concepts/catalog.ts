@@ -28,6 +28,22 @@ export const FAMILIES: Record<string, Record<string, string>> = {
   flag: { F01: 'insane' },
 };
 export const DECK_BIG: Record<string, string> = Object.assign({}, DECK_V4, ...Object.values(FAMILIES));
+/** Deck v5 packs: what the app ships. Exploitable cards dropped (No Repeat, Same Again, Slow Burn, Over/Under, exact calls, Jinx, Copycat, Called Shot). */
+export const PACKS: Record<string, Record<string, string>> = {
+  core: DECK_V4,
+  nameIt: { N1: 'bold', N2: 'bold', N3: 'bold' },
+  self: { S20: 'insane', S23: 'bold', S24: 'bold', S26: 'safe' },
+  multi: { M01: 'insane', M02: 'insane', M04: 'bold', M05: 'bold' },
+  holes: { T01: 'insane', T02: 'insane', T03: 'bold', T04: 'insane', T05: 'bold' },
+  group: { G01: 'bold', G03: 'bold', G04: 'safe' },
+  flag: { F04: 'insane' },
+  hard: { K01: 'bold', K02: 'insane', K03: 'bold', K04: 'insane', K05: 'insane', K06: 'bold' },
+};
+export const DEFAULT_PACKS = ['core', 'nameIt', 'self', 'multi', 'holes', 'group', 'flag'];
+/** What the app actually ships: no cards that need putts or penalties recorded (Putts Report, Clean Run, No Three-Putts Club). */
+export const APP_PACKS: Record<string, Record<string, string>> = { ...PACKS, self: { S20: 'insane', S23: 'bold', S26: 'safe' }, multi: { M01: 'insane', M02: 'insane' } };
+export const appDeck = (packs: string[]) => Object.assign({}, ...packs.map((p) => APP_PACKS[p])) as Record<string, string>;
+export const deckOf = (packs: string[]) => Object.assign({}, ...packs.map((p) => PACKS[p])) as Record<string, string>;
 /** Deck v3 plus head-to-head cards: Match a Rival (Bold), Beat a Rival (Insane). */
 export const DECK_DUEL: Record<string, string> = { ...DECK_V3, D03: 'bold', D01: 'insane' };
 
@@ -90,6 +106,22 @@ export const CONCEPTS: Record<string, Concept & { tune?: 'grid3' | 'grid2' | 'gr
   bigNoKing: { ...BASE, name: 'Big deck + no repeats, no Crown', decision: 'hand', deck: DECK_BIG, addons: { noRepeat: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
   everythingNoClub: { ...BASE, name: 'Everything on, minus club-limit cards', decision: 'hand', deck: Object.fromEntries(Object.entries(DECK_BIG).filter(([id]) => !(id in FAMILIES.club))), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
   everythingNoClubTuned: { ...BASE, name: 'Everything on, minus club limits, Insane −7/+3', decision: 'hand', deck: Object.fromEntries(Object.entries(DECK_BIG).filter(([id]) => !(id in FAMILIES.club))), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-7, 3] } },
+  v5: { ...BASE, name: 'v5: hand + default packs + Crown + no repeats + wild + gold', decision: 'hand', deck: deckOf(DEFAULT_PACKS), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] }, tune: 'grid3' },
+  v5NoWild: { ...BASE, name: 'v5 without wild holes', decision: 'hand', deck: deckOf(DEFAULT_PACKS), addons: { king: true, noRepeat: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5NoGold: { ...BASE, name: 'v5 without gold cards', decision: 'hand', deck: deckOf(DEFAULT_PACKS), addons: { king: true, noRepeat: true, wild: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5Repeats: { ...BASE, name: 'v5 with repeats allowed', decision: 'hand', deck: deckOf(DEFAULT_PACKS), addons: { king: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5NoCrown: { ...BASE, name: 'v5 without the Crown', decision: 'hand', deck: deckOf(DEFAULT_PACKS), addons: { noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5Hard: { ...BASE, name: 'v5 + Hard Mode pack', decision: 'hand', deck: deckOf([...DEFAULT_PACKS, 'hard']), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_nameIt: { ...BASE, name: 'v5 without the nameIt pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'nameIt')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_self: { ...BASE, name: 'v5 without the self pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'self')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_multi: { ...BASE, name: 'v5 without the multi pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'multi')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_holes: { ...BASE, name: 'v5 without the holes pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'holes')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_group: { ...BASE, name: 'v5 without the group pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'group')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  v5No_flag: { ...BASE, name: 'v5 without the flag pack', decision: 'hand', deck: deckOf(DEFAULT_PACKS.filter((p) => p !== 'flag')), addons: { king: true, noRepeat: true, wild: true, gold: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  final: { ...BASE, name: 'Final: hand + app packs + Crown + no repeats', decision: 'hand', deck: appDeck(DEFAULT_PACKS), addons: { king: true, noRepeat: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] }, tune: 'grid3' },
+  finalHard: { ...BASE, name: 'Final + Hard Mode', decision: 'hand', deck: appDeck([...DEFAULT_PACKS, 'hard']), addons: { king: true, noRepeat: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  finalCore: { ...BASE, name: 'Final, core pack only', decision: 'hand', deck: appDeck(['core']), addons: { king: true, noRepeat: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
+  finalTrim: { ...BASE, name: 'Final without Go For It and Name Your Green', decision: 'hand', deck: Object.fromEntries(Object.entries(appDeck(DEFAULT_PACKS)).filter(([id]) => id !== 'T04' && id !== 'N2')), addons: { king: true, noRepeat: true }, values: { safe: [-1, 1], bold: [-2, 2], insane: [-9, 4] } },
   hex: { ...BASE, name: 'Today + Hex: complete Insane, then ban someone from Safe on a hole', addons: { hex: true } },
   callout: { ...BASE, name: 'Today + Call-out duels: beat who you called, take 1 off them', addons: { callout: true } },
   king: { ...BASE, name: 'Today + King of the Hill: beat the leader on a hole, −1', addons: { king: true } },

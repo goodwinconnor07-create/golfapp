@@ -9,6 +9,12 @@ export type Outcome = 'made' | 'missed' | 'na';
 
 export type Status = 'lobby' | 'playing' | 'finished';
 
+/**
+ * Card packs (ruleset 2). The host switches them on or off in the lobby. Hard Mode is off by default:
+ * club limits punish weaker golfers much more (docs/GAME_BALANCE.md).
+ */
+export type PackId = 'core' | 'nameIt' | 'self' | 'multi' | 'holes' | 'group' | 'flag' | 'hard';
+
 export interface Player {
   id: string;
   name: string;
@@ -47,6 +53,10 @@ export interface Entry {
   redrawn?: boolean;
   /** The player used a mulligan on this hole (one per hole). The re-hit isn't in strokes. */
   mulligan?: boolean;
+  /** Name It cards: the number this player called (to par, strokes to the green, or putts). Set when they pick. */
+  target?: number;
+  /** Cards about a friend (Shadow, Bodyguard): the player they picked. */
+  friend?: string;
   /** Group vote on an honour-system claim: voter's player id → true if they call it fair. */
   votes?: Record<string, boolean>;
   /** One-tap reactions to this result: reacting player's id → emoji (one of REACTIONS). */
@@ -62,10 +72,21 @@ export interface Settings {
   tiebreakOnStrokes: boolean;
   /** Mulligans: re-hit a bad shot and don't count it. 2 each for 9 holes or fewer, 4 for longer rounds. */
   mulligans: boolean;
+  /** Ruleset 2: card packs in play. Set before the round. */
+  packs?: PackId[];
+  /** Ruleset 2: the Crown. Beat the outright leader's score on a hole and take a stroke off. */
+  crown?: boolean;
 }
 
 export interface Game {
   v: 1;
+  /**
+   * 2 = games made since the Showdown update (Oct 2026): each player picks from a hand of three cards,
+   * card packs, the Crown, Insane fails +4. Absent = an older game, which keeps the old rules to the end.
+   */
+  rules?: 2;
+  /** Ruleset 2: every hand is worked out from this, so every phone deals the same cards. */
+  seed?: number;
   id: string;
   /** Online join code, or null for a game that only lives on this phone. */
   code: string | null;
@@ -137,8 +158,11 @@ export type Action =
   /** Host, in the lobby: set 2v2 teams (two pairs of the four players), or null for no teams. */
   | { type: 'setTeams'; teams: [string, string][] | null }
   | { type: 'start' }
-  /** cardId: a card the phone dealt itself while offline. The server keeps it if it fits, or deals another. */
-  | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean }
+  /**
+   * cardId: a card the phone dealt itself while offline (older games), or the card picked from the hand
+   * (ruleset 2; for a Name It card, tier is the level called). friend: for cards about a friend.
+   */
+  | { type: 'pick'; playerId: string; hole: number; tier: Tier; cardId?: string; freePass?: boolean; friend?: string }
   /** Swap this hole's card for another from the same tier. Once per player per round. */
   | { type: 'redraw'; playerId: string; hole: number; cardId?: string }
   /** Take (or undo) a mulligan on the hole being played. */
